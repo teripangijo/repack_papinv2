@@ -2,10 +2,10 @@
 // Ambil data user dari variabel $user yang dikirim oleh controller
 // Sediakan nilai default jika variabel tidak ada atau kosong
 $userName = isset($user['name']) ? htmlspecialchars($user['name']) : 'Guest';
-// Cek apakah $user['image'] ada dan tidak kosong, jika tidak gunakan default.jpg
-$userImage = isset($user['image']) && !empty($user['image']) ? htmlspecialchars($user['image']) : 'default.jpg';
-// Bentuk path yang benar ke gambar profil, termasuk subfolder 'profile'
-$profileImagePath = base_url('uploads/kop/') . $userImage;
+// Pastikan nama file gambar diambil dengan benar dan ada fallback
+$userImageName = isset($user['image']) && !empty($user['image']) ? $user['image'] : 'default.jpg';
+// Path ke gambar profil/logo perusahaan (konsisten dengan tempat penyimpanan)
+$profileImagePath = base_url('uploads/kop/' . htmlspecialchars($userImageName));
 ?>
 <div id="content-wrapper" class="d-flex flex-column">
 
@@ -19,28 +19,57 @@ $profileImagePath = base_url('uploads/kop/') . $userImage;
 
             <ul class="navbar-nav ml-auto">
 
+                <li class="nav-item dropdown no-arrow d-sm-none">
+                    <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-search fa-fw"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right p-3 shadow animated--grow-in"
+                        aria-labelledby="searchDropdown">
+                        <form class="form-inline mr-auto w-100 navbar-search">
+                            <div class="input-group">
+                                <input type="text" class="form-control bg-light border-0 small"
+                                    placeholder="Search for..." aria-label="Search"
+                                    aria-describedby="basic-addon2">
+                                <div class="input-group-append">
+                                    <button class="btn btn-primary" type="button">
+                                        <i class="fas fa-search fa-sm"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </li>
+
+                <?php // Anda bisa menambahkan item notifikasi (Alerts, Messages) di sini jika diperlukan ?>
+
+                <div class="topbar-divider d-none d-sm-block"></div>
+
                 <li class="nav-item dropdown no-arrow">
-                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <span class="mr-2 d-none d-lg-inline text-gray-600 small">
-                            <?= $userName; // Tampilkan nama user ?>
+                            <?= $userName; // Menampilkan nama pengguna ?>
                         </span>
                         <img class="img-profile rounded-circle"
-                             src="<?= $profileImagePath; // Gunakan path yang sudah benar ?>"
-                             alt="<?= $userName; ?> profile picture"> <?php // Tambahkan alt text ?>
+                            src="<?= $profileImagePath; // Menggunakan path gambar yang sudah benar ?>"
+                            alt="<?= $userName; ?> profile picture"
+                            onerror="this.onerror=null; this.src='<?= base_url('uploads/kop/default.jpg'); ?>';"> <?php // Fallback jika gambar utama gagal dimuat ?>
                     </a>
-                    <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
-                        <a class="dropdown-item" href="<?= site_url('user'); // Link ke profil user ?>">
-                             <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-                             Profile
-                         </a>
-                         <a class="dropdown-item" href="<?= site_url('user/edit'); // Link ke edit profil ?>">
-                             <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
-                             Edit Profile
-                         </a>
-                         <a class="dropdown-item" href="<?= site_url('auth/changepass/' . (isset($user['id']) ? $user['id'] : '')); // Link ke ganti password ?>">
-                             <i class="fas fa-key fa-sm fa-fw mr-2 text-gray-400"></i>
-                             Change Password
-                         </a>
+                    <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
+                        aria-labelledby="userDropdown">
+                        <a class="dropdown-item" href="<?= site_url('user/index'); // Link ke Dashboard/My Profile Utama ?>">
+                            <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                            My Profile
+                        </a>
+                        <a class="dropdown-item" href="<?= site_url('user/edit'); // Link ke edit profil & perusahaan ?>">
+                            <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
+                            Edit Profile & Perusahaan
+                        </a>
+                        <a class="dropdown-item" href="<?= site_url('auth/changepass/' . (isset($user['id']) ? $user['id'] : '')); // Link ke ganti password ?>">
+                            <i class="fas fa-key fa-sm fa-fw mr-2 text-gray-400"></i>
+                            Change Password
+                        </a>
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
                             <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
@@ -48,9 +77,7 @@ $profileImagePath = base_url('uploads/kop/') . $userImage;
                         </a>
                     </div>
                 </li>
-
             </ul>
-
         </nav>
         <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
             aria-hidden="true">
@@ -70,5 +97,5 @@ $profileImagePath = base_url('uploads/kop/') . $userImage;
                 </div>
             </div>
         </div>
-
-        <?php // Jangan tutup div #content dan #content-wrapper di sini, ini harusnya ditutup di template footer ?>
+        <?php // Tag penutup untuk #content dan #content-wrapper akan ada di footer.php ?>
+        <?php // Konten halaman spesifik akan dimulai SETELAH ini oleh controller ?>

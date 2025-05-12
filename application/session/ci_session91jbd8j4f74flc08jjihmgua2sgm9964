@@ -1,1 +1,1 @@
-message|s:76:"<div class="alert alert-success" role="alert">Permohonan Telah Diubah.</div>";__ci_vars|a:1:{s:7:"message";s:3:"old";}id|s:3:"378";email|s:12:"pj2@mail.com";role_id|s:1:"2";nama|s:8:"PJ Kedua";is_active|i:1;
+message|s:77:"<div class="alert alert-success" role="alert">You have been logged out!</div>";__ci_vars|a:1:{s:7:"message";s:3:"old";}id|s:3:"379";email|s:12:"pj2@mail.com";role_id|s:1:"2";nama|s:15:"PT Kirim Barang";is_active|s:1:"1";

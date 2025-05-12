@@ -20,7 +20,7 @@
 
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
 
-    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="<?= base_url('assets') ?>/vendor/jquery/jquery.min.js"></script>
 
     <script src="https://unpkg.com/gijgo@1.9.13/js/gijgo.min.js" type="text/javascript"></script>
 

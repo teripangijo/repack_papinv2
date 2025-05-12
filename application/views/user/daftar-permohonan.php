@@ -2,7 +2,7 @@
 
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800"><?= isset($subtitle) ? htmlspecialchars($subtitle) : 'Daftar Permohonan'; ?></h1>
-        <a href="<?= site_url('user/permohonan'); ?>" class="btn btn-sm btn-primary shadow-sm">
+        <a href="<?= site_url('user/permohonan_impor_kembali'); // Pastikan ini link ke method yang benar ?>" class="btn btn-sm btn-primary shadow-sm">
             <i class="fas fa-plus fa-sm text-white-50"></i> Ajukan Permohonan Baru
         </a>
     </div>
@@ -27,7 +27,8 @@
                             <th>Id Aju</th>
                             <th>No Surat</th>
                             <th>Tanggal Surat</th>
-                            <th>Nama Perusahaan</th> <th>Waktu Submit</th>
+                            <th>Nama Perusahaan</th> 
+                            <th>Waktu Submit</th>  <?php // Pastikan ini adalah th terpisah ?>
                             <th>Petugas</th>
                             <th>Status</th>
                             <th>Action</th>
@@ -46,8 +47,6 @@
                                     <td><?= isset($p['time_stamp']) ? date('d/m/Y H:i:s', strtotime($p['time_stamp'])) : '-'; ?></td>
                                     <td>
                                         <?php
-                                        // Logika untuk menampilkan nama petugas jika ada
-                                        // Anda mungkin perlu query tambahan di controller untuk mendapatkan nama petugas berdasarkan $p['petugas'] (ID petugas)
                                         echo isset($p['nama_petugas']) ? htmlspecialchars($p['nama_petugas']) : (isset($p['petugas']) && !empty($p['petugas']) ? 'ID: '.htmlspecialchars($p['petugas']) : '-');
                                         ?>
                                     </td>
@@ -57,39 +56,26 @@
                                         $status_badge = 'secondary';
                                         if (isset($p['status'])) {
                                             switch ($p['status']) {
-                                                case '0':
-                                                    $status_text = 'Permohonan Masuk';
-                                                    $status_badge = 'info';
-                                                    break;
-                                                case '1':
-                                                    $status_text = 'Diproses Petugas';
-                                                    $status_badge = 'primary';
-                                                    break;
-                                                case '2':
-                                                    $status_text = 'LHP Direkam';
-                                                    $status_badge = 'warning';
-                                                    break;
-                                                case '3':
-                                                    $status_text = 'Selesai (Disetujui/Ditolak)';
-                                                    $status_badge = 'success'; // Atau 'danger' jika ditolak
-                                                    break;
-                                                default:
-                                                    $status_text = 'Status Tidak Dikenal';
+                                                case '0': $status_text = 'Permohonan Masuk'; $status_badge = 'info'; break;
+                                                case '1': $status_text = 'Diproses Petugas'; $status_badge = 'primary'; break;
+                                                case '2': $status_text = 'LHP Direkam'; $status_badge = 'warning'; break;
+                                                case '3': $status_text = 'Selesai (Disetujui)'; $status_badge = 'success'; break;
+                                                case '4': $status_text = 'Selesai (Ditolak)'; $status_badge = 'danger'; break;
+                                                default: $status_text = 'Status Tidak Dikenal';
                                             }
                                         }
                                         echo '<span class="badge badge-' . $status_badge . '">' . htmlspecialchars($status_text) . '</span>';
                                         ?>
                                     </td>
                                     <td>
-                                        <a href="<?= site_url('user/printPdf/' . (isset($p['id']) ? $p['id'] : '')); ?>" class="btn btn-info btn-sm" title="Preview/Print">
+                                        <a href="<?= site_url('user/printPdf/' . (isset($p['id']) ? $p['id'] : '')); ?>" class="btn btn-info btn-sm mb-1" title="Preview/Print">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         <?php if (isset($p['status']) && $p['status'] == '0') : // Hanya bisa edit jika status 'Permohonan Masuk' ?>
-                                            <a href="<?= site_url('user/editpermohonan/' . (isset($p['id']) ? $p['id'] : '')); ?>" class="btn btn-warning btn-sm" title="Edit">
+                                            <a href="<?= site_url('user/editpermohonan/' . (isset($p['id']) ? $p['id'] : '')); ?>" class="btn btn-warning btn-sm mb-1" title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                         <?php endif; ?>
-                                        <?php // Tambahkan tombol delete jika perlu, dengan konfirmasi ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -108,17 +94,24 @@
 <?php // Tempatkan script inisialisasi DataTables di sini atau di footer template ?>
 <script>
 $(document).ready(function() {
-    $('#dataTablePermohonan').DataTable({
-        // Opsi DataTables bisa ditambahkan di sini
-        // Misalnya, untuk mengubah bahasa:
-        // "language": {
-        //     "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/id.json" // Untuk Bahasa Indonesia
-        // }
-        // Atau untuk mengatur kolom mana yang bisa di-search atau di-order
-        // "columnDefs": [
-        //     { "searchable": false, "targets": [0, 8] }, // Kolom # dan Action tidak bisa dicari
-        //     { "orderable": false, "targets": [8] }     // Kolom Action tidak bisa di-sort
-        // ]
-    });
+    // Cek apakah jQuery dan DataTables sudah dimuat
+    if (typeof $ !== 'undefined' && typeof $.fn.DataTable !== 'undefined') {
+        console.log('Daftar Permohonan: jQuery and DataTables are loaded.');
+        try {
+            $('#dataTablePermohonan').DataTable({
+                // Opsi DataTables bisa ditambahkan di sini
+            });
+            console.log('Daftar Permohonan: DataTable initialized.');
+        } catch (e) {
+            console.error('Daftar Permohonan: Error initializing DataTable: ', e);
+        }
+    } else {
+        if (typeof $ === 'undefined') {
+            console.error("Daftar Permohonan: jQuery is not loaded.");
+        }
+        if (typeof $.fn.DataTable === 'undefined' && typeof $ !== 'undefined') {
+            console.error("Daftar Permohonan: DataTables plugin ($.fn.DataTable) is not loaded. Ensure jquery.dataTables.min.js is included AFTER jQuery and jQuery is loaded ONLY ONCE.");
+        }
+    }
 });
 </script>

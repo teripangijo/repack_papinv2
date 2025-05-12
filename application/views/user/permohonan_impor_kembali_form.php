@@ -1,7 +1,7 @@
 <div class="container-fluid">
 
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800"><?= isset($subtitle) ? htmlspecialchars($subtitle) : 'Form Permohonan'; ?></h1>
+        <h1 class="h3 mb-0 text-gray-800"><?= isset($subtitle) ? htmlspecialchars($subtitle) : 'Form Permohonan Impor Kembali'; ?></h1>
     </div>
 
     <?php
@@ -13,11 +13,11 @@
 
     <div class="card shadow mb-4">
         <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Formulir Pengajuan Permohonan</h6>
+            <h6 class="m-0 font-weight-bold text-primary">Formulir Pengajuan Permohonan Impor Kembali</h6>
         </div>
         <div class="card-body">
             <?php if (isset($user['is_active']) && $user['is_active'] == 1 && !empty($user_perusahaan)) : ?>
-                <?php echo form_open(site_url('user/permohonan'), ['class' => 'needs-validation', 'novalidate' => '']); ?>
+                <?php echo form_open(site_url('user/permohonan_impor_kembali'), ['class' => 'needs-validation', 'novalidate' => '']); ?>
 
                 <div class="alert alert-info small">
                     <strong>Data Perusahaan:</strong><br>
@@ -112,35 +112,32 @@
     </div>
 
 </div>
-<?php // Script untuk Gijgo Datepicker ?>
+<?php // Script untuk Gijgo Datepicker diletakkan di akhir body, setelah semua library JS utama dimuat (di footer.php) ?>
 <script>
     $(document).ready(function () {
+        // Cek sekali lagi apakah jQuery dan Gijgo Datepicker sudah ada
         if (typeof $ !== 'undefined' && typeof $.fn.datepicker !== 'undefined') {
-            console.log('jQuery and Gijgo Datepicker are loaded and ready.'); 
-
+            console.log('Permohonan Impor Kembali: jQuery and Gijgo Datepicker are loaded.'); 
             var datepickerConfig = {
                 uiLibrary: 'bootstrap4',
                 format: 'yyyy-mm-dd',
                 showOnFocus: true,    
                 showRightIcon: true,  // Bisa diatur false jika autoClose sudah cukup
                 modal: false,         // Non-modal lebih baik untuk autoClose
-                header: false,        // Hilangkan header kalender (opsional, untuk tampilan lebih simpel)
+                header: false,        // Hilangkan header kalender (opsional)
                 footer: false,        // Hilangkan footer dengan tombol OK/Cancel
-                autoClose: true       // <<< TAMBAHKAN ATAU PASTIKAN INI TRUE
+                autoClose: true       // Memastikan kalender menutup otomatis setelah tanggal dipilih
             };
-
             $('#TglSurat').datepicker(datepickerConfig);
             $('#TglKedatangan').datepicker(datepickerConfig);
             $('#TglBongkar').datepicker(datepickerConfig);
-
-            console.log('Datepickers initialized with autoClose for #TglSurat, #TglKedatangan, #TglBongkar');
-
+            console.log('Permohonan Impor Kembali: Datepickers initialized with autoClose.');
         } else {
             if (typeof $ === 'undefined') {
-                console.error("jQuery is not loaded. Gijgo Datepicker cannot initialize.");
+                console.error("Permohonan Impor Kembali: jQuery is not loaded.");
             }
             if (typeof $.fn.datepicker === 'undefined' && typeof $ !== 'undefined') {
-                console.error("Gijgo Datepicker ($.fn.datepicker) is not loaded. Ensure gijgo.min.js is included AFTER jQuery and that jQuery is loaded ONLY ONCE.");
+                console.error("Permohonan Impor Kembali: Gijgo Datepicker ($.fn.datepicker) is not loaded. Ensure gijgo.min.js is included AFTER jQuery and jQuery is loaded ONLY ONCE.");
             }
         }
     });

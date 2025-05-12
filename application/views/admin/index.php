@@ -1,74 +1,85 @@
-<!-- Begin Page Content -->
 <div class="container-fluid">
 
-    <!-- Page Heading -->
-    <h1 class="h3 mb-4 text-gray-800"> <?= $subtitle; ?></h1>
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><?= isset($subtitle) ? htmlspecialchars($subtitle) : 'Admin Dashboard'; ?></h1>
+        </div>
+
+    <?php
+    // Menampilkan flashdata message jika ada
+    if ($this->session->flashdata('message')) {
+        echo $this->session->flashdata('message');
+    }
+    ?>
 
     <div class="row">
-        <?= form_error('menu', '<div class="alert alert-danger " role="alert">', '</div>') ?>
-        <?= $this->session->flashdata('message'); ?>
-        <!-- Earnings (Monthly) Card Example -->
-        <div class="col-xl-3 col-md-6 mb-4">
+
+        <div class="col-xl-4 col-md-6 mb-4">
             <div class="card border-left-primary shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Permohonan Masuk</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $Masuk ?></div>
+                                Total Pengguna Terdaftar</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= isset($total_users) ? $total_users : '0'; ?></div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Earnings (Annual) Card Example -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Permohonan Proses</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $Proses ?></div>
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Permohonan Impor Pending</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= isset($pending_permohonan) ? $pending_permohonan : '0'; ?></div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                            <i class="fas fa-file-import fa-2x text-gray-300"></i>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Tasks Card Example -->
-        <div class="col-xl-3 col-md-6 mb-4">
+        
+        <div class="col-xl-4 col-md-6 mb-4">
             <div class="card border-left-info shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Permohonan Selesai
-                            </div>
-                            <div class="row no-gutters align-items-center">
-                                <div class="col-auto">
-                                    <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800"><?= $Selesai ?></div>
-                                </div>
-                            </div>
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Pengajuan Kuota Pending</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= isset($pending_kuota_requests) ? $pending_kuota_requests : '0'; ?></div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                            <i class="fas fa-file-invoice-dollar fa-2x text-gray-300"></i>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Selamat Datang, <?= isset($user['name']) ? htmlspecialchars($user['name']) : 'Admin'; ?>!</h6>
+                </div>
+                <div class="card-body">
+                    <p>Ini adalah halaman dashboard admin. Anda dapat mengelola pengguna, peran, permohonan, dan pengajuan kuota dari sini.</p>
+                    <p>Gunakan menu di sidebar untuk navigasi.</p>
+                    
+                    <a href="<?= site_url('admin/permohonanMasuk'); ?>" class="btn btn-info mr-2">Lihat Permohonan Masuk</a>
+                    <a href="<?= site_url('admin/daftar_pengajuan_kuota'); ?>" class="btn btn-success">Lihat Pengajuan Kuota</a>
+                </div>
+            </div>
+        </div>
     </div>
 
 </div>
-<!-- /.container-fluid -->
-
-</div>
-<!-- End of Main Content -->
