@@ -7,18 +7,15 @@ class Admin extends CI_Controller
     {
         parent::__construct();
         // Pastikan user sudah login dan adalah admin (role_id = 1)
-        // Helper is_loggedin() Anda mungkin sudah menangani ini.
-        // Jika belum, tambahkan pengecekan role di sini.
         is_loggedin(); 
         if ($this->session->userdata('role_id') != 1) {
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Access Denied! You are not authorized to access this page.</div>');
-            redirect('auth/blocked'); // atau redirect ke halaman login/user dashboard
+            redirect('auth/blocked'); 
         }
 
-        $this->load->helper(array('form', 'url', 'repack_helper')); // repack_helper jika masih digunakan
+        $this->load->helper(array('form', 'url', 'repack_helper')); 
         $this->load->library('form_validation');
-        $this->load->library('upload'); // Jika masih ada fungsi upload di Admin.php
-        // Load database jika belum di autoload
+        $this->load->library('upload'); 
         if (!isset($this->db)) {
             $this->load->database();
         }
@@ -30,16 +27,15 @@ class Admin extends CI_Controller
         $data['subtitle'] = 'Admin Dashboard';
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
         
-        // Data untuk dashboard admin (contoh)
         $data['total_users'] = $this->db->count_all('user');
         $data['pending_permohonan'] = $this->db->where_in('status', ['0', '1', '2'])->count_all_results('user_permohonan');
         $data['pending_kuota_requests'] = $this->db->where('status', 'pending')->count_all_results('user_pengajuan_kuota');
 
 
         $this->load->view('templates/header', $data);
-        $this->load->view('templates/sidebar', $data); // Pastikan sidebar admin dimuat
+        $this->load->view('templates/sidebar', $data); 
         $this->load->view('templates/topbar', $data);
-        $this->load->view('admin/index', $data); // View untuk dashboard admin
+        $this->load->view('admin/index', $data); 
         $this->load->view('templates/footer');
     }
 
@@ -71,7 +67,6 @@ class Admin extends CI_Controller
         $data['subtitle'] = 'Role Access Management';
         $data['role'] = $this->db->get_where('user_role', ['id' => $role_id])->row_array();
         
-        // $this->db->where('id !=', 1); // Jika ada menu yang tidak boleh diakses admin (misal menu Admin itu sendiri)
         $data['menu'] = $this->db->get('user_menu')->result_array();
 
         $this->load->view('templates/header', $data);
@@ -98,47 +93,38 @@ class Admin extends CI_Controller
             $this->db->delete('user_access_menu', $data);
         }
         $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Access Changed!</div>');
-        // Tidak perlu redirect di sini, AJAX akan handle refresh atau update UI jika perlu
     }
 
-    // --- METHOD-METHOD UNTUK PERMOHONAN IMPOR KEMBALI (DARI KODE LAMA ANDA) ---
     public function permohonanMasuk()
     {
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
         $data['title'] = 'Returnable Package';
         $data['subtitle'] = 'Daftar Permohonan Masuk';
 
-        // Ambil semua permohonan dengan join ke user_perusahaan untuk nama perusahaan
         $this->db->select('up.*, upr.NamaPers, u.name as nama_pengaju, ptgs.Nama as nama_petugas_assigned');
         $this->db->from('user_permohonan up');
         $this->db->join('user_perusahaan upr', 'up.id_pers = upr.id_pers', 'left');
-        $this->db->join('user u', 'upr.id_pers = u.id', 'left'); // Asumsi id_pers di user_perusahaan adalah user.id
-        $this->db->join('petugas ptgs', 'up.petugas = ptgs.id', 'left'); // Untuk nama petugas yang ditugaskan
+        $this->db->join('user u', 'upr.id_pers = u.id', 'left'); 
+        $this->db->join('petugas ptgs', 'up.petugas = ptgs.id', 'left'); 
         $this->db->order_by('up.time_stamp', 'DESC');
         $data['permohonan'] = $this->db->get()->result_array();
         
-        // Data petugas untuk dropdown (jika ada fitur assign petugas)
         $data['list_petugas'] = $this->db->get('petugas')->result_array();
-
 
         $this->load->view('templates/header', $data);
         $this->load->view('templates/sidebar', $data);
         $this->load->view('templates/topbar', $data);
-        $this->load->view('admin/permohonan-masuk', $data); // View untuk daftar permohonan admin
+        $this->load->view('admin/permohonan-masuk', $data); 
         $this->load->view('templates/footer');
     }
     
-    // Method proses, gantipetugas, prosesLHP, editLHP, prosesSurat, cetakLHP, dll.
-    // akan SAYA ASUMSIKAN ada di sini dari kode Anda sebelumnya.
-    // PENTING: Modifikasi akan ada di method yang menandakan permohonan SELESAI (misal prosesSurat)
-
-    public function prosesSurat($id_permohonan) // $id adalah id_permohonan
+    public function prosesSurat($id_permohonan) 
     {
         $data['title'] = 'Returnable Package';
         $data['subtitle'] = 'Penyelesaian Permohonan & LHP';
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
         
-        $this->db->select('up.*, upr.NamaPers, upr.remaining_quota, u.email as email_pemohon');
+        $this->db->select('up.*, upr.NamaPers, upr.remaining_quota, upr.npwp, u.email as email_pemohon'); 
         $this->db->from('user_permohonan up');
         $this->db->join('user_perusahaan upr', 'up.id_pers = upr.id_pers', 'left');
         $this->db->join('user u', 'upr.id_pers = u.id', 'left');
@@ -150,31 +136,28 @@ class Admin extends CI_Controller
             redirect('admin/permohonanMasuk');
         }
 
-        // Ambil data LHP jika ada
         $data['lhp'] = $this->db->get_where('lhp', ['id_permohonan' => $id_permohonan])->row_array();
 
-        // Validasi form untuk input data surat persetujuan/penolakan
         $this->form_validation->set_rules('nomorSetuju', 'Nomor Surat Keputusan', 'trim|required');
         $this->form_validation->set_rules('tgl_S', 'Tanggal Surat Keputusan', 'trim|required');
-        // ... (validasi lain jika perlu, misal nomor ND, link, dll.) ...
-        $this->form_validation->set_rules('status_final', 'Status Final Permohonan', 'required'); // Input baru untuk status (disetujui/ditolak)
+        $this->form_validation->set_rules('status_final', 'Status Final Permohonan', 'required'); 
 
         if ($this->form_validation->run() == false) {
             $this->load->view('templates/header', $data);
             $this->load->view('templates/sidebar', $data);
             $this->load->view('templates/topbar', $data);
-            $this->load->view('admin/proses_surat_lhp', $data); // View baru untuk form ini
+            $this->load->view('admin/proses_surat_lhp', $data); 
             $this->load->view('templates/footer');
         } else {
-            $status_final_permohonan = $this->input->post('status_final'); // Misal '3' untuk disetujui, '4' untuk ditolak
+            $status_final_permohonan = $this->input->post('status_final'); 
 
             $data_update_permohonan = [
                 'nomorSetuju' => $this->input->post('nomorSetuju'),
                 'tgl_S' => $this->input->post('tgl_S'),
-                'nomorND' => $this->input->post('nomorND'), // Jika ada
-                'tgl_ND' => $this->input->post('tgl_ND'),   // Jika ada
-                'link' => $this->input->post('link'),       // Jika ada
-                'linkND' => $this->input->post('linkND'),   // Jika ada
+                'nomorND' => $this->input->post('nomorND'), 
+                'tgl_ND' => $this->input->post('tgl_ND'),   
+                'link' => $this->input->post('link'),       
+                'linkND' => $this->input->post('linkND'),   
                 'time_selesai' => date("Y-m-d H:i:s"),
                 'status' => $status_final_permohonan 
             ];
@@ -182,8 +165,6 @@ class Admin extends CI_Controller
             $this->db->where('id', $id_permohonan);
             $this->db->update('user_permohonan', $data_update_permohonan);
 
-            // --- LOGIKA PEMOTONGAN KUOTA ---
-            // Hanya potong kuota jika statusnya disetujui ('3') dan ada LHP yang valid
             if ($status_final_permohonan == '3' && $data['lhp'] && isset($data['lhp']['JumlahBenar'])) { 
                 $id_pers_terkait = $data['permohonan']['id_pers'];
                 $jumlah_barang_disetujui = (int)$data['lhp']['JumlahBenar']; 
@@ -203,15 +184,11 @@ class Admin extends CI_Controller
                     }
                 }
             }
-            // --- AKHIR LOGIKA PEMOTONGAN KUOTA ---
-
             $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Status permohonan dan LHP telah berhasil diproses!</div>');
             redirect('admin/permohonanMasuk');
         }
     }
 
-
-    // --- METHOD-METHOD BARU UNTUK MANAJEMEN PENGAJUAN KUOTA ---
     public function daftar_pengajuan_kuota()
     {
         $data['title'] = 'Returnable Package';
@@ -221,14 +198,14 @@ class Admin extends CI_Controller
         $this->db->select('upk.*, upr.NamaPers, u.email as user_email');
         $this->db->from('user_pengajuan_kuota upk');
         $this->db->join('user_perusahaan upr', 'upk.id_pers = upr.id_pers', 'left');
-        $this->db->join('user u', 'upk.id_pers = u.id', 'left'); // Asumsi id_pers adalah user_id
+        $this->db->join('user u', 'upk.id_pers = u.id', 'left'); 
         $this->db->order_by('upk.submission_date', 'DESC');
         $data['pengajuan_kuota'] = $this->db->get()->result_array();
 
         $this->load->view('templates/header', $data);
         $this->load->view('templates/sidebar', $data);
         $this->load->view('templates/topbar', $data);
-        $this->load->view('admin/daftar_pengajuan_kuota', $data); // View baru
+        $this->load->view('admin/daftar_pengajuan_kuota', $data); 
         $this->load->view('templates/footer');
     }
 
@@ -251,7 +228,6 @@ class Admin extends CI_Controller
         }
 
         $this->form_validation->set_rules('status_pengajuan', 'Status Pengajuan', 'required|in_list[approved,rejected]');
-        // Hanya validasi approved_quota jika statusnya 'approved'
         if ($this->input->post('status_pengajuan') == 'approved') {
             $this->form_validation->set_rules('approved_quota', 'Kuota Disetujui', 'trim|required|numeric|greater_than[0]');
         } else {
@@ -263,7 +239,7 @@ class Admin extends CI_Controller
             $this->load->view('templates/header', $data);
             $this->load->view('templates/sidebar', $data);
             $this->load->view('templates/topbar', $data);
-            $this->load->view('admin/proses_pengajuan_kuota_form', $data); // View baru
+            $this->load->view('admin/proses_pengajuan_kuota_form', $data); 
             $this->load->view('templates/footer');
         } else {
             $status_pengajuan = $this->input->post('status_pengajuan');
@@ -277,10 +253,7 @@ class Admin extends CI_Controller
             ];
 
             if ($status_pengajuan == 'approved') {
-                // Tidak perlu cek $approved_quota <= 0 karena sudah ditangani validasi
                 $data_update_pengajuan['approved_quota'] = $approved_quota;
-
-                // Update tabel user_perusahaan
                 $perusahaan = $data['pengajuan']; 
                 if ($perusahaan && isset($perusahaan['initial_quota']) && isset($perusahaan['remaining_quota'])) {
                     $new_initial_quota = (int)$perusahaan['initial_quota'] + $approved_quota;
@@ -296,8 +269,8 @@ class Admin extends CI_Controller
                      redirect('admin/daftar_pengajuan_kuota');
                      return;
                 }
-            } else { // Jika 'rejected'
-                 $data_update_pengajuan['approved_quota'] = 0; // Atau NULL
+            } else { 
+                 $data_update_pengajuan['approved_quota'] = 0; 
             }
 
             $this->db->where('id', $id_pengajuan);
@@ -308,16 +281,28 @@ class Admin extends CI_Controller
         }
     }
 
-    // Method-method upload lama Anda (jika masih relevan dan tidak bentrok dengan upload di User.php)
-    // Contoh: proses, gantipetugas, prosesLHP, editLHP, cetakLHP, dll.
-    // Anda perlu memindahkan atau mengintegrasikan logika dari method-method tersebut
-    // yang berkaitan dengan pemrosesan permohonan ke dalam alur yang baru.
-    // Misalnya, fungsi untuk assign petugas, rekam LHP, dll.
+    public function print_pengajuan_kuota($id_pengajuan)
+    {
+        $data['title'] = 'Bukti Pengajuan Kuota';
+        $data['user_login'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
 
-    // public function upload() { ... }
-    // public function uploadproses($id) { ... }
-    // public function prosesuploadnpwp($id) { ... }
-    // public function prosesuploadskep($id) { ... }
-    // public function prosesuploadttd($id) { ... }
+        $this->db->select('upk.*, upr.NamaPers, upr.npwp AS npwp_perusahaan, u.email AS user_email, u.name AS user_name');
+        $this->db->from('user_pengajuan_kuota upk');
+        $this->db->join('user_perusahaan upr', 'upk.id_pers = upr.id_pers', 'left');
+        $this->db->join('user u', 'upk.id_pers = u.id', 'left'); 
+        $this->db->where('upk.id', $id_pengajuan);
+        $data['pengajuan'] = $this->db->get()->row_array();
+
+        if (!$data['pengajuan']) {
+            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Data pengajuan kuota tidak ditemukan.</div>');
+            redirect('admin/daftar_pengajuan_kuota');
+            return;
+        }
+        
+        $this->load->view('user/FormPengajuanKuota_print', $data); 
+    }
+
+    // Anda mungkin memiliki method lain seperti prosesLHP, editLHP, cetakLHP, dll.
+    // Pastikan untuk meninjau dan mengintegrasikannya jika diperlukan.
 
 } // End class Admin

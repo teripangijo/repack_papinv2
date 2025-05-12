@@ -27,13 +27,14 @@
                             <th>Id Aju</th>
                             <th>No Surat</th>
                             <th>Tanggal Surat</th>
-                            <th>Nama Perusahaan</th> 
-                            <th>Waktu Submit</th>  <?php // Pastikan ini adalah th terpisah ?>
+                            <th>Nama Perusahaan</th>
+                            <th>Waktu Submit</th>
                             <th>Petugas</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
                     </thead>
+                    <?php // Blok <tfoot> DIHAPUS dari sini ?>
                     <tbody>
                         <?php if (!empty($permohonan) && is_array($permohonan)) : ?>
                             <?php $no = 1; ?>
@@ -68,11 +69,11 @@
                                         ?>
                                     </td>
                                     <td>
-                                        <a href="<?= site_url('user/printPdf/' . (isset($p['id']) ? $p['id'] : '')); ?>" class="btn btn-info btn-sm mb-1" title="Preview/Print">
+                                        <a href="<?= site_url('user/printPdf/' . (isset($p['id']) ? $p['id'] : '#')); ?>" class="btn btn-info btn-sm mb-1" title="Preview/Print">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         <?php if (isset($p['status']) && $p['status'] == '0') : // Hanya bisa edit jika status 'Permohonan Masuk' ?>
-                                            <a href="<?= site_url('user/editpermohonan/' . (isset($p['id']) ? $p['id'] : '')); ?>" class="btn btn-warning btn-sm mb-1" title="Edit">
+                                            <a href="<?= site_url('user/editpermohonan/' . (isset($p['id']) ? $p['id'] : '#')); ?>" class="btn btn-warning btn-sm mb-1" title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                         <?php endif; ?>
@@ -80,9 +81,7 @@
                                 </tr>
                             <?php endforeach; ?>
                         <?php else : ?>
-                            <tr>
-                                <td colspan="9" class="text-center">Belum ada data permohonan.</td>
-                            </tr>
+                            <?php // Jika tidak ada data, biarkan tbody kosong agar DataTables menampilkan pesan default ?>
                         <?php endif; ?>
                     </tbody>
                 </table>
@@ -91,10 +90,8 @@
     </div>
 
 </div>
-<?php // Tempatkan script inisialisasi DataTables di sini atau di footer template ?>
 <script>
 $(document).ready(function() {
-    // Cek apakah jQuery dan DataTables sudah dimuat
     if (typeof $ !== 'undefined' && typeof $.fn.DataTable !== 'undefined') {
         console.log('Daftar Permohonan: jQuery and DataTables are loaded.');
         try {

@@ -26,6 +26,12 @@
             <span>Pengajuan Kuota</span></a>
     </li>
 
+    <li class="nav-item <?= ($this->uri->segment(1) == 'user' && $this->uri->segment(2) == 'daftar_pengajuan_kuota') ? 'active' : ''; ?>">
+        <a class="nav-link" href="<?= site_url('user/daftar_pengajuan_kuota'); ?>">
+            <i class="fas fa-fw fa-history"></i>
+            <span>Daftar Pengajuan Kuota</span></a>
+    </li>
+
     <li class="nav-item <?= ($this->uri->segment(1) == 'user' && $this->uri->segment(2) == 'permohonan_impor_kembali') ? 'active' : ''; ?>">
         <a class="nav-link" href="<?= site_url('user/permohonan_impor_kembali'); ?>">
             <i class="fas fa-fw fa-file-import"></i>
@@ -35,8 +41,9 @@
     <li class="nav-item <?= ($this->uri->segment(1) == 'user' && $this->uri->segment(2) == 'daftarPermohonan') ? 'active' : ''; ?>">
         <a class="nav-link" href="<?= site_url('user/daftarPermohonan'); ?>">
             <i class="fas fa-fw fa-list-alt"></i>
-            <span>Daftar Permohonan</span></a>
+            <span>Daftar Permohonan Impor</span></a>
     </li>
+
 
     <hr class="sidebar-divider d-none d-md-block">
 
