@@ -4,78 +4,85 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bukti Pengajuan Kuota - ID: <?= isset($pengajuan['id']) ? htmlspecialchars($pengajuan['id']) : 'Detail'; ?></title>
+    <title>Surat Pengajuan Kuota - <?= isset($pengajuan['nomor_surat_pengajuan']) ? htmlspecialchars($pengajuan['nomor_surat_pengajuan']) : ('ID: ' . (isset($pengajuan['id']) ? htmlspecialchars($pengajuan['id']) : 'Detail')); ?></title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            font-size: 11pt;
-            margin: 20px;
+            font-size: 11pt; 
+            margin: 20px; 
         }
         table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: collapse; 
         }
         td, th {
-            padding: 4px 6px; /* Sedikit padding lebih banyak untuk keterbacaan */
-            vertical-align: top;
-            border: 1px solid #ccc; /* Tambahkan border untuk tampilan tabel */
+            padding: 1px 2px; 
+            vertical-align: top; 
         }
-        th {
-            background-color: #f2f2f2;
-            text-align: left;
+        p {
+            margin-top: 0; 
+            margin-bottom: 3px; 
+            line-height: 1.3; 
         }
-        h2, h3 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        hr {
+        hr.header-separator { /* Style khusus untuk HR di bawah kop */
             border: none;
             border-top: 1px solid black;
-            margin-top: 15px;
+            margin-top: 5px;
             margin-bottom: 15px;
         }
-        .signature-block {
-            width: 35%;
-            float: right;
-            text-align: center; /* Tanda tangan biasanya di tengah */
-            margin-top: 40px;
+        .header-table td.label-cell { 
+            width: 10%; 
+        }
+        .header-table td.colon-cell { 
+            width: 2%;
+            text-align: center;
+        }
+        .header-table td.value-cell { 
+            width: 53%;
+        }
+        .header-table td.date-cell { 
+            width: 35%; 
+            text-align: right;
+            white-space: nowrap; 
+        }
+        .content-table td {
+            padding-bottom: 3px;
+        }
+        .signature-block { 
+            width: 35%; 
+            float: right; 
+            text-align: left; 
+            margin-top: 40px; /* Beri jarak lebih untuk tanda tangan */
         }
         .signature-block img {
             margin-bottom: 5px;
             display: block;
-            margin-left: auto;
-            margin-right: auto;
         }
         .signature-block p {
             margin: 0;
             line-height: 1.4;
         }
         .clear { clear: both; }
-        .no-print { display: none; } /* Sembunyikan elemen dengan class no-print saat cetak */
+        .text-indent-50 { text-indent: 50px; }
+        .address-block p { margin-bottom: 2px; }
 
         @media print {
             body {
                 margin: 0.5in;
-                font-size: 10pt;
+                font-size: 10pt; 
                 -webkit-print-color-adjust: exact !important;
                 color-adjust: exact !important;
             }
-            .back-button-container {
-                display: none !important;
-            }
+            .back-button-container { display: none !important; }
         }
-        .info-label {
-            font-weight: bold;
-            width: 30%;
-        }
-        .info-value {
-            width: 70%;
-        }
+        .detail-label { width: 35%; }
+        .colon-separator { width: 2%; text-align: center; }
     </style>
 </head>
+
 <body onload="window.print()">
     <?php
-    if (!function_exists('dateConvertFull')) { // Menggunakan nama berbeda agar tidak konflik jika ada helper lain
+    if (!function_exists('dateConvertFull')) {
         function dateConvertFull($date_sql) {
             if (!is_string($date_sql) || empty(trim($date_sql)) || $date_sql == '0000-00-00' || $date_sql == '0000-00-00 00:00:00') {
                 return '-';
@@ -83,12 +90,12 @@
             try {
                 $date_obj = new DateTime($date_sql);
                 if ($date_obj) {
-                    $bulan = array(
-                        1 => 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-                        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-                    );
+                    $bulan = array(1 => 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember');
                     $hari = array('Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu');
-                    return $hari[$date_obj->format('w')] . ', ' . (int)$date_obj->format('d') . ' ' . $bulan[(int)$date_obj->format('m')] . ' ' . $date_obj->format('Y') . ' Pukul ' . $date_obj->format('H:i');
+                    // Untuk tanggal saja, tanpa hari dan jam:
+                    // return (int)$date_obj->format('d') . ' ' . $bulan[(int)$date_obj->format('m')] . ' ' . $date_obj->format('Y');
+                    // Untuk format lengkap dengan hari dan jam (sesuaikan jika hanya perlu tanggal)
+                    return (int)$date_obj->format('d') . ' ' . $bulan[(int)$date_obj->format('m')] . ' ' . $date_obj->format('Y');
                 }
                 return htmlspecialchars($date_sql);
             } catch (Exception $e) {
@@ -96,119 +103,103 @@
             }
         }
     }
-    $logo_perusahaan_file = (isset($user_login['image']) && $user_login['image'] != 'default.jpg' && !empty($user_login['image'])) ? $user_login['image'] : null;
+
+    // Data user yang login (untuk logo) dan data perusahaan (untuk kop dan ttd PIC)
+    // Controller User->print_bukti_pengajuan_kuota() mengirimkan:
+    // $data['user'] (berisi $user_login dari session, termasuk $user['image'] sebagai logo)
+    // $data['user_perusahaan'] (berisi data perusahaan termasuk nama, alamat, pic, jabatanPic, ttd)
+    // $data['pengajuan'] (berisi detail pengajuan kuota itu sendiri)
+
+    $logo_perusahaan_file = (isset($user['image']) && $user['image'] != 'default.jpg' && !empty($user['image'])) ? $user['image'] : null;
+    $ttd_pic_file = (isset($user_perusahaan['ttd']) && !empty($user_perusahaan['ttd'])) ? $user_perusahaan['ttd'] : null;
     ?>
 
     <div class="back-button-container no-print">
         <button onclick="goBack()" style="padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">&laquo; Kembali</button>
     </div>
 
-    <h2>BUKTI PENGAJUAN KUOTA RETURNABLE PACKAGE</h2>
-    <hr>
+    <table>
+        <tr>
+            <td style="width: 25%; text-align: center; vertical-align: middle;">
+                <?php if ($logo_perusahaan_file) : ?>
+                    <img src="<?= base_url('uploads/kop/' . htmlspecialchars($logo_perusahaan_file)); ?>" alt="Logo Perusahaan" style="max-width: 100px; max-height: 100px; object-fit: contain;">
+                <?php else: ?>
+                    <div style="width:100px; height:100px; border:1px solid #ccc; display:flex; align-items:center; justify-content:center; margin:auto; font-size:10px;">No Logo</div>
+                <?php endif; ?>
+            </td>
+            <td style="width: 50%; text-align: center; vertical-align: middle;">
+                <h3 style="margin-bottom: 5px;"><?= isset($user_perusahaan['NamaPers']) ? strtoupper(htmlspecialchars($user_perusahaan['NamaPers'])) : 'NAMA PERUSAHAAN'; ?></h3>
+                <h5 style="margin-top: 0; font-weight:normal;"><?= isset($user_perusahaan['alamat']) ? htmlspecialchars($user_perusahaan['alamat']) : 'Alamat Perusahaan'; ?></h5>
+            </td>
+            <td style="width: 25%; text-align: center;"></td>
+        </tr>
+    </table>
+    <hr class="header-separator">
 
-    <?php if (isset($pengajuan) && !empty($pengajuan)) : ?>
-        <h3>Detail Perusahaan</h3>
+    <table class="header-table">
+        <tr>
+            <td class="label-cell">No</td>
+            <td class="colon-cell">:</td>
+            <td class="value-cell"><?= isset($pengajuan['nomor_surat_pengajuan']) ? htmlspecialchars($pengajuan['nomor_surat_pengajuan']) : '-'; ?></td>
+            <td class="date-cell">Pangkalpinang, <?= isset($pengajuan['tanggal_surat_pengajuan']) ? dateConvertFull($pengajuan['tanggal_surat_pengajuan']) : dateConvertFull(date('Y-m-d')); // Tanggal surat atau tanggal hari ini ?></td>
+        </tr>
+        <tr>
+            <td class="label-cell">Hal</td>
+            <td class="colon-cell">:</td>
+            <td class="value-cell"><?= isset($pengajuan['perihal_pengajuan']) ? htmlspecialchars($pengajuan['perihal_pengajuan']) : 'Pengajuan Kuota Returnable Package'; ?></td>
+            <td></td>
+        </tr>
+    </table>
+
+    <div style="margin-top: 25px;">
         <table>
-            <tr>
-                <td class="info-label">Nama Perusahaan</td>
-                <td class="info-value">: <?= isset($pengajuan['NamaPers']) ? htmlspecialchars($pengajuan['NamaPers']) : 'N/A'; ?></td>
-            </tr>
-            <tr>
-                <td class="info-label">Email Pengaju</td>
-                <td class="info-value">: <?= isset($pengajuan['user_email']) ? htmlspecialchars($pengajuan['user_email']) : 'N/A'; ?></td>
-            </tr>
-            <tr>
-                <td class="info-label">NPWP</td>
-                <td class="info-value">: <?= isset($pengajuan['npwp_perusahaan']) ? htmlspecialchars($pengajuan['npwp_perusahaan']) : 'N/A'; // Asumsi kolom NPWP ada di data $pengajuan ?></td>
-            </tr>
+            <tr><td class="address-block">
+                <p>Kepada Yth.</p>
+                <p>Kepala Kantor Pengawasan dan Pelayanan Bea dan Cukai</p>
+                <p>Tipe Madya Pabean C Pangkalpinang</p>
+                <p>Di Tempat</p>
+            </td></tr>
         </table>
-        <hr>
+    </div>
 
-        <h3>Detail Pengajuan</h3>
+    <div style="margin-top: 25px;">
         <table>
-            <tr>
-                <td class="info-label">ID Pengajuan</td>
-                <td class="info-value">: <?= htmlspecialchars($pengajuan['id']); ?></td>
-            </tr>
-            <tr>
-                <td class="info-label">Nomor Surat Pengajuan</td>
-                <td class="info-value">: <?= isset($pengajuan['nomor_surat_pengajuan']) ? htmlspecialchars($pengajuan['nomor_surat_pengajuan']) : '-'; ?></td>
-            </tr>
-            <tr>
-                <td class="info-label">Tanggal Surat Pengajuan</td>
-                <td class="info-value">: <?= isset($pengajuan['tanggal_surat_pengajuan']) ? dateConvertFull($pengajuan['tanggal_surat_pengajuan']) : '-'; ?></td>
-            </tr>
-             <tr>
-                <td class="info-label">Perihal Surat Pengajuan</td>
-                <td class="info-value">: <?= isset($pengajuan['perihal_pengajuan']) ? htmlspecialchars($pengajuan['perihal_pengajuan']) : '-'; ?></td>
-            </tr>
-            <tr>
-                <td class="info-label">Nama/Jenis Barang (untuk Kuota)</td>
-                <td class="info-value">: <?= isset($pengajuan['nama_barang_kuota']) ? htmlspecialchars($pengajuan['nama_barang_kuota']) : '-'; ?></td>
-            </tr>
-            <tr>
-                <td class="info-label">Jumlah Kuota Diajukan</td>
-                <td class="info-value">: <strong><?= isset($pengajuan['requested_quota']) ? number_format($pengajuan['requested_quota'], 0, ',', '.') : '0'; ?> Unit</strong></td>
-            </tr>
-            <tr>
-                <td class="info-label">Alasan Pengajuan</td>
-                <td class="info-value" style="white-space: pre-wrap;"><?= isset($pengajuan['reason']) ? nl2br(htmlspecialchars($pengajuan['reason'])) : '-'; ?></td>
-            </tr>
-            <tr>
-                <td class="info-label">Tanggal Pengajuan ke Sistem</td>
-                <td class="info-value">: <?= isset($pengajuan['submission_date']) ? dateConvertFull($pengajuan['submission_date']) : '-'; ?></td>
-            </tr>
+            <tr><td>
+                <p>Dengan hormat,</p>
+                <p class="text-indent-50" style="text-align: justify; line-height: 1.5;">
+                    Bersama ini kami mengajukan permohonan penambahan kuota untuk impor kembali kemasan returnable package jenis 
+                    <strong><?= isset($pengajuan['nama_barang_kuota']) ? strtolower(htmlspecialchars($pengajuan['nama_barang_kuota'])) : 'barang'; ?></strong> 
+                    sebanyak <strong><?= isset($pengajuan['requested_quota']) ? number_format($pengajuan['requested_quota'],0,',','.') : '0'; ?> unit</strong>.
+                </p>
+                <p class="text-indent-50" style="text-align: justify; line-height: 1.5;">
+                    Adapun alasan pengajuan penambahan kuota ini adalah sebagai berikut:
+                </p>
+                <p style="margin-left: 50px; text-align: justify; line-height: 1.5; white-space: pre-wrap;"><?= isset($pengajuan['reason']) ? nl2br(htmlspecialchars($pengajuan['reason'])) : '-'; ?></p>
+                <br>
+                <p class="text-indent-50" style="text-align: justify; line-height: 1.5;">Demikian permohonan ini kami sampaikan, atas perhatian dan kerjasamanya kami ucapkan terima kasih.</p>
+            </td></tr>
         </table>
-        <hr>
-
-        <h3>Status Pemrosesan oleh Admin</h3>
-        <table>
-            <tr>
-                <td class="info-label">Status</td>
-                <td class="info-value">: <strong><?= isset($pengajuan['status']) ? strtoupper(htmlspecialchars($pengajuan['status'])) : 'N/A'; ?></strong></td>
-            </tr>
-            <?php if (isset($pengajuan['status']) && $pengajuan['status'] == 'approved') : ?>
-            <tr>
-                <td class="info-label">Jumlah Kuota Disetujui</td>
-                <td class="info-value">: <strong><?= isset($pengajuan['approved_quota']) ? number_format($pengajuan['approved_quota'], 0, ',', '.') : '0'; ?> Unit</strong></td>
-            </tr>
-            <?php endif; ?>
-            <tr>
-                <td class="info-label">Catatan dari Admin</td>
-                <td class="info-value" style="white-space: pre-wrap;"><?= isset($pengajuan['admin_notes']) && !empty($pengajuan['admin_notes']) ? nl2br(htmlspecialchars($pengajuan['admin_notes'])) : '-'; ?></td>
-            </tr>
-            <tr>
-                <td class="info-label">Tanggal Diproses Admin</td>
-                <td class="info-value">: <?= isset($pengajuan['processed_date']) ? dateConvertFull($pengajuan['processed_date']) : '-'; ?></td>
-            </tr>
-        </table>
-        <br><br>
-
-        <table style="width:100%;">
-            <tr>
-                <td style="width: 60%;"></td>
-                <td style="width: 40%; text-align: center;">
-                    Pangkalpinang, <?= dateConvertFull(date('Y-m-d H:i:s')); // Tanggal cetak ?>
-                    <br>Pengguna Jasa,
-                    <br><br><br><br><br>
-                    <strong>( <?= isset($user_login['name']) ? strtoupper(htmlspecialchars($user_login['name'])) : 'Nama Pengguna Jasa'; ?> )</strong>
-                </td>
-            </tr>
-        </table>
-
-
-    <?php else : ?>
-        <p>Data pengajuan kuota tidak ditemukan.</p>
-    <?php endif; ?>
+    </div>
+    
+    <div class="signature-block">
+        <p>Hormat Kami,</p>
+        <?php if ($ttd_pic_file) : ?>
+            <img src="<?= base_url('uploads/ttd/' . htmlspecialchars($ttd_pic_file)); ?>" alt="Tanda Tangan PIC" style="max-width: 120px; max-height: 60px; object-fit: contain;">
+        <?php else : ?>
+            <div style="height: 60px;">&nbsp;</div> 
+        <?php endif; ?>
+        <p style="font-weight: bold; text-decoration: underline; margin-bottom:2px;"><?= isset($user_perusahaan['pic']) ? strtoupper(htmlspecialchars($user_perusahaan['pic'])) : 'NAMA PIC'; ?></p>
+        <p style="margin-bottom:2px;"><?= isset($user_perusahaan['jabatanPic']) ? htmlspecialchars($user_perusahaan['jabatanPic']) : 'Jabatan PIC'; ?></p>
+        <p><?= isset($user_perusahaan['NamaPers']) ? htmlspecialchars($user_perusahaan['NamaPers']) : 'Nama Perusahaan'; ?></p>
+    </div>
+    <div class="clear"></div>
 
     <script>
         function goBack() {
-            if (history.length > 1 && document.referrer.indexOf(window.location.host) !== -1) { // Cek jika ada history dan dari domain yang sama
+            if (history.length > 1 && document.referrer.indexOf(window.location.host) !== -1) {
                 history.back();
             } else {
-                // Arahkan ke daftar pengajuan kuota admin atau user, tergantung siapa yang print
-                // Untuk sekarang, kita asumsikan ini dicetak dari sisi admin
-                window.location.href = "<?= site_url('admin/daftar_pengajuan_kuota'); ?>"; 
+                window.location.href = "<?= site_url('user/daftar_pengajuan_kuota'); ?>"; 
             }
         }
     </script>

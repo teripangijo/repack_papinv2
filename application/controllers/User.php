@@ -10,37 +10,43 @@ class User extends CI_Controller
         $this->load->library('upload');
         $this->load->helper('url');
         $this->load->helper('form');
+        // Pastikan database sudah di-load jika belum di autoload
         if (!isset($this->db)) {
              $this->load->database();
         }
         $this->_check_auth();
     }
 
+    // Fungsi helper untuk mengecek otentikasi dan status aktif
     private function _check_auth()
     {
+        // Cek apakah user sudah login
         if (!$this->session->userdata('email')) {
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Please login to continue.</div>');
             redirect('auth');
         }
-        $user_is_active = $this->session->userdata('is_active');
-        $current_method = $this->router->fetch_method();
-        
+
+        // Cek status aktif, kecuali untuk method 'edit' dan 'index' (dashboard) jika user belum aktif
+        $user_is_active = $this->session->userdata('is_active'); 
+        $current_method = $this->router->fetch_method(); 
+
         if ($user_is_active == 0 && !in_array($current_method, ['edit', 'index']) ) {
             $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Your account is not yet active. Please complete your company profile.</div>');
-            redirect('user/edit'); 
+            redirect('user/edit'); // Arahkan ke edit untuk aktivasi
         }
         
+        // Pengecekan role, hanya user biasa (role_id = 2) yang boleh akses controller User
         if ($this->session->userdata('role_id') != 2) { 
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Access Denied! You are not authorized to access this page.</div>');
             if ($this->session->userdata('role_id') == 1) {
-                redirect('admin'); 
+                redirect('admin'); // Admin diarahkan ke dashboard admin
             } else {
-                redirect('auth/blocked'); 
+                redirect('auth/blocked'); // Role lain diblokir
             }
         }
     }
 
-    public function index() 
+    public function index() // Ini adalah Dashboard
     {
         $data['title'] = 'Returnable Package';
         $data['subtitle'] = 'Dashboard'; 
@@ -110,7 +116,7 @@ class User extends CI_Controller
             $nama_file_profile_image = null; 
             $is_activating = empty($data['user_perusahaan']);
 
-            // --- Proses Upload TTD --- (Kode tetap sama)
+            // --- Proses Upload TTD ---
             if (isset($_FILES['ttd']) && $_FILES['ttd']['error'] != UPLOAD_ERR_NO_FILE) {
                 $upload_dir_relative_ttd = 'uploads/ttd/'; 
                 $upload_path_absolute_ttd = FCPATH . $upload_dir_relative_ttd;
@@ -123,9 +129,7 @@ class User extends CI_Controller
                 $config_ttd['allowed_types'] = 'jpg|png|jpeg|pdf';
                 $config_ttd['max_size']      = '1024';
                 $config_ttd['encrypt_name']  = TRUE;
-
                 $this->upload->initialize($config_ttd, TRUE); 
-
                 if ($this->upload->do_upload('ttd')) {
                     if (!$is_activating && !empty($data['user_perusahaan']['ttd']) && file_exists($config_ttd['upload_path'] . $data['user_perusahaan']['ttd'])) {
                         @unlink($config_ttd['upload_path'] . $data['user_perusahaan']['ttd']);
@@ -141,7 +145,7 @@ class User extends CI_Controller
                 }
             }
 
-            // --- Proses Upload Gambar Profil (Logo Perusahaan) --- (Kode tetap sama)
+            // --- Proses Upload Gambar Profil (Logo Perusahaan) ---
             if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] != UPLOAD_ERR_NO_FILE) {
                 $upload_dir_relative_profile = 'uploads/kop/'; 
                 $upload_path_absolute_profile = FCPATH . $upload_dir_relative_profile;
@@ -156,9 +160,7 @@ class User extends CI_Controller
                 $config_profile['max_width']     = '1024'; 
                 $config_profile['max_height']    = '1024';
                 $config_profile['encrypt_name']  = TRUE; 
-
                 $this->upload->initialize($config_profile, TRUE); 
-
                 if ($this->upload->do_upload('profile_image')) {
                     $old_image = $data['user']['image'];
                     if ($old_image != 'default.jpg' && file_exists($config_profile['upload_path'] . $old_image)) {
@@ -200,19 +202,18 @@ class User extends CI_Controller
                 $input_quota = (int)$this->input->post('quota');
                 $data_perusahaan['initial_quota'] = $input_quota;
                 $data_perusahaan['remaining_quota'] = $input_quota;
-                
                 $this->db->insert('user_perusahaan', $data_perusahaan);
                 $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Company profile saved and account has been activated! Welcome to your Dashboard.</div>');
-                
                 $is_active_data = ['is_active' => 1];
                 $this->db->where('id', $id);
                 $this->db->update('user', $is_active_data);
                 $this->session->set_userdata('is_active', 1);
-                
                 redirect('user/index'); 
             } else {
                 if ($this->input->post('quota') !== null && is_numeric($this->input->post('quota'))) {
-                    // $data_perusahaan['quota'] = (int)$this->input->post('quota'); 
+                    // Jika ada input 'quota' saat edit, Anda bisa memutuskan apa yang akan dilakukan.
+                    // Untuk saat ini, kita tidak mengubah initial_quota atau remaining_quota di sini.
+                    // $data_perusahaan['quota'] = (int)$this->input->post('quota'); // Jika ada kolom 'quota' umum
                 }
                 $this->db->where('id_pers', $id);
                 $this->db->update('user_perusahaan', $data_perusahaan);
@@ -228,7 +229,6 @@ class User extends CI_Controller
 
     public function file_check($str, $field)
     {
-        // ... (kode file_check tetap sama) ...
         if ($field == 'ttd') {
             $allowed_mime_type_arr = ['image/jpeg', 'image/png', 'application/pdf', 'image/pjpeg'];
             $max_size = 1048576; // 1MB
@@ -265,20 +265,26 @@ class User extends CI_Controller
             }
             return true; 
         } else {
+            // Jika file tidak diupload
             if ($field == 'ttd') {
+                // Cek apakah ini aktivasi (ttd wajib) atau edit (ttd tidak wajib)
                 $user_id_from_session = $this->session->userdata('id');
-                if (!$user_id_from_session) return false; 
-                $perusahaan_data = $this->db->get_where('user_perusahaan', ['id_pers' => $user_id_from_session])->row_array();
-                if (empty($perusahaan_data)) { 
-                    $this->form_validation->set_message('file_check', 'The Tanda Tangan field is required for account activation.');
+                if (!$user_id_from_session) {
+                    $this->form_validation->set_message('file_check', 'User session not found for TTD validation.');
                     return false; 
+                }
+                $perusahaan_data = $this->db->get_where('user_perusahaan', ['id_pers' => $user_id_from_session])->row_array();
+                if (empty($perusahaan_data)) { // Jika data perusahaan belum ada (proses aktivasi)
+                    $this->form_validation->set_message('file_check', 'The Tanda Tangan field is required for account activation.');
+                    return false; // Wajib saat aktivasi
                 } else {
-                    return true; 
+                    return true; // Tidak wajib saat edit (jika tidak ada file baru)
                 }
             } elseif ($field == 'profile_image') {
-                return true; 
+                // Gambar profil/logo tidak wajib saat edit (jika tidak ada file baru)
+                return true;
             } else {
-                 return true; 
+                 return true; // Field lain mungkin tidak wajib
             }
         }
     }
@@ -407,7 +413,6 @@ class User extends CI_Controller
         }
     }
 
-    // METHOD BARU UNTUK DAFTAR PENGAJUAN KUOTA USER
     public function daftar_pengajuan_kuota()
     {
         $data['title'] = 'Returnable Package';
@@ -421,15 +426,47 @@ class User extends CI_Controller
         $this->load->view('templates/header', $data);
         $this->load->view('templates/sidebar', $data);
         $this->load->view('templates/topbar', $data);
-        $this->load->view('user/daftar_pengajuan_kuota_view', $data); // View baru
+        $this->load->view('user/daftar_pengajuan_kuota_view', $data); 
         $this->load->view('templates/footer');
+    }
+
+    public function print_bukti_pengajuan_kuota($id_pengajuan)
+    {
+        $data['title'] = 'Bukti Pengajuan Kuota';
+        $data['user_login'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+
+        $this->db->select('upk.*, upr.NamaPers, upr.npwp AS npwp_perusahaan, upr.alamat as alamat_perusahaan, upr.pic, upr.jabatanPic, upr.ttd as ttd_perusahaan_pic, u.email AS user_email, u.name AS user_name_pengaju, u.image AS logo_perusahaan_file');
+        $this->db->from('user_pengajuan_kuota upk');
+        $this->db->join('user_perusahaan upr', 'upk.id_pers = upr.id_pers', 'left');
+        $this->db->join('user u', 'upk.id_pers = u.id', 'left'); 
+        $this->db->where('upk.id', $id_pengajuan);
+        $this->db->where('upk.id_pers', $data['user_login']['id']); 
+        $data['pengajuan'] = $this->db->get()->row_array();
+
+        if (!$data['pengajuan']) {
+            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Data pengajuan kuota tidak ditemukan atau Anda tidak berhak mengaksesnya.</div>');
+            redirect('user/daftar_pengajuan_kuota'); 
+            return;
+        }
+        
+        $data['user'] = $data['user_login']; 
+        $data['user_perusahaan'] = [ 
+            'NamaPers' => $data['pengajuan']['NamaPers'],
+            'npwp' => $data['pengajuan']['npwp_perusahaan'],
+            'alamat' => $data['pengajuan']['alamat_perusahaan'],
+            'pic' => $data['pengajuan']['pic'],
+            'jabatanPic' => $data['pengajuan']['jabatanPic'],
+            'ttd' => $data['pengajuan']['ttd_perusahaan_pic']
+        ];
+
+        $this->load->view('user/FormPengajuanKuota_print', $data); 
     }
 
 
     public function daftarPermohonan()
     {
         $data['title'] = 'Returnable Package';
-        $data['subtitle'] = 'Daftar Permohonan Impor Kembali'; // Judul disesuaikan
+        $data['subtitle'] = 'Daftar Permohonan Impor Kembali'; 
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
         
         $this->db->select('up.*, p.Nama AS nama_petugas'); 
@@ -469,7 +506,7 @@ class User extends CI_Controller
     public function editpermohonan($id_permohonan)
     {
         $data['title'] = 'Returnable Package';
-        $data['subtitle'] = 'Edit Permohonan Impor Kembali'; // Judul disesuaikan
+        $data['subtitle'] = 'Edit Permohonan Impor Kembali'; 
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
         $id_user = $data['user']['id'];
 
