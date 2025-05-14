@@ -607,72 +607,86 @@ public function detailPengajuanKuotaAdmin($id_pengajuan)
     }
 
     
-public function tambah_user_petugas()
-{
-    $data['title'] = 'Returnable Package';
-    $data['subtitle'] = 'Tambah User Petugas Baru';
-    $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+public function tambah_user_petugas() // Atau bisa dinamai tambah_internal_user
+    {
+        $data['title'] = 'Returnable Package';
+        $data['subtitle'] = 'Tambah User Petugas Baru'; // Judul bisa dinamis jika untuk role lain juga
+        $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
 
-    // Role untuk Petugas adalah ID 3 (sesuaikan jika berbeda)
-    $role_petugas_id = 3;
-    $data['role_petugas'] = $this->db->get_where('user_role', ['id' => $role_petugas_id])->row_array();
-    if (!$data['role_petugas']) {
-        $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Role "Petugas" tidak ditemukan. Harap konfigurasikan role terlebih dahulu.</div>');
-        redirect('admin/manajemen_user');
-        return;
-    }
+        // Default role yang akan ditambahkan adalah Petugas (ID 3)
+        // Anda bisa membuat ini lebih dinamis jika form ini digunakan untuk role lain seperti Monitoring
+        $target_role_id = 3; // Untuk Petugas
+        // $target_role_id = $this->input->get('role_type'); // Contoh jika role dipilih dari link/parameter
+
+        $data['target_role_info'] = $this->db->get_where('user_role', ['id' => $target_role_id])->row_array();
+
+        if (!$data['target_role_info']) {
+            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Role target tidak valid.</div>');
+            redirect('admin/manajemen_user');
+            return;
+        }
+        // Sesuaikan subtitle berdasarkan role target jika perlu
+        $data['subtitle'] = 'Tambah User ' . htmlspecialchars($data['target_role_info']['role']);
 
 
-    $this->form_validation->set_rules('name', 'Nama Lengkap Petugas', 'required|trim');
-    $this->form_validation->set_rules('email', 'Email Petugas', 'required|trim|valid_email|is_unique[user.email]', [
-        'is_unique' => 'Email ini sudah terdaftar.'
-    ]);
-    $this->form_validation->set_rules('password', 'Password Awal', 'required|trim|min_length[6]');
-    $this->form_validation->set_rules('nip_petugas', 'NIP Petugas', 'trim'); // Opsional, atau buat wajib jika perlu
-    $this->form_validation->set_rules('jabatan_petugas', 'Jabatan Petugas', 'trim'); // Opsional
-
-    if ($this->form_validation->run() == false) {
-        $this->load->view('templates/header', $data);
-        $this->load->view('templates/sidebar', $data);
-        $this->load->view('templates/topbar', $data);
-        $this->load->view('admin/form_tambah_user_petugas', $data); // Buat view ini
-        $this->load->view('templates/footer');
-    } else {
-        // Simpan ke tabel user
-        $user_data = [
-            'name' => htmlspecialchars($this->input->post('name', true)),
-            'email' => htmlspecialchars($this->input->post('email', true)),
-            'image' => 'default.jpg', // Default image
-            'password' => password_hash($this->input->post('password'), PASSWORD_DEFAULT),
-            'role_id' => $role_petugas_id, // Role Petugas
-            'is_active' => 1, // Langsung aktif
-            'force_change_password' => 1, // Petugas baru wajib ganti password saat login pertama
-            'date_created' => time()
-        ];
-        $this->db->insert('user', $user_data);
-        $new_user_id = $this->db->insert_id();
-
-        // Simpan ke tabel petugas (jika tabel petugas terpisah dan menyimpan info NIP, Jabatan)
-        // Asumsi Anda memiliki tabel `petugas` dengan kolom `id_user`, `NIP`, `Jabatan`, `Nama`
-        // Jika nama sudah di tabel user, mungkin tidak perlu kolom nama lagi di tabel petugas.
-        if ($new_user_id && ($this->input->post('nip_petugas') || $this->input->post('jabatan_petugas'))) {
-            $petugas_data = [
-                'id_user' => $new_user_id, // FK ke tabel user.id
-                'Nama' => $this->input->post('name'), // Bisa ambil dari input nama user
-                'NIP' => $this->input->post('nip_petugas'),
-                'Jabatan' => $this->input->post('jabatan_petugas')
-                // Tambahkan kolom lain yang relevan untuk tabel petugas
-            ];
-            // Cek apakah NIP unik jika diperlukan
-            // $is_nip_unique = $this->db->get_where('petugas', ['NIP' => $petugas_data['NIP']])->num_rows();
-            // if ($is_nip_unique > 0) { ... handle error NIP sudah ada ... }
-            $this->db->insert('petugas', $petugas_data);
+        $this->form_validation->set_rules('name', 'Nama Lengkap', 'required|trim');
+        // NIP akan disimpan di kolom 'email' dan harus unik
+        $this->form_validation->set_rules('nip', 'NIP (Nomor Induk Pegawai)', 'required|trim|numeric|is_unique[user.email]', [
+            'is_unique' => 'NIP ini sudah terdaftar sebagai login identifier.',
+            'numeric'   => 'NIP harus berupa angka.'
+        ]);
+        $this->form_validation->set_rules('password', 'Password Awal', 'required|trim|min_length[6]');
+        $this->form_validation->set_rules('confirm_password', 'Konfirmasi Password', 'required|trim|matches[password]');
+        
+        // Field tambahan khusus untuk tabel 'petugas' (jika role adalah Petugas)
+        if ($target_role_id == 3) { // Asumsi Role ID 3 adalah Petugas
+            // $this->form_validation->set_rules('nip_detail_petugas', 'NIP (Detail Petugas)', 'trim|required|numeric'); // NIP di tabel petugas harus sama dengan NIP login
+            $this->form_validation->set_rules('jabatan_petugas', 'Jabatan Petugas', 'trim|required');
         }
 
-        $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">User petugas baru berhasil ditambahkan. Petugas wajib mengganti password saat login pertama.</div>');
-        redirect('admin/manajemen_user');
+        if ($this->form_validation->run() == false) {
+            $this->load->view('templates/header', $data);
+            $this->load->view('templates/sidebar', $data);
+            $this->load->view('templates/topbar', $data);
+            $this->load->view('admin/form_tambah_user_petugas', $data); // View ini perlu disesuaikan
+            $this->load->view('templates/footer');
+        } else {
+            $nip_input = $this->input->post('nip');
+
+            $user_data_to_insert = [
+                'name' => htmlspecialchars($this->input->post('name', true)),
+                'email' => htmlspecialchars($nip_input, true), // NIP disimpan di kolom email
+                'image' => 'default.jpg',
+                'password' => password_hash($this->input->post('password'), PASSWORD_DEFAULT),
+                'role_id' => $target_role_id,
+                'is_active' => 1, // Langsung aktif
+                'force_change_password' => 1, // Wajib ganti password saat login pertama
+                'date_created' => time()
+            ];
+            $this->db->insert('user', $user_data_to_insert);
+            $new_user_id = $this->db->insert_id();
+
+            if ($new_user_id) {
+                // Jika role adalah Petugas, simpan juga ke tabel 'petugas'
+                if ($target_role_id == 3) { // Asumsi Role ID 3 adalah Petugas
+                    $petugas_data_to_insert = [
+                        'id_user' => $new_user_id,
+                        'Nama' => $user_data_to_insert['name'], // Ambil dari nama user
+                        'NIP' => $nip_input, // NIP dari input form
+                        'Jabatan' => htmlspecialchars($this->input->post('jabatan_petugas', true))
+                        // Tambahkan kolom lain yang relevan untuk tabel petugas
+                    ];
+                    $this->db->insert('petugas', $petugas_data_to_insert);
+                }
+                // Tambahkan logika untuk role Monitoring jika ada tabel terpisah untuk detail Monitoring
+
+                $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">User ' . htmlspecialchars($data['target_role_info']['role']) . ' baru, ' . htmlspecialchars($user_data_to_insert['name']) . ', berhasil ditambahkan. User wajib mengganti password saat login pertama.</div>');
+            } else {
+                $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Gagal menambahkan user baru. Silakan coba lagi.</div>');
+            }
+            redirect('admin/manajemen_user');
+        }
     }
-}
 
 
 public function ganti_password_user($target_user_id = 0)
@@ -731,7 +745,7 @@ public function edit_user($target_user_id = 0)
         $data['title'] = 'Returnable Package';
         $data['subtitle'] = 'Edit Data User';
         $admin_logged_in = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
-        $data['user'] = $admin_logged_in; 
+        $data['user'] = $admin_logged_in; // Data admin yang login (untuk header, sidebar, dll)
 
         $data['target_user_data'] = $this->db->get_where('user', ['id' => $target_user_id])->row_array();
 
@@ -741,31 +755,44 @@ public function edit_user($target_user_id = 0)
             return;
         }
 
-        $is_editing_main_admin = ($data['target_user_data']['id'] == 1); 
-        // Asumsi Role Petugas = 3, Monitoring = 4. Pengguna Jasa = 2.
-        $is_target_petugas_or_monitoring = in_array($data['target_user_data']['role_id'], [3, 4]);
+        $is_editing_main_admin = ($data['target_user_data']['id'] == 1); // Asumsi Admin utama memiliki ID = 1
+        
+        // Tentukan apakah target adalah Petugas (3) atau Monitoring (4) berdasarkan role_id yang akan disubmit atau yang sudah ada
+        $target_role_id_for_check = $this->input->post('role_id') ? (int)$this->input->post('role_id') : (int)$data['target_user_data']['role_id'];
+        $is_target_petugas_or_monitoring = in_array($target_role_id_for_check, [3, 4]); // Asumsi Role Petugas = 3, Monitoring = 4
 
         $data['roles_list'] = $this->db->get('user_role')->result_array();
 
         // Validasi Form
         $this->form_validation->set_rules('name', 'Nama Lengkap', 'required|trim');
 
-        $original_login_identifier = $data['target_user_data']['email']; // Kolom 'email' sekarang bisa berisi email atau NIP
-        $input_login_identifier = $this->input->post('login_identifier'); // Nama field baru di form
+        $original_login_identifier = $data['target_user_data']['email']; // Kolom 'email' di DB bisa berisi email atau NIP
+        $input_login_identifier = $this->input->post('login_identifier'); // Nama field input dari form
+
+        // Membangun aturan validasi untuk login_identifier (Email/NIP)
+        $login_identifier_rules = 'required|trim';
+        $login_identifier_label = '';
 
         if ($is_target_petugas_or_monitoring) {
-            // Untuk Petugas/Monitoring, validasi sebagai NIP (misal: numerik, panjang tertentu, unik)
-            // Kolom di DB tetap 'email', tapi isinya NIP
-            $this->form_validation->set_rules('login_identifier', 'NIP', 'required|trim|numeric'); // Tambahkan is_unique jika NIP harus unik di tabel user
-            if ($input_login_identifier != $original_login_identifier) {
-                 $this->form_validation->add_rule('is_unique[user.email]'); // Tetap cek ke kolom 'email'
+            $login_identifier_label = 'NIP';
+            $login_identifier_rules .= '|numeric'; // NIP harus numerik
+            if ($input_login_identifier !== null && $input_login_identifier != $original_login_identifier) {
+                $login_identifier_rules .= '|is_unique[user.email]';
             }
-        } else {
-            // Untuk role lain (Admin, Pengguna Jasa), validasi sebagai Email
-            $this->form_validation->set_rules('login_identifier', 'Email', 'required|trim|valid_email');
-            if ($input_login_identifier != $original_login_identifier) {
-                 $this->form_validation->add_rule('is_unique[user.email]');
+        } else { // Untuk Admin dan Pengguna Jasa
+            $login_identifier_label = 'Email';
+            $login_identifier_rules .= '|valid_email';
+            if ($input_login_identifier !== null && $input_login_identifier != $original_login_identifier) {
+                $login_identifier_rules .= '|is_unique[user.email]';
             }
+        }
+        // Hanya set rules jika ada input (untuk menghindari error saat halaman pertama kali load)
+        if ($this->input->post('login_identifier') !== null) {
+            $this->form_validation->set_rules('login_identifier', $login_identifier_label, $login_identifier_rules, [
+                'is_unique' => $login_identifier_label . ' ini sudah terdaftar.',
+                'numeric'   => $login_identifier_label . ' harus berupa angka.',
+                'valid_email' => $login_identifier_label . ' tidak valid.'
+            ]);
         }
 
 
@@ -783,15 +810,17 @@ public function edit_user($target_user_id = 0)
         } else {
             $update_data_user = [
                 'name' => htmlspecialchars($this->input->post('name', true)),
-                'email' => htmlspecialchars($input_login_identifier, true), // Simpan NIP atau Email ke kolom 'email'
+                // Hanya update 'email' (login identifier) jika ada input dan berbeda, atau jika memang diinput
+                'email' => htmlspecialchars($input_login_identifier, true), 
             ];
 
             if (!$is_editing_main_admin) {
-                $update_data_user['role_id'] = $this->input->post('role_id');
-                $update_data_user['is_active'] = $this->input->post('is_active');
+                $update_data_user['role_id'] = (int)$this->input->post('role_id');
+                $update_data_user['is_active'] = (int)$this->input->post('is_active');
             } else {
-                $update_data_user['role_id'] = $data['target_user_data']['role_id']; 
-                $update_data_user['is_active'] = $data['target_user_data']['is_active']; 
+                // Jika admin utama, pastikan role dan status tidak berubah dari form ini
+                $update_data_user['role_id'] = (int)$data['target_user_data']['role_id']; 
+                $update_data_user['is_active'] = (int)$data['target_user_data']['is_active']; 
             }
 
             $this->db->where('id', $target_user_id);
@@ -799,25 +828,32 @@ public function edit_user($target_user_id = 0)
 
             $new_role_id = (int)($this->input->post('role_id') ?? $data['target_user_data']['role_id']);
 
-            // Jika target adalah Petugas (role_id 3) atau diubah menjadi Petugas
-            if ($new_role_id == 3) {
-                $petugas_detail = $this->db->get_where('petugas', ['id_user' => $target_user_id])->row_array();
-                $data_petugas_update = [
-                    'Nama' => $update_data_user['name'],
-                    // NIP untuk Petugas sekarang diambil dari 'login_identifier' (yang disimpan di user.email)
-                    'NIP' => ($is_target_petugas_or_monitoring || $new_role_id == 3) ? $update_data_user['email'] : $this->input->post('nip_petugas_edit'), 
-                    'Jabatan' => $this->input->post('jabatan_petugas_edit') 
-                ];
+            // Jika role baru atau role saat ini adalah Petugas (ID 3)
+            // dan pastikan tabel 'petugas' memiliki kolom 'id_user' sebagai foreign key ke 'user.id'
+            if ($new_role_id == 3) { 
+                // Cek apakah kolom 'id_user' ada di tabel 'petugas'
+                if ($this->db->field_exists('id_user', 'petugas')) {
+                    $petugas_detail = $this->db->get_where('petugas', ['id_user' => $target_user_id])->row_array();
+                    $data_petugas_update = [
+                        'Nama' => $update_data_user['name'],
+                        'NIP' => $update_data_user['email'], // NIP diambil dari user.email (yang berisi NIP)
+                        'Jabatan' => $this->input->post('jabatan_petugas_edit') // Pastikan field ini ada di form edit
+                    ];
 
-                if ($petugas_detail) { 
-                    $this->db->where('id_user', $target_user_id);
-                    $this->db->update('petugas', $data_petugas_update);
-                } else { 
-                    $data_petugas_update['id_user'] = $target_user_id;
-                    $this->db->insert('petugas', $data_petugas_update);
+                    if ($petugas_detail) { 
+                        $this->db->where('id_user', $target_user_id);
+                        $this->db->update('petugas', $data_petugas_update);
+                    } else { 
+                        $data_petugas_update['id_user'] = $target_user_id;
+                        $this->db->insert('petugas', $data_petugas_update);
+                    }
+                } else {
+                    log_message('error', 'Kolom id_user tidak ditemukan di tabel petugas saat mencoba update/insert data petugas untuk user ID: ' . $target_user_id);
+                    // Anda bisa set flashdata error di sini jika perlu
+                    // $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Data user berhasil diupdate, tetapi detail petugas tidak dapat diproses karena struktur tabel petugas tidak sesuai (missing id_user).</div>');
                 }
             }
-            // Anda bisa menambahkan logika jika role diubah DARI Petugas (misal, menghapus entri di tabel petugas)
+            // Tambahkan logika jika role diubah DARI Petugas (misal, menghapus entri di tabel petugas)
             // atau jika role adalah Monitoring dan perlu update tabel terpisah (jika ada)
 
             $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Data user '.htmlspecialchars($update_data_user['name']).' berhasil diupdate.</div>');
