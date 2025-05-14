@@ -236,7 +236,7 @@ class Admin extends CI_Controller
         $this->db->from('user_pengajuan_kuota upk');
         $this->db->join('user_perusahaan upr', 'upk.id_pers = upr.id_pers', 'left');
         $this->db->join('user u', 'upk.id_pers = u.id', 'left');
-        $this->db->order_by('upk.status = "pending" DESC, upk.submission_date DESC'); // Pending di atas
+        $this->db->order_by('FIELD(upk.status, "pending") DESC, upk.submission_date DESC');
         $data['pengajuan_kuota'] = $this->db->get()->result_array();
 
         $this->load->view('templates/header', $data);
@@ -385,6 +385,39 @@ class Admin extends CI_Controller
         $data['user_perusahaan'] = $this->db->get_where('user_perusahaan', ['id_pers' => $data['pengajuan']['id_pers']])->row_array();
 
         $this->load->view('user/FormPengajuanKuota_print', $data); // Menggunakan view cetak yang sama dengan user
+    }
+
+    // Di dalam controllers/Admin.php
+
+public function detailPengajuanKuotaAdmin($id_pengajuan)
+    {
+        $data['title'] = 'Returnable Package';
+        $data['subtitle'] = 'Detail Proses Pengajuan Kuota';
+        $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+
+        $this->db->select('upk.*, upr.NamaPers, upr.npwp AS npwp_perusahaan, upr.alamat as alamat_perusahaan, upr.pic, upr.jabatanPic, u.email AS user_email_pemohon, u.name AS nama_pemohon');
+        $this->db->from('user_pengajuan_kuota upk');
+        $this->db->join('user_perusahaan upr', 'upk.id_pers = upr.id_pers', 'left');
+        $this->db->join('user u', 'upk.id_pers = u.id', 'left'); // Asumsi id_pers di user_pengajuan_kuota merujuk ke id user pemohon
+        $this->db->where('upk.id', $id_pengajuan);
+        $data['pengajuan'] = $this->db->get()->row_array();
+
+        if (!$data['pengajuan']) {
+            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Data pengajuan kuota tidak ditemukan.</div>');
+            redirect('admin/daftar_pengajuan_kuota'); // Atau ke halaman error yang sesuai
+            return;
+        }
+
+        // Data perusahaan dan user pemohon bisa juga diambil terpisah jika diperlukan informasi lebih banyak
+        // $data['user_pemohon_detail'] = $this->db->get_where('user', ['id' => $data['pengajuan']['id_pers']])->row_array();
+        // $data['perusahaan_detail'] = $this->db->get_where('user_perusahaan', ['id_pers' => $data['pengajuan']['id_pers']])->row_array();
+
+
+        $this->load->view('templates/header', $data);
+        $this->load->view('templates/sidebar', $data);
+        $this->load->view('templates/topbar', $data);
+        $this->load->view('admin/detail_pengajuan_kuota_view', $data); // Load view baru untuk Admin
+        $this->load->view('templates/footer');
     }
 
     public function download_sk_kuota_admin($id_pengajuan)
