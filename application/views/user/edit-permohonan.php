@@ -3,11 +3,11 @@
 
     <!-- Page Heading -->
     <h1 class="h3 mb-4 text-gray-800"> <?= $subtitle; ?></h1>
-    <?= $this->session->flashdata('message'); ?>
+    <!-- <?= $this->session->flashdata('message'); ?>
     <?php if (validation_errors()) : ?>
         <div class="alert alert-danger" role="alert"><?= validation_errors(); ?></div>
         <?= $this->session->flashdata('message'); ?>
-    <?php endif; ?>
+    <?php endif; ?> -->
     <h5>Status: <?php if ($user['is_active'] == 1) {
                     echo "Active";
                 } else {

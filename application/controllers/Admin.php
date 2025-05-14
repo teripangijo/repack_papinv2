@@ -145,7 +145,16 @@ class Admin extends CI_Controller
         $this->db->join('user_perusahaan upr', 'up.id_pers = upr.id_pers', 'left');
         $this->db->join('user u', 'upr.id_pers = u.id', 'left');
         $this->db->join('petugas ptgs', 'up.petugas = ptgs.id', 'left');
-        $this->db->order_by('up.time_stamp', 'DESC');
+        // $this->db->order_by('up.time_stamp', 'DESC');
+        $this->db->order_by("
+            CASE up.status
+                WHEN '0' THEN 1  -- Prioritas 1 untuk status 'Baru Masuk'
+                WHEN '1' THEN 2  -- Prioritas 2 untuk status berikutnya yang dianggap 'pending'
+                WHEN '2' THEN 3  -- Prioritas 3 untuk status berikutnya yang dianggap 'pending'
+                ELSE 4           -- Prioritas lebih rendah untuk status lainnya (misal: Selesai, Ditolak)
+            END ASC,             -- Urutkan berdasarkan prioritas status ini secara menaik (ASC)
+            up.time_stamp DESC   -- Untuk status dengan prioritas yang sama, urutkan berdasarkan waktu terbaru
+        ");
         $data['permohonan'] = $this->db->get()->result_array();
 
         $data['list_petugas'] = $this->db->get('petugas')->result_array();
@@ -157,72 +166,190 @@ class Admin extends CI_Controller
         $this->load->view('templates/footer');
     }
 
-    public function prosesSurat($id_permohonan)
-    {
-        // ... (kode method prosesSurat yang sudah ada) ...
-        $data['title'] = 'Returnable Package';
-        $data['subtitle'] = 'Penyelesaian Permohonan Impor'; // Disesuaikan
-        $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+    // public function prosesSurat($id_permohonan)
+    // {
+    //     // ... (kode method prosesSurat yang sudah ada) ...
+    //     $data['title'] = 'Returnable Package';
+    //     $data['subtitle'] = 'Penyelesaian Permohonan Impor'; // Disesuaikan
+    //     $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
 
-        $this->db->select('up.*, upr.NamaPers, upr.remaining_quota, upr.npwp, u.email as email_pemohon');
+    //     $this->db->select('up.*, upr.NamaPers, upr.remaining_quota, upr.npwp, u.email as email_pemohon');
+    //     $this->db->from('user_permohonan up');
+    //     $this->db->join('user_perusahaan upr', 'up.id_pers = upr.id_pers', 'left');
+    //     $this->db->join('user u', 'upr.id_pers = u.id', 'left');
+    //     $this->db->where('up.id', $id_permohonan);
+    //     $data['permohonan'] = $this->db->get()->row_array();
+
+    //     if (!$data['permohonan']) {
+    //         $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Permohonan tidak ditemukan!</div>');
+    //         redirect('admin/permohonanMasuk');
+    //     }
+
+    //     $data['lhp'] = $this->db->get_where('lhp', ['id_permohonan' => $id_permohonan])->row_array();
+
+    //     $this->form_validation->set_rules('nomorSetuju', 'Nomor Surat Keputusan', 'trim|required');
+    //     $this->form_validation->set_rules('tgl_S', 'Tanggal Surat Keputusan', 'trim|required');
+    //     $this->form_validation->set_rules('status_final', 'Status Final Permohonan', 'required|in_list[3,4]'); // 3=Selesai (Disetujui), 4=Selesai (Ditolak)
+
+    //     if ($this->form_validation->run() == false) {
+    //         $this->load->view('templates/header', $data);
+    //         $this->load->view('templates/sidebar', $data);
+    //         $this->load->view('templates/topbar', $data);
+    //         $this->load->view('admin/proses_surat_lhp', $data);
+    //         $this->load->view('templates/footer');
+    //     } else {
+    //         $status_final_permohonan = $this->input->post('status_final');
+
+    //         $data_update_permohonan = [
+    //             'nomorSetuju' => $this->input->post('nomorSetuju'),
+    //             'tgl_S' => $this->input->post('tgl_S'),
+    //             'nomorND' => $this->input->post('nomorND'),
+    //             'tgl_ND' => $this->input->post('tgl_ND'),
+    //             'link' => $this->input->post('link'),
+    //             'linkND' => $this->input->post('linkND'),
+    //             'time_selesai' => date("Y-m-d H:i:s"),
+    //             'status' => $status_final_permohonan
+    //         ];
+
+    //         $this->db->where('id', $id_permohonan);
+    //         $this->db->update('user_permohonan', $data_update_permohonan);
+
+    //         // Logika Pemotongan Kuota
+    //         if ($status_final_permohonan == '3' && $data['lhp'] && isset($data['lhp']['JumlahBenar'])) {
+    //             $id_pers_terkait = $data['permohonan']['id_pers'];
+    //             $jumlah_barang_disetujui = (int)$data['lhp']['JumlahBenar'];
+
+    //             if ($jumlah_barang_disetujui > 0) {
+    //                 $perusahaan = $this->db->get_where('user_perusahaan', ['id_pers' => $id_pers_terkait])->row_array();
+    //                 if ($perusahaan && isset($perusahaan['remaining_quota'])) {
+    //                     $sisa_kuota_lama = (int)$perusahaan['remaining_quota'];
+    //                     $sisa_kuota_baru = $sisa_kuota_lama - $jumlah_barang_disetujui;
+    //                     if ($sisa_kuota_baru < 0) { $sisa_kuota_baru = 0; }
+    //                     $this->db->where('id_pers', $id_pers_terkait);
+    //                     $this->db->update('user_perusahaan', ['remaining_quota' => $sisa_kuota_baru]);
+    //                     log_message('info', 'Quota updated for id_pers: ' . $id_pers_terkait . '. Used: ' . $jumlah_barang_disetujui . '. Remaining: ' . $sisa_kuota_baru);
+    //                 }
+    //             }
+    //         }
+    //         $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Status permohonan telah berhasil diproses!</div>');
+    //         redirect('admin/permohonanMasuk');
+    //     }
+    // }
+
+    public function penunjukanPetugas($id_permohonan)
+    {
+        $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+        $data['title'] = 'Returnable Package';
+        $data['subtitle'] = 'Penunjukan Petugas Pemeriksa';
+
+        // Ambil data permohonan yang akan diproses
+        $this->db->select('up.*, upr.NamaPers');
         $this->db->from('user_permohonan up');
         $this->db->join('user_perusahaan upr', 'up.id_pers = upr.id_pers', 'left');
-        $this->db->join('user u', 'upr.id_pers = u.id', 'left');
         $this->db->where('up.id', $id_permohonan);
-        $data['permohonan'] = $this->db->get()->row_array();
+        $permohonan = $this->db->get()->row_array();
 
-        if (!$data['permohonan']) {
+        if (!$permohonan) {
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Permohonan tidak ditemukan!</div>');
             redirect('admin/permohonanMasuk');
+            return;
+        }
+        $data['permohonan'] = $permohonan;
+
+        // (Langkah 1 Alur) Ketika admin klik "Proses" pertama kali, ubah status menjadi "Diproses Admin"
+        // Ini hanya dilakukan jika status masih "Baru Masuk" ('0') dan ini bukan POST request (artinya baru masuk ke form)
+        if ($permohonan['status'] == '0' && $this->input->method() !== 'post') {
+            $this->db->where('id', $id_permohonan);
+            $this->db->update('user_permohonan', ['status' => '5']); // Status '5' = Diproses Admin
+            // Refresh data permohonan setelah update status
+            $permohonan['status'] = '5';
+            $data['permohonan']['status'] = '5';
+            // Set flashdata bahwa status telah diubah ke "Diproses Admin"
+            $this->session->set_flashdata('message_transient', '<div class="alert alert-info" role="alert">Status permohonan ID ' . $id_permohonan . ' telah diubah menjadi "Diproses Admin". Lanjutkan dengan menunjuk petugas.</div>');
         }
 
-        $data['lhp'] = $this->db->get_where('lhp', ['id_permohonan' => $id_permohonan])->row_array();
 
-        $this->form_validation->set_rules('nomorSetuju', 'Nomor Surat Keputusan', 'trim|required');
-        $this->form_validation->set_rules('tgl_S', 'Tanggal Surat Keputusan', 'trim|required');
-        $this->form_validation->set_rules('status_final', 'Status Final Permohonan', 'required|in_list[3,4]'); // 3=Selesai (Disetujui), 4=Selesai (Ditolak)
+        // Ambil daftar petugas dari tabel 'petugas'
+        $data['list_petugas'] = $this->db->order_by('Nama', 'ASC')->get('petugas')->result_array();
+        if (empty($data['list_petugas'])) {
+            // Sebaiknya ada penanganan jika tidak ada petugas tersedia
+            log_message('warning', 'Tidak ada data petugas ditemukan di tabel petugas.');
+        }
+
+
+        // Validasi form
+        $this->form_validation->set_rules('petugas_id', 'Petugas Pemeriksa', 'required|numeric');
+        $this->form_validation->set_rules('nomor_surat_tugas', 'Nomor Surat Tugas', 'required|trim');
+        $this->form_validation->set_rules('tanggal_surat_tugas', 'Tanggal Surat Tugas', 'required');
+        // Validasi file upload (opsional, bisa dibuat wajib jika file_surat_tugas harus ada)
+        // Jika file wajib, tambahkan validasi callback atau cek $_FILES secara manual.
+        // Untuk contoh ini, kita asumsikan file bisa dikosongkan, tapi jika ada akan diupload.
+
 
         if ($this->form_validation->run() == false) {
+            // Tampilkan form penunjukan petugas
             $this->load->view('templates/header', $data);
             $this->load->view('templates/sidebar', $data);
             $this->load->view('templates/topbar', $data);
-            $this->load->view('admin/proses_surat_lhp', $data);
+            $this->load->view('admin/form_penunjukan_petugas', $data); // Buat view baru ini
             $this->load->view('templates/footer');
         } else {
-            $status_final_permohonan = $this->input->post('status_final');
-
-            $data_update_permohonan = [
-                'nomorSetuju' => $this->input->post('nomorSetuju'),
-                'tgl_S' => $this->input->post('tgl_S'),
-                'nomorND' => $this->input->post('nomorND'),
-                'tgl_ND' => $this->input->post('tgl_ND'),
-                'link' => $this->input->post('link'),
-                'linkND' => $this->input->post('linkND'),
-                'time_selesai' => date("Y-m-d H:i:s"),
-                'status' => $status_final_permohonan
+            // Proses data form
+            $update_data = [
+                'petugas' => $this->input->post('petugas_id'),
+                'NoSuratTugas' => $this->input->post('nomor_surat_tugas'), // Sesuaikan nama kolom di DB
+                'TglSuratTugas' => $this->input->post('tanggal_surat_tugas'), // Sesuaikan nama kolom di DB
+                'status' => '1', // Status '1' = Penunjukan Pemeriksa
+                'WaktuPenunjukanPetugas' => date('Y-m-d H:i:s') // Sesuaikan nama kolom di DB
             ];
 
-            $this->db->where('id', $id_permohonan);
-            $this->db->update('user_permohonan', $data_update_permohonan);
+            // Proses upload file Surat Tugas jika ada
+            if (isset($_FILES['file_surat_tugas']) && $_FILES['file_surat_tugas']['error'] != UPLOAD_ERR_NO_FILE) {
+                $upload_dir_st = 'uploads/surat_tugas/';
+                $upload_path_st = FCPATH . $upload_dir_st;
 
-            // Logika Pemotongan Kuota
-            if ($status_final_permohonan == '3' && $data['lhp'] && isset($data['lhp']['JumlahBenar'])) {
-                $id_pers_terkait = $data['permohonan']['id_pers'];
-                $jumlah_barang_disetujui = (int)$data['lhp']['JumlahBenar'];
-
-                if ($jumlah_barang_disetujui > 0) {
-                    $perusahaan = $this->db->get_where('user_perusahaan', ['id_pers' => $id_pers_terkait])->row_array();
-                    if ($perusahaan && isset($perusahaan['remaining_quota'])) {
-                        $sisa_kuota_lama = (int)$perusahaan['remaining_quota'];
-                        $sisa_kuota_baru = $sisa_kuota_lama - $jumlah_barang_disetujui;
-                        if ($sisa_kuota_baru < 0) { $sisa_kuota_baru = 0; }
-                        $this->db->where('id_pers', $id_pers_terkait);
-                        $this->db->update('user_perusahaan', ['remaining_quota' => $sisa_kuota_baru]);
-                        log_message('info', 'Quota updated for id_pers: ' . $id_pers_terkait . '. Used: ' . $jumlah_barang_disetujui . '. Remaining: ' . $sisa_kuota_baru);
-                    }
+                if (!is_dir($upload_path_st)) {
+                    @mkdir($upload_path_st, 0777, true);
                 }
+
+                if (!is_writable($upload_path_st)) {
+                    $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Upload error: Direktori Surat Tugas tidak writable.</div>');
+                    redirect('admin/penunjukanPetugas/' . $id_permohonan);
+                    return;
+                }
+
+                $config_st['upload_path']   = $upload_path_st;
+                $config_st['allowed_types'] = 'pdf|jpg|png|jpeg|doc|docx'; // Sesuaikan tipe file
+                $config_st['max_size']      = '2048'; // 2MB
+                $config_st['encrypt_name']  = TRUE;
+
+                $this->load->library('upload', $config_st, 'st_upload'); // Gunakan alias 'st_upload' untuk instance upload ini
+                $this->st_upload->initialize($config_st); // Re-initialize dengan config spesifik
+
+                if ($this->st_upload->do_upload('file_surat_tugas')) {
+                    // Hapus file lama jika ada (jika fitur edit penunjukan ada dan file bisa diganti)
+                    // if (!empty($permohonan['FileSuratTugas']) && file_exists($upload_path_st . $permohonan['FileSuratTugas'])) {
+                    //    @unlink($upload_path_st . $permohonan['FileSuratTugas']);
+                    // }
+                    $update_data['FileSuratTugas'] = $this->st_upload->data('file_name'); // Sesuaikan nama kolom di DB
+                } else {
+                    $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Upload File Surat Tugas Gagal: ' . $this->st_upload->display_errors('', '') . '</div>');
+                    redirect('admin/penunjukanPetugas/' . $id_permohonan);
+                    return;
+                }
+            } elseif (empty($permohonan['FileSuratTugas']) && (isset($_FILES['file_surat_tugas']) && $_FILES['file_surat_tugas']['error'] == UPLOAD_ERR_NO_FILE) ) {
+                // Jika file WAJIB diupload dan tidak ada file lama maupun baru.
+                // $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">File Surat Tugas wajib diupload.</div>');
+                // redirect('admin/penunjukanPetugas/' . $id_permohonan);
+                // return;
             }
-            $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Status permohonan telah berhasil diproses!</div>');
+
+
+            // Update data permohonan
+            $this->db->where('id', $id_permohonan);
+            $this->db->update('user_permohonan', $update_data);
+
+            $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Petugas pemeriksa berhasil ditunjuk untuk permohonan ID ' . $id_permohonan . '. Status diubah menjadi "Penunjukan Pemeriksa".</div>');
             redirect('admin/permohonanMasuk');
         }
     }

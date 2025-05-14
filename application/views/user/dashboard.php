@@ -4,12 +4,12 @@
         <h1 class="h3 mb-0 text-gray-800"><?= isset($subtitle) ? htmlspecialchars($subtitle) : 'Dashboard'; ?></h1>
     </div>
 
-    <?php
+    <!-- <?php
     // Menampilkan flashdata message jika ada
     if ($this->session->flashdata('message')) {
         echo $this->session->flashdata('message');
     }
-    ?>
+    ?> -->
 
     <?php if (empty($user_perusahaan)) : ?>
         <div class="alert alert-warning" role="alert">

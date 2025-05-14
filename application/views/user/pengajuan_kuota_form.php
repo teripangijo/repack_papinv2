@@ -4,12 +4,12 @@
         <h1 class="h3 mb-0 text-gray-800"><?= isset($subtitle) ? htmlspecialchars($subtitle) : 'Pengajuan Kuota'; ?></h1>
     </div>
 
-    <?php
+    <!-- <?php
     // Menampilkan flashdata message jika ada
     if ($this->session->flashdata('message')) {
         echo $this->session->flashdata('message');
     }
-    ?>
+    ?> -->
 
     <div class="row">
         <div class="col-lg-8">

@@ -35,12 +35,12 @@ $profile_image_path = base_url('uploads/kop/' . htmlspecialchars($profile_image_
 
     <h1 class="h3 mb-4 text-gray-800"><?= isset($subtitle) ? htmlspecialchars($subtitle) : 'My Profile'; ?></h1>
 
-    <?php
+    <!-- <?php
     // Menampilkan flashdata message jika ada.
     if ($this->session->flashdata('message')) {
         echo $this->session->flashdata('message');
     }
-    ?>
+    ?> -->
 
     <div class="card shadow mb-4">
         <div class="card-header py-3">
