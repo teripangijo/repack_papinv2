@@ -53,9 +53,17 @@ class User extends CI_Controller
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
         
         $data['user_perusahaan'] = $this->db->get_where('user_perusahaan', ['id_pers' => $data['user']['id']])->row_array();
+        
+        $data['kuota_awal'] = 0;
+        $data['sisa_kuota'] = 0;
+        $data['total_kuota_terpakai'] = 0;
+
 
         if ($data['user_perusahaan']) {
             $this->db->select('id, nomorSurat, TglSurat, NamaBarang, JumlahBarang, status, time_stamp');
+            $data['kuota_awal'] = $data['user_perusahaan']['initial_quota'] ?? 0;
+            $data['sisa_kuota'] = $data['user_perusahaan']['remaining_quota'] ?? 0;
+            $data['total_kuota_terpakai'] = ($data['kuota_awal'] - $data['sisa_kuota']);
             $this->db->where('id_pers', $data['user']['id']);
             $this->db->order_by('time_stamp', 'DESC');
             $this->db->limit(5); 

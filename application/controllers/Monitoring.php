@@ -1,63 +1,154 @@
 <?php
-defined('BASEPATH') or exit('No direct script access allowed');
+defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Monitoring extends CI_Controller
-{
+class Monitoring extends CI_Controller {
+
     public function __construct()
     {
         parent::__construct();
-        is_loggedin();
-        $this->load->helper('repack_helper');
+        // Load library dan helper yang dibutuhkan
+        $this->load->library('session');
+        $this->load->helper('url');
+        if (!isset($this->db)) {
+             $this->load->database();
+        }
+        $this->_check_auth_monitoring(); // Fungsi helper untuk otentikasi & otorisasi Monitoring
     }
 
-    public function index()
+    private function _check_auth_monitoring()
     {
-        $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
-        $data['permohonanMasuk'] = $this->db->get_where('user_permohonan',['status' => '0'])->result();
-        $data['permohonanProses1'] = $this->db->get_where('user_permohonan', ['status' => '1'])->result();
-        $data['permohonanProses2'] = $this->db->get_where('user_permohonan', ['status' => '2'])->result();
-        $data['permohonanSelesai'] = $this->db->get_where('user_permohonan', ['status' => '3'])->result();
-        $data['Masuk'] =count($data['permohonanMasuk']);
-        $data['Proses1'] =count($data['permohonanProses1']);
-        $data['Proses2'] = count($data['permohonanProses2']);
-        $data['Proses'] = $data['Proses1'] + $data['Proses2'];
-        $data['Selesai'] = count($data['permohonanSelesai']);
+        if (!$this->session->userdata('email')) {
+            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Please login to continue.</div>');
+            redirect('auth');
+            exit;
+        }
+        if ($this->session->userdata('role_id') != 4) { // Role ID 4 untuk Monitoring
+            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Access Denied! You are not authorized.</div>');
+            // Redirect ke dashboard sesuai role atau ke blocked
+            $role_id_session = $this->session->userdata('role_id');
+            if ($role_id_session == 1) redirect('admin');
+            elseif ($role_id_session == 2) redirect('user');
+            elseif ($role_id_session == 3) redirect('petugas');
+            else redirect('auth/blocked');
+            exit;
+        }
+        // Tidak ada pengecekan force_change_password di sini, diasumsikan akun monitoring tidak perlu itu.
+    }
+
+    public function index() // Dashboard Monitoring
+    {
         $data['title'] = 'Returnable Package';
-        $data['subtitle'] = 'Dashboard';
+        $data['subtitle'] = 'Dashboard Monitoring';
+        $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+
+        // Ambil statistik ringkas untuk dashboard monitoring jika perlu
+        // Contoh: Jumlah total pengajuan kuota, jumlah total permohonan impor, dll.
+        $data['total_pengajuan_kuota'] = $this->db->count_all_results('user_pengajuan_kuota');
+        $data['total_permohonan_impor'] = $this->db->count_all_results('user_permohonan');
+        $data['permohonan_kuota_pending'] = $this->db->where('status', 'pending')->count_all_results('user_pengajuan_kuota');
+        $data['permohonan_impor_baru'] = $this->db->where_in('status', ['0','5'])->count_all_results('user_permohonan');
+
+
         $this->load->view('templates/header', $data);
-        $this->load->view('templates/sidebar', $data);
+        $this->load->view('templates/sidebar', $data); // Sidebar perlu disesuaikan untuk role Monitoring
         $this->load->view('templates/topbar', $data);
-        $this->load->view('monitoring/index', $data);
+        $this->load->view('monitoring/dashboard_monitoring_view', $data); // Buat view ini
         $this->load->view('templates/footer');
     }
 
-    public function permohonan()
+    public function pengajuan_kuota()
     {
-        $data['menu'] = $this->db->get_where('user_menu')->result_array();
-        $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
-        $data['permohonan'] = $this->db->get_where('user_permohonan',)->result_array();
         $data['title'] = 'Returnable Package';
-        $data['subtitle'] = 'Status Permohonan';
-
-            $this->load->view('templates/header', $data);
-            $this->load->view('templates/sidebar', $data);
-            $this->load->view('templates/topbar', $data);
-            $this->load->view('monitoring/permohonan-masuk', $data);
-            $this->load->view('templates/footer');
-    }
-
-    public function perusahaan()
-    {
-        $data['menu'] = $this->db->get_where('user_menu')->result_array();
+        $data['subtitle'] = 'Pantauan Data Pengajuan Kuota';
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
-        $data['perusahaan'] = $this->db->get_where('user_perusahaan',)->result_array();
-        $data['title'] = 'Returnable Package';
-        $data['subtitle'] = 'Data Perusahaan Terdaftar';
+
+        $this->db->select('upk.*, upr.NamaPers, u_pemohon.name as nama_pengaju_kuota');
+        $this->db->from('user_pengajuan_kuota upk');
+        $this->db->join('user_perusahaan upr', 'upk.id_pers = upr.id_pers', 'left');
+        $this->db->join('user u_pemohon', 'upk.id_pers = u_pemohon.id', 'left'); // User yang mengajukan
+        $this->db->order_by('upk.submission_date', 'DESC');
+        $data['daftar_pengajuan_kuota'] = $this->db->get()->result_array();
 
         $this->load->view('templates/header', $data);
         $this->load->view('templates/sidebar', $data);
         $this->load->view('templates/topbar', $data);
-        $this->load->view('monitoring/perusahaan', $data);
+        $this->load->view('monitoring/daftar_pengajuan_kuota_view', $data); // Buat view ini
+        $this->load->view('templates/footer');
+    }
+
+    public function permohonan_impor()
+    {
+        $data['title'] = 'Returnable Package';
+        $data['subtitle'] = 'Pantauan Data Permohonan Impor';
+        $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+
+        $this->db->select('up.*, upr.NamaPers, u_pemohon.name as nama_pemohon_impor, p_petugas.Nama as nama_petugas_pemeriksa');
+        $this->db->from('user_permohonan up');
+        $this->db->join('user_perusahaan upr', 'up.id_pers = upr.id_pers', 'left');
+        $this->db->join('user u_pemohon', 'upr.id_pers = u_pemohon.id', 'left'); // User yang mengajukan permohonan
+        $this->db->join('petugas p_petugas', 'up.petugas = p_petugas.id', 'left'); // Petugas yang ditunjuk
+        $this->db->order_by('up.time_stamp', 'DESC');
+        $data['daftar_permohonan_impor'] = $this->db->get()->result_array();
+
+        $this->load->view('templates/header', $data);
+        $this->load->view('templates/sidebar', $data);
+        $this->load->view('templates/topbar', $data);
+        $this->load->view('monitoring/daftar_permohonan_impor_view', $data); // Buat view ini
+        $this->load->view('templates/footer');
+    }
+
+    // Jika diperlukan method untuk melihat detail spesifik (read-only)
+    public function detail_pengajuan_kuota($id_pengajuan)
+    {
+        $data['title'] = 'Returnable Package';
+        $data['subtitle'] = 'Detail Pantauan Pengajuan Kuota';
+        $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+
+        $this->db->select('upk.*, upr.NamaPers, u_pemohon.name as nama_pengaju_kuota');
+        $this->db->from('user_pengajuan_kuota upk');
+        $this->db->join('user_perusahaan upr', 'upk.id_pers = upr.id_pers', 'left');
+        $this->db->join('user u_pemohon', 'upk.id_pers = u_pemohon.id', 'left');
+        $this->db->where('upk.id', $id_pengajuan);
+        $data['pengajuan'] = $this->db->get()->row_array();
+
+        if (!$data['pengajuan']) {
+            $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Data pengajuan kuota tidak ditemukan.</div>');
+            redirect('monitoring/pengajuan_kuota');
+            return;
+        }
+
+        $this->load->view('templates/header', $data);
+        $this->load->view('templates/sidebar', $data);
+        $this->load->view('templates/topbar', $data);
+        $this->load->view('monitoring/detail_pengajuan_kuota_view', $data); // Buat view ini
+        $this->load->view('templates/footer');
+    }
+
+    public function detail_permohonan_impor($id_permohonan)
+    {
+        $data['title'] = 'Returnable Package';
+        $data['subtitle'] = 'Detail Pantauan Permohonan Impor';
+        $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+
+        $this->db->select('up.*, upr.NamaPers, u_pemohon.name as nama_pemohon_impor, p_petugas.Nama as nama_petugas_pemeriksa, lhp.JumlahBenar as lhp_jumlah_benar, lhp.catatan_pemeriksaan as lhp_catatan, lhp.file_dokumentasi_foto as lhp_file_foto, lhp.tanggal_lhp');
+        $this->db->from('user_permohonan up');
+        $this->db->join('user_perusahaan upr', 'up.id_pers = upr.id_pers', 'left');
+        $this->db->join('user u_pemohon', 'upr.id_pers = u_pemohon.id', 'left');
+        $this->db->join('petugas p_petugas', 'up.petugas = p_petugas.id', 'left');
+        $this->db->join('lhp', 'up.id = lhp.id_permohonan', 'left'); // Join LHP untuk detail
+        $this->db->where('up.id', $id_permohonan);
+        $data['permohonan'] = $this->db->get()->row_array();
+
+        if (!$data['permohonan']) {
+            $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Data permohonan impor tidak ditemukan.</div>');
+            redirect('monitoring/permohonan_impor');
+            return;
+        }
+
+        $this->load->view('templates/header', $data);
+        $this->load->view('templates/sidebar', $data);
+        $this->load->view('templates/topbar', $data);
+        $this->load->view('monitoring/detail_permohonan_impor_view', $data); // Buat view ini
         $this->load->view('templates/footer');
     }
 }

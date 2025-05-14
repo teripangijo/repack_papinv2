@@ -76,18 +76,17 @@ class Admin extends CI_Controller
 
     public function role()
     {
-    // ... (kode method role yang sudah ada) ...
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
         $data['title'] = 'Returnable Package';
         $data['subtitle'] = 'Role Management';
-        $data['role'] = $this->db->get('user_role')->result_array();
+        $data['role'] = $this->db->get('user_role')->result_array(); // Mengambil semua role dari tabel
 
         $this->form_validation->set_rules('role', 'Role', 'required|trim|is_unique[user_role.role]');
         if($this->form_validation->run() == false){
             $this->load->view('templates/header', $data);
             $this->load->view('templates/sidebar', $data);
             $this->load->view('templates/topbar', $data);
-            $this->load->view('admin/role', $data);
+            $this->load->view('admin/role', $data); // View untuk menampilkan daftar role dan form tambah
             $this->load->view('templates/footer');
         } else {
             $this->db->insert('user_role', ['role' => $this->input->post('role')]);
@@ -98,18 +97,27 @@ class Admin extends CI_Controller
 
     public function roleAccess($role_id)
     {
-        // ... (kode method roleAccess yang sudah ada) ...
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
         $data['title'] = 'Returnable Package';
         $data['subtitle'] = 'Role Access Management';
         $data['role'] = $this->db->get_where('user_role', ['id' => $role_id])->row_array();
 
-        $data['menu'] = $this->db->get('user_menu')->result_array();
+        // Ambil semua menu utama (controllers)
+        // $this->db->where('id !=', 1); // Contoh: Jangan izinkan akses ke menu Admin diubah dari sini
+        $data['menu'] = $this->db->get('user_menu')->result_array(); // Ini mengambil menu utama
+
+        // Jika Anda ingin mengatur akses per SUBMENU, query-nya akan berbeda:
+        // $this->db->select('user_sub_menu.*, user_menu.menu as parent_menu_name');
+        // $this->db->from('user_sub_menu');
+        // $this->db->join('user_menu', 'user_sub_menu.menu_id = user_menu.id');
+        // $this->db->order_by('user_menu.menu ASC, user_sub_menu.title ASC');
+        // $data['all_sub_menus'] = $this->db->get()->result_array();
+        // Dan view 'admin/role-access.php' perlu diubah untuk menampilkan submenu.
 
         $this->load->view('templates/header', $data);
         $this->load->view('templates/sidebar', $data);
         $this->load->view('templates/topbar', $data);
-        $this->load->view('admin/role-access', $data);
+        $this->load->view('admin/role-access', $data); // View untuk menampilkan daftar menu dan checkbox akses
         $this->load->view('templates/footer');
     }
 
