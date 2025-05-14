@@ -143,34 +143,44 @@ class Admin extends CI_Controller
 
     public function permohonanMasuk()
     {
-        // ... (kode method permohonanMasuk yang sudah ada) ...
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
         $data['title'] = 'Returnable Package';
-        $data['subtitle'] = 'Daftar Permohonan Impor'; // Disesuaikan
+        $data['subtitle'] = 'Daftar Permohonan Impor';
 
-        $this->db->select('up.*, upr.NamaPers, u.name as nama_pengaju, ptgs.Nama as nama_petugas_assigned');
+        $this->db->select(
+            'up.id, up.nomorSurat, up.TglSurat, up.time_stamp, up.status, ' .
+            'upr.NamaPers, ' .
+            'u_pemohon.name as nama_pengaju, ' .
+            'u_petugas.name as nama_petugas_assigned' // Ambil nama petugas dari tabel user
+        );
         $this->db->from('user_permohonan up');
         $this->db->join('user_perusahaan upr', 'up.id_pers = upr.id_pers', 'left');
-        $this->db->join('user u', 'upr.id_pers = u.id', 'left');
-        $this->db->join('petugas ptgs', 'up.petugas = ptgs.id', 'left');
-        // $this->db->order_by('up.time_stamp', 'DESC');
+        $this->db->join('user u_pemohon', 'upr.id_pers = u_pemohon.id', 'left'); // Untuk nama pengaju (user Pengguna Jasa)
+        
+        // Join ke tabel 'user' lagi untuk mendapatkan nama petugas yang ditunjuk
+        // Asumsi: kolom 'up.petugas' menyimpan ID dari tabel 'user' untuk petugas yang ditunjuk
+        $this->db->join('user u_petugas', 'up.petugas = u_petugas.id', 'left'); 
+        
+        // Jika Anda memiliki tabel 'petugas' terpisah dan 'up.petugas' merujuk ke 'petugas.id',
+        // dan 'petugas' memiliki kolom 'id_user' yang merujuk ke 'user.id', maka joinnya akan berbeda:
+        // $this->db->join('petugas ptgs', 'up.petugas = ptgs.id', 'left'); // Jika up.petugas adalah petugas.id
+        // $this->db->join('user u_petugas_detail', 'ptgs.id_user = u_petugas_detail.id', 'left'); // Untuk mengambil nama dari user
+        // Dan selectnya menjadi: 'ptgs.Nama as nama_petugas_assigned' atau 'u_petugas_detail.name as nama_petugas_assigned'
+
         $this->db->order_by("
             CASE up.status
-                WHEN '0' THEN 1  -- Prioritas 1 untuk status 'Baru Masuk'
-                WHEN '1' THEN 2  -- Prioritas 2 untuk status berikutnya yang dianggap 'pending'
-                WHEN '2' THEN 3  -- Prioritas 3 untuk status berikutnya yang dianggap 'pending'
-                ELSE 4           -- Prioritas lebih rendah untuk status lainnya (misal: Selesai, Ditolak)
-            END ASC,             -- Urutkan berdasarkan prioritas status ini secara menaik (ASC)
-            up.time_stamp DESC   -- Untuk status dengan prioritas yang sama, urutkan berdasarkan waktu terbaru
-        ");
+                WHEN '0' THEN 1
+                WHEN '5' THEN 2 
+                WHEN '1' THEN 3 
+                WHEN '2' THEN 4  
+                ELSE 5           
+            END ASC, up.time_stamp DESC");
         $data['permohonan'] = $this->db->get()->result_array();
-
-        $data['list_petugas'] = $this->db->get('petugas')->result_array();
-
+        
         $this->load->view('templates/header', $data);
         $this->load->view('templates/sidebar', $data);
         $this->load->view('templates/topbar', $data);
-        $this->load->view('admin/permohonan-masuk', $data);
+        $this->load->view('admin/permohonan-masuk', $data); 
         $this->load->view('templates/footer');
     }
 

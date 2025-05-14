@@ -68,8 +68,8 @@ class Auth extends CI_Controller
         } else {
             // Jika role tidak dikenal atau tidak ada, hancurkan session dan kembali ke login
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Role tidak dikenal. Silakan login kembali.</div>');
-            $this->session_sess_destroy();
-            redirect('auth/login');
+            $this->session->sess_destroy();
+            redirect('auth');
         }
     }
 
@@ -219,7 +219,7 @@ class Auth extends CI_Controller
         // Hancurkan semua data session
         $this->session->sess_destroy();
         $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Anda telah berhasil logout!</div>');
-        redirect('auth/login'); // Arahkan ke halaman login
+        redirect('auth'); // Arahkan ke halaman login
     }
 
     public function blocked()

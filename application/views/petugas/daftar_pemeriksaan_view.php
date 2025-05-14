@@ -1,6 +1,6 @@
 <div class="container-fluid">
     <h1 class="h3 mb-4 text-gray-800"><?= htmlspecialchars($subtitle ?? 'Daftar Pemeriksaan Ditugaskan'); ?></h1>
-    <?php if ($this->session->flashdata('message')) { echo $this->session->flashdata('message'); } ?>
+    <!-- <?php if ($this->session->flashdata('message')) { echo $this->session->flashdata('message'); } ?> -->
     <div class="card shadow mb-4">
         <div class="card-header py-3">
             <h6 class="m-0 font-weight-bold text-primary">Permohonan yang Perlu Direkam LHP</h6>

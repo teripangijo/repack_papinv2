@@ -1,24 +1,33 @@
 <?php
 // Ambil data user dari variabel $user yang dikirim oleh controller
-// Sediakan nilai default jika variabel tidak ada atau kosong
 $userName = isset($user['name']) ? htmlspecialchars($user['name']) : 'Guest';
-// Pastikan nama file gambar diambil dengan benar dan ada fallback
 $userImageName = isset($user['image']) && !empty($user['image']) ? $user['image'] : 'default.jpg';
-// Path ke gambar profil/logo perusahaan (konsisten dengan tempat penyimpanan)
-$profileImagePath = base_url('uploads/kop/' . htmlspecialchars($userImageName));
+
+// Tentukan base path untuk gambar profil berdasarkan role atau path umum
+$role_id_for_topbar = $this->session->userdata('role_id'); // Ambil role_id dari session
+$profile_image_folder = 'uploads/kop/'; // Default untuk Pengguna Jasa (logo perusahaan)
+
+if ($role_id_for_topbar == 1) { // Admin
+    $profile_image_folder = 'uploads/profile_admin/'; // Contoh path untuk admin
+} elseif ($role_id_for_topbar == 3) { // Petugas
+    $profile_image_folder = 'uploads/profile_images/'; // Path yang Anda gunakan di Petugas::edit_profil()
+} elseif ($role_id_for_topbar == 4) { // Monitoring
+    $profile_image_folder = 'uploads/profile_monitoring/'; // Contoh path untuk monitoring
+}
+// Jika Anda menggunakan satu folder untuk semua foto profil user (selain logo perusahaan), sederhanakan:
+// $profile_image_folder = 'uploads/profile_images/'; 
+
+$profileImagePath = base_url($profile_image_folder . htmlspecialchars($userImageName));
+$fallbackImagePath = base_url('assets/img/default-avatar.png'); // Fallback umum
 ?>
 <div id="content-wrapper" class="d-flex flex-column">
-
     <div id="content">
-
         <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
-
             <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
                 <i class="fa fa-bars"></i>
             </button>
 
             <ul class="navbar-nav ml-auto">
-
                 <li class="nav-item dropdown no-arrow d-sm-none">
                     <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button"
                         data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -41,49 +50,75 @@ $profileImagePath = base_url('uploads/kop/' . htmlspecialchars($userImageName));
                     </div>
                 </li>
 
-                <?php // Anda bisa menambahkan item notifikasi (Alerts, Messages) di sini jika diperlukan ?>
-
                 <div class="topbar-divider d-none d-sm-block"></div>
 
                 <li class="nav-item dropdown no-arrow">
                     <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                         data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <span class="mr-2 d-none d-lg-inline text-gray-600 small">
-                            <?= $userName; // Menampilkan nama pengguna ?>
+                            <?= $userName; ?>
                         </span>
                         <img class="img-profile rounded-circle"
-                            src="<?= $profileImagePath; // Menggunakan path gambar yang sudah benar ?>"
+                            src="<?= $profileImagePath; ?>"
                             alt="<?= $userName; ?> profile picture"
-                            onerror="this.onerror=null; this.src='<?= base_url('uploads/kop/default.jpg'); ?>';"> <?php // Fallback jika gambar utama gagal dimuat ?>
+                            onerror="this.onerror=null; this.src='<?= $fallbackImagePath; ?>';">
                     </a>
                     <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                         aria-labelledby="userDropdown">
-                        <a class="dropdown-item" href="<?= site_url('user/index'); // Link ke Dashboard/My Profile Utama ?>">
-                            <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-                            My Profile
-                        </a>
-                        <a class="dropdown-item" href="<?= site_url('user/edit'); // Link ke edit profil & perusahaan ?>">
-                            <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
-                            Edit Profile & Perusahaan
-                        </a>
-                        <a class="dropdown-item" href="<?= site_url('auth/changepass/' . (isset($user['id']) ? $user['id'] : '')); // Link ke ganti password ?>">
-                            <i class="fas fa-key fa-sm fa-fw mr-2 text-gray-400"></i>
-                            Change Password
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
-                            <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
-                            Logout
-                        </a>
+
+                        <?php if ($role_id_for_topbar == 1) : // ADMIN ?>
+                            <a class="dropdown-item" href="<?= site_url('admin/profile'); // Buat halaman profil admin jika perlu ?>">
+                                <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                                My Profile (Admin)
+                            </a>
+                            <a class="dropdown-item" href="<?= site_url('admin/settings'); // Contoh link settings admin ?>">
+                                <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
+                                Settings
+                            </a>
+                        <?php elseif ($role_id_for_topbar == 2) : // PENGGUNA JASA ?>
+                            <a class="dropdown-item" href="<?= site_url('user/index'); // Dashboard Pengguna Jasa bisa jadi profilnya juga ?>">
+                                <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                                My Dashboard
+                            </a>
+                            <a class="dropdown-item" href="<?= site_url('user/edit'); ?>">
+                                <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
+                                Edit Profile & Perusahaan
+                            </a>
+                        <?php elseif ($role_id_for_topbar == 3) : // PETUGAS ?>
+                            <a class="dropdown-item" href="<?= site_url('petugas/edit_profil'); // Link ke edit profil petugas ?>">
+                                <i class="fas fa-user-edit fa-sm fa-fw mr-2 text-gray-400"></i>
+                                Edit Profil Saya
+                            </a>
+                        <?php elseif ($role_id_for_topbar == 4) : // MONITORING ?>
+                             <a class="dropdown-item" href="<?= site_url('monitoring/profile'); // Buat halaman profil monitoring jika perlu ?>">
+                                <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                                My Profile (Monitoring)
+                            </a>
+                        <?php else: // Guest atau role tidak dikenal ?>
+                             <a class="dropdown-item" href="#">
+                                <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                                Profile
+                            </a>
+                        <?php endif; ?>
+                        
+                        <?php // Link Ganti Password dan Logout selalu ada jika user login ?>
+                        <?php if ($this->session->userdata('email')) : ?>
+                            <a class="dropdown-item" href="<?= site_url('auth/changepass'); // Link ke ganti password umum ?>">
+                                <i class="fas fa-key fa-sm fa-fw mr-2 text-gray-400"></i>
+                                Ganti Password
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
+                                <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+                                Logout
+                            </a>
+                        <?php endif; ?>
                     </div>
                 </li>
             </ul>
         </nav>
-        <div class="container-fluid"> <?php if ($this->session->flashdata('message')) : ?>
+        <div class="container-fluid pt-1"> <?php if ($this->session->flashdata('message')) : ?>
                 <?= $this->session->flashdata('message'); ?>
             <?php endif; ?>
         </div>
-        <?php // Modal logout dipindahkan ke footer.php atau biarkan jika ini layout utama sebelum konten spesifik ?>
-        <?php // Tag penutup untuk #content dan #content-wrapper akan ada di footer.php ?>
-        <?php // Konten halaman spesifik akan dimulai SETELAH ini oleh controller, biasanya di dalam <div class="container-fluid"> baru ?>
-        <?php // Jadi, flashdata akan muncul di atas konten spesifik tersebut. ?>
+        <?php // Konten halaman spesifik akan dimulai SETELAH ini oleh controller ?>

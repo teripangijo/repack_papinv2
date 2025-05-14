@@ -2,8 +2,15 @@
 
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800"><?= isset($subtitle) ? htmlspecialchars($subtitle) : 'Daftar Pengajuan Kuota'; ?></h1>
+        <?php // Tombol "Ajukan Kuota Baru" tidak relevan untuk Admin di halaman ini ?>
     </div>
 
+    <?php
+    // Flashdata seharusnya sudah ditampilkan secara global oleh templates/topbar.php
+    // if ($this->session->flashdata('message')) {
+    //     echo $this->session->flashdata('message');
+    // }
+    ?>
 
     <div class="card shadow mb-4">
         <div class="card-header py-3">
@@ -20,11 +27,11 @@
                             <th>Email User</th>
                             <th>No. Surat Pengajuan</th>
                             <th>Tgl. Surat Pengajuan</th>
-                            <th>Kuota Diajukan</th>
+                            <th class="text-right">Kuota Diajukan</th>
                             <th>Alasan</th>
                             <th>Tgl. Submit Sistem</th>
                             <th>Status</th>
-                            <th>Kuota Disetujui</th>
+                            <th class="text-right">Kuota Disetujui</th>
                             <th>Catatan Petugas</th>
                             <th>Tgl. Proses</th>
                             <th>Action</th>
@@ -46,7 +53,7 @@
                                     <td><?= isset($pk['submission_date']) && $pk['submission_date'] != '0000-00-00 00:00:00' ? date('d/m/Y H:i', strtotime($pk['submission_date'])) : '-'; ?></td>
                                     <td>
                                         <?php
-                                        $status_text = ucfirst(isset($pk['status']) ? $pk['status'] : 'N/A');
+                                        $status_text = ucfirst(isset($pk['status']) ? htmlspecialchars($pk['status']) : 'N/A');
                                         $status_badge = 'secondary';
                                         if (isset($pk['status'])) {
                                             switch (strtolower($pk['status'])) {
@@ -54,41 +61,34 @@
                                                 case 'diproses': $status_badge = 'info'; $status_text = 'Diproses'; break;
                                                 case 'approved': $status_badge = 'success'; $status_text = 'Disetujui'; break;
                                                 case 'rejected': $status_badge = 'danger'; $status_text = 'Ditolak'; break;
-                                                // Anda mungkin tidak menggunakan 'selesai' lagi jika 'approved' sudah final
-                                                // case 'selesai': $status_badge = 'primary'; $status_text = 'Selesai (SK Terbit)'; break;
+                                                // case 'selesai': $status_badge = 'primary'; $status_text = 'Selesai (SK Terbit)'; break; // Jika ada status ini
                                             }
                                         }
-                                        echo '<span class="badge badge-' . $status_badge . '">' . htmlspecialchars($status_text) . '</span>';
+                                        echo '<span class="badge badge-pill badge-' . $status_badge . '">' . $status_text . '</span>';
                                         ?>
                                     </td>
                                     <td class="text-right"><?= (isset($pk['status']) && strtolower($pk['status']) == 'approved' && isset($pk['approved_quota'])) ? number_format($pk['approved_quota'],0,',','.') . ' Unit' : '-'; ?></td>
                                     <td><?= isset($pk['admin_notes']) && !empty($pk['admin_notes']) ? nl2br(htmlspecialchars($pk['admin_notes'])) : '-'; ?></td>
                                     <td><?= isset($pk['processed_date']) && $pk['processed_date'] != '0000-00-00 00:00:00' ? date('d/m/Y H:i', strtotime($pk['processed_date'])) : '-'; ?></td>
                                     <td>
-                                        <a href="<?= site_url('admin/detailPengajuanKuotaAdmin/' . $pk['id']); ?>" class="btn btn-sm btn-info mb-1" title="Lihat Detail Proses Admin">
-                                            <i class="fas fa-eye"></i> Detail
+                                        <a href="<?= site_url('admin/detailPengajuanKuotaAdmin/' . $pk['id']); ?>" class="btn btn-info btn-circle btn-sm my-1" title="Lihat Detail Proses Admin">
+                                            <i class="fas fa-eye"></i>
                                         </a>
-
                                         <?php if (isset($pk['status']) && (strtolower($pk['status']) == 'pending' || strtolower($pk['status']) == 'diproses')) : ?>
-                                            <a href="<?= site_url('admin/proses_pengajuan_kuota/' . $pk['id']); ?>" class="btn btn-sm btn-success mb-1" title="Proses Pengajuan">
-                                                <i class="fas fa-cogs"></i> Proses
+                                            <a href="<?= site_url('admin/proses_pengajuan_kuota/' . $pk['id']); ?>" class="btn btn-success btn-circle btn-sm my-1" title="Proses Pengajuan">
+                                                <i class="fas fa-cogs"></i>
                                             </a>
                                         <?php endif; ?>
-
-                                        <?php if (!empty($pk['file_sk_petugas']) && (strtolower($pk['status']) == 'approved' || strtolower($pk['status']) == 'rejected')): // Tampilkan tombol download SK jika file ada dan status sudah final ?>
-                                            <a href="<?= site_url('admin/download_sk_kuota_admin/' . $pk['id']); ?>" class="btn btn-sm btn-primary mb-1" title="Unduh SK Petugas">
-                                                <i class="fas fa-download"></i> SK
+                                        <?php if (!empty($pk['file_sk_petugas']) && (strtolower($pk['status']) == 'approved' || strtolower($pk['status']) == 'rejected')): ?>
+                                            <a href="<?= site_url('admin/download_sk_kuota_admin/' . $pk['id']); ?>" class="btn btn-primary btn-circle btn-sm my-1" title="Unduh SK Petugas">
+                                                <i class="fas fa-download"></i>
                                             </a>
                                         <?php endif; ?>
-                                        
-                                        </td>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
-                        <?php else : ?>
-                            <tr>
-                                <td colspan="14" class="text-center">Belum ada data pengajuan kuota.</td>
-                            </tr>
                         <?php endif; ?>
+                        <?php // Baris "Belum ada data pengajuan kuota." yang menggunakan colspan DIHAPUS dari sini ?>
                     </tbody>
                 </table>
             </div>
@@ -98,19 +98,31 @@
 </div>
 <script>
 $(document).ready(function() {
+    // Pastikan jQuery dan DataTables sudah dimuat di template footer Anda
     if (typeof $ !== 'undefined' && typeof $.fn.DataTable !== 'undefined') {
         $('#dataTableAdminPengajuanKuota').DataTable({
             "order": [[ 8, "desc" ]], // Urutkan berdasarkan Tgl Submit Sistem terbaru (indeks kolom ke-8 dari 0)
+            "language": {
+                "emptyTable": "Belum ada data pengajuan kuota.", // Pesan kustom jika tabel kosong
+                "zeroRecords": "Tidak ada data yang cocok ditemukan",
+                "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ entri",
+                "infoEmpty": "Menampilkan 0 sampai 0 dari 0 entri",
+                "infoFiltered": "(disaring dari _MAX_ entri keseluruhan)",
+                "lengthMenu": "Tampilkan _MENU_ entri",
+                "search": "Cari:",
+                "paginate": {
+                    "first":    "Pertama",
+                    "last":     "Terakhir",
+                    "next":     "Selanjutnya",
+                    "previous": "Sebelumnya"
+                }
+            },
             "columnDefs": [
-                { "orderable": false, "targets": [13] } // Kolom Action (indeks ke-13 dari 0) tidak bisa di-sort
-            ],
-            // Menambahkan konfigurasi bahasa jika diperlukan
-            // "language": {
-            //     "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Indonesian.json" // Contoh untuk Bahasa Indonesia
-            // }
+                { "orderable": false, "targets": [0, 13] } // Kolom '#' (indeks 0) dan Action (indeks 13) tidak bisa di-sort
+            ]
         });
     } else {
-        console.error("DataTables plugin is not loaded for Daftar Pengajuan Kuota (Admin).");
+        console.error("DataTables plugin is not loaded for 'dataTableAdminPengajuanKuota'.");
     }
 });
 </script>
