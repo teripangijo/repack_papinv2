@@ -74,7 +74,21 @@ class Auth extends CI_Controller
                 'is_active' => $user['is_active'] 
             ];
             $this->session->set_userdata($data_session);
-            $this->_redirect_user_by_role($user['is_active']); 
+            if ($user['force_change_password'] == 1) {
+                $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Untuk keamanan, Anda wajib mengganti password Anda.</div>');
+                // Arahkan ke halaman ganti password khusus untuk role tersebut
+                if ($user['role_id'] == 2) { // Pengguna Jasa
+                    redirect('user/force_change_password_page'); // Buat method dan view ini di User.php
+                } elseif ($user['role_id'] == 3) { // Petugas
+                    redirect('petugas/force_change_password_page'); // Buat method dan view ini di Petugas.php
+                } else {
+                    // Untuk role lain, mungkin langsung ke dashboard mereka jika tidak ada force change
+                    $this->_redirect_user_by_role($user['is_active']);
+                }
+                return; // Hentikan eksekusi lebih lanjut
+            } else {
+                $this->_redirect_user_by_role($user['is_active']);
+        }
         } else {
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Bypass failed: User not found!</div>');
             redirect('auth');

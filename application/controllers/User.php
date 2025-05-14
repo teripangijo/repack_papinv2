@@ -578,4 +578,43 @@ class User extends CI_Controller
         }
     }
 
+    public function force_change_password_page()
+    {
+        // Pastikan user login dan memang harus ganti password
+        if (!$this->session->userdata('email') || $this->session->userdata('force_change_password') != 1) {
+            redirect('user/index'); // Atau ke halaman default role mereka
+            return;
+        }
+
+        $data['title'] = 'Returnable Package';
+        $data['subtitle'] = 'Wajib Ganti Password';
+        $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+
+        $this->form_validation->set_rules('new_password', 'Password Baru', 'required|trim|min_length[6]|matches[confirm_new_password]');
+        $this->form_validation->set_rules('confirm_new_password', 'Konfirmasi Password Baru', 'required|trim');
+
+        if ($this->form_validation->run() == false) {
+            $this->load->view('templates/header', $data);
+            $this->load->view('templates/sidebar', $data);
+            $this->load->view('templates/topbar', $data);
+            $this->load->view('user/form_force_change_password', $data); // Buat view ini
+            $this->load->view('templates/footer');
+        } else {
+            $new_password_hash = password_hash($this->input->post('new_password'), PASSWORD_DEFAULT);
+            $update_data = [
+                'password' => $new_password_hash,
+                'force_change_password' => 0 // Set kembali ke 0 setelah berhasil ganti
+            ];
+
+            $this->db->where('id', $data['user']['id']);
+            $this->db->update('user', $update_data);
+
+            // Update session juga
+            $this->session->set_userdata('force_change_password', 0);
+
+            $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Password Anda telah berhasil diubah. Silakan lanjutkan.</div>');
+            redirect('user/index'); // Arahkan ke dashboard mereka
+        }
+    }
+
 } // End class User
