@@ -1,1 +1,1 @@
-message|s:75:"<div class="alert alert-danger" role="alert">Email is not registered!</div>";__ci_vars|a:1:{s:7:"message";s:3:"old";}id|s:2:"11";email|s:17:"adminbc@gmail.com";role_id|s:1:"1";nama|s:8:"Admin BC";is_active|s:1:"1";
+message|s:77:"<div class="alert alert-success" role="alert">You have been logged out!</div>";__ci_vars|a:1:{s:7:"message";s:3:"old";}id|s:2:"11";email|s:17:"adminbc@gmail.com";role_id|s:1:"1";nama|s:8:"Admin BC";is_active|s:1:"1";
