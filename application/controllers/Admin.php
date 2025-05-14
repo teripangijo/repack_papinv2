@@ -20,6 +20,8 @@ class Admin extends CI_Controller
         // Sebaiknya load model jika ada query kompleks, tapi untuk contoh ini kita langsung pakai $this->db
     }
 
+    
+
     public function index()
     {
         // ... (kode method index yang sudah ada) ...
@@ -465,5 +467,30 @@ public function detailPengajuanKuotaAdmin($id_pengajuan)
         $this->load->view('admin/manajemen_user_view', $data); // Buat view ini
         $this->load->view('templates/footer');
     }
+
+//     // Di Admin.php
+// public function test_set_flash() {
+//     $this->session->set_flashdata('message', '<div class="alert alert-info" role="alert">Ini adalah pesan flashdata UNTUK TES!</div>');
+//     log_message('debug', 'TEST_SET_FLASH: Flashdata "message" telah di-set.');
+//     redirect('admin/test_show_flash');
+// }
+
+// public function test_show_flash() {
+//     $data['title'] = "Halaman Tes Flashdata";
+//     $data['subtitle'] = "Menampilkan Flashdata Tes";
+//     // Pastikan variabel $user dikirim ke view jika template membutuhkannya
+//     $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+
+//     log_message('debug', 'TEST_SHOW_FLASH: Halaman dimuat. Flashdata "message" akan ditampilkan oleh topbar.');
+//     // Flashdata akan ditampilkan oleh templates/topbar.php
+
+//     // Buat file view sederhana di application/views/admin/simple_test_page.php
+//     // Isi: <h1>Ini Halaman Tes Sederhana</h1>
+//     $this->load->view('templates/header', $data);
+//     $this->load->view('templates/sidebar', $data);
+//     $this->load->view('templates/topbar', $data);
+//     $this->load->view('admin/simple_test_page', $data); // Ganti dengan nama view tes Anda
+//     $this->load->view('templates/footer');
+// }
 
 } // End class Admin
