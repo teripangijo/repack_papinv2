@@ -173,6 +173,8 @@ class Auth extends CI_Controller
         $this->session->unset_userdata('nama');
         $this->session->unset_userdata('is_active');
 
+        $this->session->sess_destroy(); // Hancurkan session
+
         $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">You have been logged out!</div>');
         redirect('auth');
     }

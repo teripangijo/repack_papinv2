@@ -79,23 +79,11 @@ $profileImagePath = base_url('uploads/kop/' . htmlspecialchars($userImageName));
                 </li>
             </ul>
         </nav>
-        <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-            aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">Ready to Leave?</h5>
-                        <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">×</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
-                    <div class="modal-footer">
-                        <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-                        <a class="btn btn-primary" href="<?= site_url('auth/logout'); ?>">Logout</a>
-                    </div>
-                </div>
-            </div>
+        <div class="container-fluid"> <?php if ($this->session->flashdata('message')) : ?>
+                <?= $this->session->flashdata('message'); ?>
+            <?php endif; ?>
         </div>
+        <?php // Modal logout dipindahkan ke footer.php atau biarkan jika ini layout utama sebelum konten spesifik ?>
         <?php // Tag penutup untuk #content dan #content-wrapper akan ada di footer.php ?>
-        <?php // Konten halaman spesifik akan dimulai SETELAH ini oleh controller ?>
+        <?php // Konten halaman spesifik akan dimulai SETELAH ini oleh controller, biasanya di dalam <div class="container-fluid"> baru ?>
+        <?php // Jadi, flashdata akan muncul di atas konten spesifik tersebut. ?>

@@ -4,11 +4,6 @@
         <h1 class="h3 mb-0 text-gray-800"><?= isset($subtitle) ? htmlspecialchars($subtitle) : 'Monitoring Kuota Perusahaan'; ?></h1>
     </div>
 
-    <?php
-    if ($this->session->flashdata('message')) {
-        echo $this->session->flashdata('message');
-    }
-    ?>
 
     <div class="card shadow mb-4">
         <div class="card-header py-3">
