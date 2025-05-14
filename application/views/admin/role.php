@@ -74,6 +74,5 @@
             </form>
         </div>
     </div>
-</div>
 
 <!-- Modal -->

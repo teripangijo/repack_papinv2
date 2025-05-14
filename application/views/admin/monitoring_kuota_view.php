@@ -1,15 +1,15 @@
 <div class="container-fluid">
 
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800"><?= isset($subtitle) ? htmlspecialchars($subtitle) : 'Monitoring Kuota Perusahaan'; ?></h1>
-    </div>
+        <h1 class="h3 mb-0 text-gray-800"><?= htmlspecialchars($subtitle ?? 'Monitoring Kuota Perusahaan'); ?></h1>
+        </div>
 
-    <?php
-    // Flashdata seharusnya sudah ditampilkan secara global oleh templates/topbar.php
-    // if ($this->session->flashdata('message')) {
-    //     echo $this->session->flashdata('message');
-    // }
-    ?>
+    <!-- <?php
+    // Menampilkan flash message jika ada
+    if ($this->session->flashdata('message')) {
+        echo $this->session->flashdata('message');
+    }
+    ?> -->
 
     <div class="card shadow mb-4">
         <div class="card-header py-3">
@@ -27,30 +27,47 @@
                             <th class="text-right">Sisa Kuota</th>
                             <th class="text-right">Kuota Terpakai</th>
                             <th>No. KEP Kuota Terakhir</th>
-                        </tr>
+                            </tr>
                     </thead>
                     <tbody>
-                        <?php if (!empty($monitoring_data) && is_array($monitoring_data)) : ?>
-                            <?php $no = 1; ?>
-                            <?php foreach ($monitoring_data as $md) : ?>
-                                <?php
-                                    // Pastikan variabel ada sebelum digunakan untuk menghindari notice, default ke 0 jika tidak ada
-                                    $initial_quota = isset($md['initial_quota']) ? (int)$md['initial_quota'] : 0;
-                                    $remaining_quota = isset($md['remaining_quota']) ? (int)$md['remaining_quota'] : 0;
-                                    $used_quota = $initial_quota - $remaining_quota;
-                                ?>
-                                <tr>
-                                    <td><?= $no++; ?></td>
-                                    <td><?= isset($md['NamaPers']) ? htmlspecialchars($md['NamaPers']) : 'N/A'; ?></td>
-                                    <td><?= isset($md['user_email']) ? htmlspecialchars($md['user_email']) : 'N/A'; ?></td>
-                                    <td class="text-right"><?= number_format($initial_quota, 0, ',', '.'); ?></td>
-                                    <td class="text-right <?= ($remaining_quota <= 0 && $initial_quota > 0) ? 'text-danger font-weight-bold' : ''; ?>"><?= number_format($remaining_quota, 0, ',', '.'); ?></td>
-                                    <td class="text-right"><?= number_format($used_quota, 0, ',', '.'); ?></td>
-                                    <td><?= isset($md['kep_terakhir']) ? htmlspecialchars($md['kep_terakhir']) : '-'; ?></td>
+                        <?php if (!empty($monitoring_data)): $no = 1; ?>
+                            <?php foreach ($monitoring_data as $item): ?>
+                            <tr>
+                                <td><?= $no++; ?></td>
+                                <td>
+                                    <?php
+                                    // Pastikan $item['id_pers'] ada dan tidak kosong.
+                                    // Ini adalah asumsi bahwa kolom di tabel user_perusahaan adalah 'id_pers'.
+                                    // Jika nama kolomnya berbeda (misal 'id'), ganti $item['id_pers'] menjadi $item['id']
+                                    // dan pastikan kolom tersebut di-SELECT di controller.
+                                    if (isset($item['id_pers']) && !empty($item['id_pers'])) {
+                                        $link_histori = site_url('admin/histori_kuota_perusahaan/' . $item['id_pers']);
+                                        echo '<a href="' . $link_histori . '" title="Lihat Histori Kuota ' . htmlspecialchars($item['NamaPers']) . '">' . htmlspecialchars($item['NamaPers']) . '</a>';
+                                    } else {
+                                        echo htmlspecialchars($item['NamaPers'] ?? 'Nama Perusahaan Tidak Ada');
+                                    }
+                                    ?>
+                                </td>
+                                <td><?= htmlspecialchars($item['user_email'] ?? '-'); ?></td>
+                                <td class="text-right"><?= htmlspecialchars(number_format($item['initial_quota'] ?? 0)); ?></td>
+                                <td class="text-right font-weight-bold <?= (($item['remaining_quota'] ?? 0) <=0 && ($item['initial_quota'] ?? 0) > 0) ? 'text-danger' : 'text-success'; ?>">
+                                    <?= htmlspecialchars(number_format($item['remaining_quota'] ?? 0)); ?>
+                                </td>
+                                <td class="text-right">
+                                    <?php
+                                        $initial_quota = $item['initial_quota'] ?? 0;
+                                        $remaining_quota = $item['remaining_quota'] ?? 0;
+                                        echo htmlspecialchars(number_format($initial_quota - $remaining_quota));
+                                    ?>
+                                </td>
+                                <td><?= htmlspecialchars($item['kep_terakhir'] ?? '-'); ?></td>
                                 </tr>
                             <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="7" class="text-center">Belum ada data perusahaan untuk dimonitor.</td>
+                            </tr>
                         <?php endif; ?>
-                        <?php // Jika $monitoring_data kosong, tbody akan kosong, dan DataTables akan menampilkan pesan defaultnya atau yang dikustomisasi ?>
                     </tbody>
                 </table>
             </div>
@@ -60,32 +77,18 @@
 </div>
 <script>
 $(document).ready(function() {
-    // Pastikan jQuery dan DataTables sudah dimuat di template footer Anda
-    if (typeof $ !== 'undefined' && typeof $.fn.DataTable !== 'undefined') {
+    // Cek apakah DataTables sudah di-load sebelum menginisialisasi
+    if (typeof $.fn.DataTable !== 'undefined') {
         $('#dataTableMonitoringKuota').DataTable({
-            "order": [[ 1, "asc" ]], // Urutkan berdasarkan Nama Perusahaan (kolom indeks 1)
-            "language": {
-                "emptyTable": "Belum ada data perusahaan untuk dimonitor.", // Pesan kustom jika tabel kosong
-                "zeroRecords": "Tidak ada data yang cocok ditemukan",
-                "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ entri",
-                "infoEmpty": "Menampilkan 0 sampai 0 dari 0 entri",
-                "infoFiltered": "(disaring dari _MAX_ entri keseluruhan)",
-                "lengthMenu": "Tampilkan _MENU_ entri",
-                "search": "Cari:",
-                "paginate": {
-                    "first":    "Pertama",
-                    "last":     "Terakhir",
-                    "next":     "Selanjutnya",
-                    "previous": "Sebelumnya"
-                }
-            }
-            // Anda bisa menambahkan opsi lain DataTables di sini jika perlu
-            // "columnDefs": [
-            //    { "orderable": false, "targets": [0] } // Contoh: Kolom '#' tidak bisa di-sort
-            // ]
+            "order": [[1, "asc"]], // Urutkan berdasarkan Nama Perusahaan A-Z
+            // Opsi lain DataTables bisa ditambahkan di sini
+            // Contoh: paging, searching, lengthChange, dll. akan aktif secara default
+            // "language": {
+            //     "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Indonesian.json" // Jika ingin bahasa Indonesia
+            // }
         });
     } else {
-        console.error("DataTables plugin is not loaded for 'dataTableMonitoringKuota'.");
+        console.warn("DataTables plugin is not loaded.");
     }
 });
 </script>

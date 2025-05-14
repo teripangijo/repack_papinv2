@@ -8,9 +8,9 @@
                 <div class="card-body">
                     <p class="text-center text-warning">Untuk keamanan akun Anda, silakan buat password baru.</p>
 
-                    <?php if ($this->session->flashdata('message')) : ?>
+                    <!-- <?php if ($this->session->flashdata('message')) : ?>
                         <?= $this->session->flashdata('message'); ?>
-                    <?php endif; ?>
+                    <?php endif; ?> -->
                     <?php if (validation_errors()) : ?>
                         <div class="alert alert-danger" role="alert">
                             <?= validation_errors(); ?>
