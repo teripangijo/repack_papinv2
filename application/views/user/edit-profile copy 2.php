@@ -163,6 +163,7 @@ $current_user_image = isset($user['image']) ? $user['image'] : 'default.jpg'; //
     <?php echo form_close(); ?>
 
 </div>
+</div>
 <?php // Tambahkan script kecil untuk menampilkan nama file di input file custom Bootstrap ?>
 <script>
 // Script untuk menampilkan nama file pada custom file input Bootstrap 4

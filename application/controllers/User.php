@@ -81,6 +81,8 @@ class User extends CI_Controller
 
     public function edit()
     {
+        // echo "CONTROLLER User->edit() DIEKSEKUSI PADA " . date('Y-m-d H:i:s');
+        // die();
         $data['title'] = 'Returnable Package';
         $data['subtitle'] = 'Edit Profile & Perusahaan'; 
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
@@ -616,5 +618,29 @@ class User extends CI_Controller
             redirect('user/index'); // Arahkan ke dashboard mereka
         }
     }
+
+    // Di application/controllers/User.php
+public function tes_layout()
+{
+    $data['title'] = 'Tes Layout';
+    $data['subtitle'] = 'Halaman Uji Coba Template';
+    // Data user minimal untuk diteruskan ke template
+    $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+    if (empty($data['user'])) { // Jika tidak ada session, buat array user kosong agar tidak error di template
+        $data['user'] = ['name' => 'Guest', 'image' => 'default.jpg', 'role_id' => 0, 'role_name' => 'Guest'];
+    }
+
+
+    log_message('debug', 'TES LAYOUT - Memulai load view header.');
+    $this->load->view('templates/header', $data);
+
+    // Buat view tes_konten.php
+    log_message('debug', 'TES LAYOUT - Memulai load view tes_konten.');
+    $this->load->view('user/tes_konten', $data); // View konten yang SANGAT sederhana
+
+    log_message('debug', 'TES LAYOUT - Memulai load view footer.');
+    $this->load->view('templates/footer', $data);
+    log_message('debug', 'TES LAYOUT - Semua view selesai di-load.');
+}
 
 } // End class User
