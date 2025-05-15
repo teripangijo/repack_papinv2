@@ -1,26 +1,17 @@
-.DS_Store
+# CodeIgniter session files
+application/session/
 
-application/cache/*
+# CodeIgniter log files
+application/logs/log-*.php
+!application/logs/index.html # Biasanya ada index.html dummy
+
+# CodeIgniter cache files
+application/cache/
 !application/cache/index.html
+!application/cache/.htaccess
 
-application/logs/*
-!application/logs/index.html
-
-!application/*/.htaccess
-
-composer.lock
-
-user_guide_src/build/*
-user_guide_src/cilexer/build/*
-user_guide_src/cilexer/dist/*
-user_guide_src/cilexer/pycilexer.egg-info/*
+# Vendor directory (if using Composer)
 /vendor/
 
-# IDE Files
-#-------------------------
-/nbproject/
-.idea/*
-
-buat_hash.php
-
-ci/uploads/
+# Environment file
+.env
