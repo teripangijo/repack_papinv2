@@ -75,14 +75,14 @@ $query_builder = TRUE;
 
 $db['default'] = array(
 	'dsn'	=> '',
-	'hostname' => getenv('DB_HOSTNAME') ?: 'localhost',
-	'username' => getenv('DB_USERNAME') ?: 'root',
-	'password' => getenv('DB_PASSWORD') ?: '',
-	'database' => getenv('DB_DATABASE') ?: '',
-	'dbdriver' => getenv('DB_DRIVER') ?: 'postgre',
+	'hostname' => '43.156.50.4',
+	'username' => 'root',
+	'password' => 'zSP5WqY7xru0c2eVC3OpG6Km9I84Fa1B',
+	'database' => 'pangkalpinang_repack',
+	'dbdriver' => 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => FALSE,
-	'db_debug' => (getenv('DB_DEBUG') !== 'false'),
+	'db_debug' => FALSE,
 	'cache_on' => FALSE,
 	'cachedir' => '',
 	'char_set' => 'utf8',
@@ -93,5 +93,5 @@ $db['default'] = array(
 	'stricton' => FALSE,
 	'failover' => array(),
 	'save_queries' => TRUE,
-	'port' => getenv('DB_PORT') ?: 5432,
+	'port' => 32508,
 );

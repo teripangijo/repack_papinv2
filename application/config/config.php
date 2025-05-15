@@ -23,7 +23,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | a PHP script and you can easily do that on your own.
 |
 */
-$config['base_url'] = getenv('BASE_URL');
+$config['base_url'] = 'https://repack-papin.srtkanwilsumbagtim.my.id/';
 
 /*
 |--------------------------------------------------------------------------
@@ -324,7 +324,7 @@ $config['cache_query_string'] = FALSE;
 | https://codeigniter.com/user_guide/libraries/encryption.html
 |
 */
-$config['encryption_key'] = getenv('ENCRYPTION_KEY');
+$config['encryption_key'] = 'j9Q1ZJcDhvBI!q9SSq@x%W3DyE%9DgUi';
 /*
 |--------------------------------------------------------------------------
 | Session Variables
