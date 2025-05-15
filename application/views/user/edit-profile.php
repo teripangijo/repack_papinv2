@@ -1,191 +1,287 @@
 <?php
-// Definisikan nilai default untuk semua field dari user_perusahaan
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+// Variabel dari Controller:
+// $user (array): Data user login
+// $user_perusahaan (array): Data perusahaan, bisa kosong jika baru
+// $is_activating (boolean): True jika $user_perusahaan kosong
+// $daftar_kuota_barang_user (array): Daftar kuota barang (jika !$is_activating)
+// $title, $subtitle
+// $upload_error (dari flashdata jika ada)
+
+// --- Inisialisasi Variabel untuk Form ---
 $default_nama_pers = '';
 $default_npwp = '';
 $default_alamat = '';
 $default_telp = '';
 $default_pic = '';
 $default_jabatan_pic = '';
-$default_no_skep = '';
-$default_quota = '';
-$existing_ttd_file = null; 
+$default_no_skep_fasilitas = ''; // Untuk SKEP Fasilitas Umum
+$existing_ttd_file = null;
+$existing_skep_fasilitas_file = null;
 
-// Jika $user_perusahaan ada dan merupakan array, isi nilai default dari sana
 if (isset($user_perusahaan) && is_array($user_perusahaan) && !empty($user_perusahaan)) {
-    $default_nama_pers = isset($user_perusahaan['NamaPers']) ? $user_perusahaan['NamaPers'] : '';
-    $default_npwp = isset($user_perusahaan['npwp']) ? $user_perusahaan['npwp'] : '';
-    $default_alamat = isset($user_perusahaan['alamat']) ? $user_perusahaan['alamat'] : '';
-    $default_telp = isset($user_perusahaan['telp']) ? $user_perusahaan['telp'] : '';
-    $default_pic = isset($user_perusahaan['pic']) ? $user_perusahaan['pic'] : '';
-    $default_jabatan_pic = isset($user_perusahaan['jabatanPic']) ? $user_perusahaan['jabatanPic'] : '';
-    $default_no_skep = isset($user_perusahaan['NoSkep']) ? $user_perusahaan['NoSkep'] : '';
-    $default_quota = isset($user_perusahaan['quota']) ? $user_perusahaan['quota'] : '';
-    $existing_ttd_file = isset($user_perusahaan['ttd']) ? $user_perusahaan['ttd'] : null; 
+    $default_nama_pers = $user_perusahaan['NamaPers'] ?? '';
+    $default_npwp = $user_perusahaan['npwp'] ?? '';
+    $default_alamat = $user_perusahaan['alamat'] ?? '';
+    $default_telp = $user_perusahaan['telp'] ?? '';
+    $default_pic = $user_perusahaan['pic'] ?? '';
+    $default_jabatan_pic = $user_perusahaan['jabatanPic'] ?? '';
+    $default_no_skep_fasilitas = $user_perusahaan['NoSkepFasilitas'] ?? '';
+    $existing_ttd_file = $user_perusahaan['ttd'] ?? null;
+    $existing_skep_fasilitas_file = $user_perusahaan['FileSkepFasilitas'] ?? null;
 }
 
-// Ambil data user (termasuk nama file gambar saat ini)
-$current_user_image = isset($user['image']) ? $user['image'] : 'default.jpg'; // Ambil dari $user
+$current_user_image = isset($user['image']) ? $user['image'] : 'default.jpg';
+// !!! GANTI 'uploads/kop/' DENGAN 'uploads/profile_images/' JIKA ITU PATH YANG BENAR UNTUK FOTO PROFIL/LOGO USER !!!
+$profileImagePath = base_url('uploads/profile_images/') . htmlspecialchars($current_user_image);
+$fallbackImagePath = base_url('assets/img/default-avatar.png'); // Sediakan gambar fallback
 
+$form_action_url = site_url('user/edit');
 ?>
-<div class="container-fluid">
 
-    <h1 class="h3 mb-4 text-gray-800"> <?= isset($subtitle) ? htmlspecialchars($subtitle) : 'Edit Profile'; ?></h1>
+<div class="container-fluid"> <?php // Container-fluid utama untuk view ini ?>
 
-    <!-- <?php
-        // Menampilkan pesan flashdata (sukses atau error umum dari controller)
-        if ($this->session->flashdata('message')) {
-            echo $this->session->flashdata('message');
-        }
-        // Menampilkan error upload spesifik jika ada
-        if (isset($upload_error)) {
-             echo '<div class="alert alert-danger" role="alert">' . $upload_error . '</div>';
-        }
-    ?> -->
+    <h1 class="h3 mb-4 text-gray-800"> <?= isset($subtitle) ? htmlspecialchars($subtitle) : 'Edit Profil & Perusahaan'; ?></h1>
 
-    <?php // Menampilkan Status dalam Box Alert ?>
+    <?php
+    // if ($this->session->flashdata('message')) { echo $this->session->flashdata('message'); }
+    if (validation_errors()) { echo '<div class="alert alert-danger mt-3" role="alert">' . validation_errors() . '</div>'; }
+    if (isset($upload_error) && !empty($upload_error)) { echo '<div class="alert alert-danger mt-3" role="alert">' . $upload_error . '</div>'; }
+    ?>
+
     <?php if (isset($user['is_active'])) : ?>
-        <?php if ($user['is_active'] == 1) : ?>
-            <div class="alert alert-success" role="alert">
-                <h5 class="alert-heading mb-0">Status: Active</h5>
-            </div>
+        <?php if ($user['is_active'] == 1 && !$is_activating) : ?>
+            <div class="alert alert-success" role="alert"><h5 class="alert-heading mb-0"><i class="fas fa-check-circle"></i> Status Akun: Aktif</h5><p class="mb-0 small">Profil perusahaan Anda sudah lengkap.</p></div>
+        <?php elseif ($user['is_active'] == 1 && $is_activating) : ?>
+            <div class="alert alert-info" role="alert"><h5 class="alert-heading"><i class="fas fa-building"></i> Lengkapi Profil Perusahaan</h5><p class="mb-0 small">Akun Anda sudah aktif, namun silakan lengkapi data perusahaan di bawah ini.</p></div>
         <?php else : ?>
-            <div class="alert alert-warning" role="alert">
-                 <h5 class="alert-heading">Status: Not Active!</h5>
-                 <p class="mb-0">Please complete your profile data below to activate your account.</p>
-            </div>
+            <div class="alert alert-warning" role="alert"><h5 class="alert-heading"><i class="fas fa-exclamation-triangle"></i> Status Akun: Belum Aktif!</h5><p class="mb-0 small">Mohon lengkapi data profil dan perusahaan di bawah ini untuk mengaktifkan akun.</p></div>
         <?php endif; ?>
     <?php endif; ?>
     <hr>
 
-    <?php // PENTING: Gunakan form_open_multipart karena ada input file ?>
-    <?php echo form_open_multipart(base_url('user/edit')); ?>
+    <?php echo form_open_multipart($form_action_url); ?>
 
-        <?php // Bagian Edit Info Dasar Pengguna (Nama & Gambar) ?>
-        <div class="row mb-3">
-            <div class="col-md-8">
-                <div class="form-group">
-                    <label for="name">Nama Lengkap</label>
-                    <input type="text" class="form-control <?= (form_error('name')) ? 'is-invalid' : ''; ?>" id="name" name="name" value="<?= set_value('name', isset($user['name']) ? $user['name'] : ''); ?>" readonly> <?php // Nama mungkin tidak boleh diedit? Jika boleh, hapus readonly ?>
-                    <?= form_error('name', '<small class="text-danger pl-1">', '</small>'); ?>
+    <div class="card shadow mb-4">
+        <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Informasi Akun Pengguna</h6></div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="form-group">
+                        <label for="name">Nama Lengkap (Kontak Utama)</label>
+                        <input type="text" class="form-control" id="name" name="name" value="<?= htmlspecialchars($user['name'] ?? ''); ?>" readonly title="Nama lengkap tidak dapat diubah.">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email (Login)</label>
+                        <input type="email" class="form-control" id="email" name="email" value="<?= htmlspecialchars($user['email'] ?? ''); ?>" readonly title="Email login tidak dapat diubah.">
+                    </div>
                 </div>
-                 <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" class="form-control" id="email" name="email" value="<?= isset($user['email']) ? $user['email'] : ''; ?>" readonly> <?php // Email biasanya tidak boleh diedit ?>
+                <div class="col-md-4 text-center">
+                    <label>Gambar Profil/Logo Perusahaan Saat Ini</label><br>
+                    <img src="<?= $profileImagePath; ?>" onerror="this.onerror=null; this.src='<?= $fallbackImagePath; ?>';" class="img-thumbnail mb-2" alt="Logo Perusahaan" style="width: 150px; height: 150px; object-fit: contain;">
+                    <div class="custom-file">
+                        <input type="file" class="custom-file-input <?= (form_error('profile_image')) ? 'is-invalid' : ''; ?>" id="profile_image" name="profile_image" accept="image/jpeg,image/png,image/gif">
+                        <label class="custom-file-label text-left" for="profile_image"><?= ($current_user_image != 'default.jpg' && !empty($current_user_image)) ? htmlspecialchars($current_user_image) : 'Ganti Gambar/Logo...'; ?></label>
+                    </div>
+                    <?= form_error('profile_image', '<small class="text-danger d-block text-center mt-1">', '</small>'); ?>
+                    <small class="form-text text-muted">Format: JPG, PNG, GIF. Maks 1MB.</small>
                 </div>
             </div>
-            <div class="col-md-4 text-center">
-                 <label>Gambar Profil Saat Ini</label><br>
-                 <img src="<?= base_url('uploads/kop/') . htmlspecialchars($current_user_image); ?>" class="img-thumbnail mb-2" alt="Profile Image" style="max-width: 150px; max-height: 150px;">
-                 <div class="custom-file">
-                     <input type="file" class="custom-file-input <?= (form_error('profile_image')) ? 'is-invalid' : ''; ?>" id="profile_image" name="profile_image" aria-describedby="profileImageHelp">
-                     <label class="custom-file-label text-left" for="profile_image">Ganti Gambar...</label>
-                     <?= form_error('profile_image', '<small class="text-danger">', '</small>'); ?>
-                 </div>
-                 <small id="profileImageHelp" class="form-text text-muted">Format: jpg, png, gif. Max: 1MB.</small>
-            </div>
         </div>
-        <hr>
+    </div>
 
-        <h5 class="text-gray-800 mb-3">Informasi Perusahaan</h5>
-        <div class="form-row">
-            <div class="form-group col-md-6">
-                <label for="NamaPers">Nama Perusahaan <span class="text-danger">*</span></label>
-                <input type="text" class="form-control <?= (form_error('NamaPers')) ? 'is-invalid' : ''; ?>" id="NamaPers" name="NamaPers" placeholder="Nama Perusahaan" value="<?= set_value('NamaPers', $default_nama_pers) ?>" required>
-                <?= form_error('NamaPers', '<small class="text-danger pl-1">', '</small>'); ?>
+    <div class="card shadow mb-4">
+        <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Informasi Detail Perusahaan</h6></div>
+        <div class="card-body">
+            <div class="form-row">
+                <div class="form-group col-md-6"><label for="NamaPers">Nama Perusahaan <span class="text-danger">*</span></label><input type="text" class="form-control <?= (form_error('NamaPers')) ? 'is-invalid' : ''; ?>" id="NamaPers" name="NamaPers" placeholder="Nama Lengkap Perusahaan" value="<?= set_value('NamaPers', $default_nama_pers) ?>" required><?= form_error('NamaPers', '<small class="text-danger pl-1">', '</small>'); ?></div>
+                <div class="form-group col-md-6"><label for="npwp">NPWP <span class="text-danger">*</span></label><input type="text" class="form-control <?= (form_error('npwp')) ? 'is-invalid' : ''; ?>" id="npwp" name="npwp" placeholder="00.000.000.0-000.000" value="<?= set_value('npwp', $default_npwp) ?>" required><?= form_error('npwp', '<small class="text-danger pl-1">', '</small>'); ?></div>
             </div>
-            <div class="form-group col-md-6">
-                <label for="npwp">NPWP <span class="text-danger">*</span></label>
-                <input type="text" class="form-control <?= (form_error('npwp')) ? 'is-invalid' : ''; ?>" id="npwp" name="npwp" placeholder="NPWP" value="<?= set_value('npwp', $default_npwp) ?>" required>
-                 <?= form_error('npwp', '<small class="text-danger pl-1">', '</small>'); ?>
+            <div class="form-group"><label for="alamat">Alamat Lengkap Perusahaan <span class="text-danger">*</span></label><textarea class="form-control <?= (form_error('alamat')) ? 'is-invalid' : ''; ?>" id="alamat" name="alamat" placeholder="Alamat lengkap sesuai domisili perusahaan" rows="3" required><?= set_value('alamat', $default_alamat) ?></textarea><?= form_error('alamat', '<small class="text-danger pl-1">', '</small>'); ?></div>
+            <div class="form-group"><label for="telp">Nomor Telepon Perusahaan <span class="text-danger">*</span></label><input type="text" class="form-control <?= (form_error('telp')) ? 'is-invalid' : ''; ?>" id="telp" name="telp" placeholder="Contoh: 021-xxxxxxx atau 08xxxxxxxxxx" value="<?= set_value('telp', $default_telp) ?>" required><?= form_error('telp', '<small class="text-danger pl-1">', '</small>'); ?></div>
+            <div class="form-row">
+                <div class="form-group col-md-6"><label for="pic">Nama PIC (Person In Charge) <span class="text-danger">*</span></label><input type="text" class="form-control <?= (form_error('pic')) ? 'is-invalid' : ''; ?>" id="pic" name="pic" placeholder="Nama lengkap PIC" value="<?= set_value('pic', $default_pic) ?>" required><?= form_error('pic', '<small class="text-danger pl-1">', '</small>'); ?></div>
+                <div class="form-group col-md-6"><label for="jabatanPic">Jabatan PIC <span class="text-danger">*</span></label><input type="text" class="form-control <?= (form_error('jabatanPic')) ? 'is-invalid' : ''; ?>" id="jabatanPic" name="jabatanPic" placeholder="Jabatan PIC di perusahaan" value="<?= set_value('jabatanPic', $default_jabatan_pic) ?>" required><?= form_error('jabatanPic', '<small class="text-danger pl-1">', '</small>'); ?></div>
             </div>
-        </div>
-        <div class="form-group">
-            <label for="alamat">Alamat <span class="text-danger">*</span></label>
-            <input type="text" class="form-control <?= (form_error('alamat')) ? 'is-invalid' : ''; ?>" id="alamat" name="alamat" placeholder="Alamat" value="<?= set_value('alamat', $default_alamat) ?>" required>
-             <?= form_error('alamat', '<small class="text-danger pl-1">', '</small>'); ?>
-        </div>
-        <div class="form-group">
-            <label for="telp">Nomor Telp <span class="text-danger">*</span></label>
-            <input type="text" class="form-control <?= (form_error('telp')) ? 'is-invalid' : ''; ?>" id="telp" name="telp" placeholder="No Telp" value="<?= set_value('telp', $default_telp) ?>" required>
-             <?= form_error('telp', '<small class="text-danger pl-1">', '</small>'); ?>
-        </div>
-        <div class="form-row">
-            <div class="form-group col-md-6">
-                <label for="pic">Nama PIC <span class="text-danger">*</span></label>
-                <input type="text" class="form-control <?= (form_error('pic')) ? 'is-invalid' : ''; ?>" id="pic" name="pic" placeholder="PIC" value="<?= set_value('pic', $default_pic) ?>" required>
-                 <?= form_error('pic', '<small class="text-danger pl-1">', '</small>'); ?>
+             <div class="form-group">
+                <label for="NoSkepFasilitas">No. SKEP Fasilitas Umum (Jika Ada)</label>
+                <input type="text" class="form-control <?= (form_error('NoSkepFasilitas')) ? 'is-invalid' : ''; ?>" id="NoSkepFasilitas" name="NoSkepFasilitas" placeholder="Nomor SKEP Fasilitas (KB, GB, dll.)" value="<?= set_value('NoSkepFasilitas', $default_no_skep_fasilitas); ?>">
+                <?= form_error('NoSkepFasilitas', '<small class="text-danger pl-1">', '</small>'); ?>
             </div>
-            <div class="form-group col-md-6">
-                <label for="jabatanPic">Jabatan PIC <span class="text-danger">*</span></label>
-                <input type="text" class="form-control <?= (form_error('jabatanPic')) ? 'is-invalid' : ''; ?>" id="jabatanPic" name="jabatanPic" placeholder="Jabatan" value="<?= set_value('jabatanPic', $default_jabatan_pic) ?>" required>
-                 <?= form_error('jabatanPic', '<small class="text-danger pl-1">', '</small>'); ?>
-            </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group col-md-6">
-                <label for="NoSkep">No Skep</label>
-                <input type="text" class="form-control <?= (form_error('NoSkep')) ? 'is-invalid' : ''; ?>" id="NoSkep" name="NoSkep" placeholder="No Skep (Jika Ada)" value="<?= set_value('NoSkep', $default_no_skep) ?>">
-                 <?= form_error('NoSkep', '<small class="text-danger pl-1">', '</small>'); ?>
-            </div>
-            <div class="form-group col-md-6">
-                <label for="quota">Quota</label>
-                <input type="number" class="form-control <?= (form_error('quota')) ? 'is-invalid' : ''; ?>" id="quota" name="quota" placeholder="Quota (Jika Ada)" value="<?= set_value('quota', $default_quota) ?>">
-                 <?= form_error('quota', '<small class="text-danger pl-1">', '</small>'); ?>
-            </div>
-        </div>
-
-        <hr>
-        <h5 class="text-gray-800 mb-3">Upload Dokumen Perusahaan</h5>
-
-        <div class="form-group">
-            <label for="ttd">
-                Upload File Tanda Tangan PIC
-                <?php if (empty($user_perusahaan)): // Jika aktivasi, wajib ?>
-                    <span class="text-danger">*</span>
-                <?php else: // Jika edit, opsional ?>
-                    (Kosongkan jika tidak ingin mengubah)
+            <div class="form-group">
+                <label for="file_skep_fasilitas">Upload File SKEP Fasilitas (Opsional, PDF/Gambar maks 2MB)</label>
+                <div class="custom-file">
+                     <input type="file" class="custom-file-input <?= (form_error('file_skep_fasilitas')) ? 'is-invalid' : ''; ?>" id="file_skep_fasilitas" name="file_skep_fasilitas" accept=".pdf,.jpg,.jpeg,.png">
+                     <label class="custom-file-label" for="file_skep_fasilitas"><?= $existing_skep_fasilitas_file ? htmlspecialchars($existing_skep_fasilitas_file) : 'Pilih file SKEP Fasilitas...'; ?></label>
+                </div>
+                <?= form_error('file_skep_fasilitas', '<small class="text-danger d-block mt-1">', '</small>'); ?>
+                <?php if ($existing_skep_fasilitas_file): ?>
+                    <small class="form-text text-info mt-1">File SKEP Fasilitas saat ini: <a href="<?= base_url('uploads/skep_fasilitas/' . htmlspecialchars($existing_skep_fasilitas_file)); ?>" target="_blank"><?= htmlspecialchars($existing_skep_fasilitas_file); ?></a></small>
                 <?php endif; ?>
-            </label>
-            <div class="custom-file">
-                 <input type="file" class="custom-file-input <?= (form_error('ttd')) ? 'is-invalid' : ''; ?>" id="ttd" name="ttd" aria-describedby="ttdHelp">
-                 <label class="custom-file-label" for="ttd">Choose file...</label>
-                 <div class="invalid-feedback"><?= form_error('ttd'); ?></div>
             </div>
-            <small id="ttdHelp" class="form-text text-muted">Format: jpg, png, pdf. Max: 1MB.</small>
-            <?php if ($existing_ttd_file): ?>
-                <small class="form-text text-muted">File saat ini: <?= htmlspecialchars($existing_ttd_file); ?></small>
-            <?php endif; ?>
         </div>
+    </div>
 
-        <button type="submit" class="btn btn-primary btn-user btn-block mt-4">
-             <?php echo (empty($user_perusahaan)) ? 'Simpan Data & Aktifkan Akun' : 'Update Data Profil & Perusahaan'; ?>
-        </button>
+    <?php // --- BAGIAN INPUT KUOTA AWAL SAAT AKTIVASI --- ?>
+    <?php if (isset($is_activating) && $is_activating): ?>
+    <div class="card shadow mb-4">
+        <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Input Kuota Awal (Jika Sudah Memiliki SKEP & Kuota Sebelumnya)</h6></div>
+        <div class="card-body">
+            <p class="small text-muted">Jika perusahaan Anda sudah memiliki SKEP dan penetapan kuota sebelumnya (di luar sistem ini), silakan masukkan detailnya di bawah untuk **satu jenis barang**. Ini hanya untuk pencatatan awal. Jika ada lebih dari satu jenis barang/SKEP dengan kuota berbeda, Anda bisa menambahkannya melalui menu "Pengajuan Kuota" setelah profil ini disimpan, atau hubungi Admin.</p>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="initial_skep_no">Nomor SKEP Kuota Awal <span class="text-info">(Wajib jika input kuota)</span></label>
+                    <input type="text" class="form-control <?= (form_error('initial_skep_no')) ? 'is-invalid' : ''; ?>" id="initial_skep_no" name="initial_skep_no" value="<?= set_value('initial_skep_no'); ?>" placeholder="No. SKEP terkait kuota awal">
+                    <?= form_error('initial_skep_no', '<small class="text-danger pl-1">', '</small>'); ?>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="initial_skep_tgl">Tanggal SKEP Kuota Awal <span class="text-info">(Wajib jika input kuota)</span></label>
+                    <input type="date" class="form-control <?= (form_error('initial_skep_tgl')) ? 'is-invalid' : ''; ?>" id="initial_skep_tgl" name="initial_skep_tgl" value="<?= set_value('initial_skep_tgl'); ?>">
+                    <?= form_error('initial_skep_tgl', '<small class="text-danger pl-1">', '</small>'); ?>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-7">
+                    <label for="initial_nama_barang">Nama Barang untuk Kuota Awal <span class="text-info">(Wajib jika input kuota)</span></label>
+                    <input type="text" class="form-control <?= (form_error('initial_nama_barang')) ? 'is-invalid' : ''; ?>" id="initial_nama_barang" name="initial_nama_barang" value="<?= set_value('initial_nama_barang'); ?>" placeholder="Contoh: Plastic Box, Fiber Pallet">
+                    <?= form_error('initial_nama_barang', '<small class="text-danger pl-1">', '</small>'); ?>
+                </div>
+                <div class="form-group col-md-5">
+                    <label for="initial_kuota_jumlah">Jumlah Kuota Awal (Unit) <span class="text-info">(Wajib jika input kuota)</span></label>
+                    <input type="number" class="form-control <?= (form_error('initial_kuota_jumlah')) ? 'is-invalid' : ''; ?>" id="initial_kuota_jumlah" name="initial_kuota_jumlah" value="<?= set_value('initial_kuota_jumlah'); ?>" min="1" placeholder="Jumlah unit">
+                    <?= form_error('initial_kuota_jumlah', '<small class="text-danger pl-1">', '</small>'); ?>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="initial_skep_file">Upload File SKEP Kuota Awal (Opsional, PDF/Gambar maks 2MB)</label>
+                <div class="custom-file">
+                     <input type="file" class="custom-file-input <?= (form_error('initial_skep_file')) ? 'is-invalid' : ''; ?>" id="initial_skep_file" name="initial_skep_file" accept=".pdf,.jpg,.jpeg,.png">
+                     <label class="custom-file-label" for="initial_skep_file">Pilih file SKEP Kuota Awal...</label>
+                </div>
+                <?= form_error('initial_skep_file', '<small class="text-danger d-block mt-1">', '</small>'); ?>
+            </div>
+            <small class="form-text text-info">Field di atas wajib diisi jika Anda ingin mencatatkan kuota awal untuk satu jenis barang.</small>
+        </div>
+    </div>
+    <?php endif; ?>
+    <?php // --- AKHIR BAGIAN INPUT KUOTA AWAL --- ?>
+
+    <?php // --- MENAMPILKAN DAFTAR KUOTA PER BARANG YANG SUDAH ADA (JIKA BUKAN AKTIVASI) --- ?>
+    <?php if (isset($is_activating) && !$is_activating && isset($daftar_kuota_barang_user)): ?>
+    <div class="card shadow mb-4">
+        <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Daftar Kuota per Jenis Barang Saat Ini (Read-Only)</h6></div>
+        <div class="card-body">
+            <?php if(!empty($daftar_kuota_barang_user)): ?>
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered table-hover" id="dataTableKuotaBarangUser" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Nama Barang</th>
+                            <th class="text-right">Kuota Awal Diberikan</th>
+                            <th class="text-right">Sisa Kuota</th>
+                            <th>No. SKEP Asal</th>
+                            <th>Tgl. SKEP Asal</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach($daftar_kuota_barang_user as $kuota_brg): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($kuota_brg['nama_barang']); ?></td>
+                            <td class="text-right"><?= htmlspecialchars(number_format($kuota_brg['initial_quota_barang'] ?? 0, 0, ',', '.')); ?> Unit</td>
+                            <td class="text-right font-weight-bold <?= (($kuota_brg['remaining_quota_barang'] ?? 0) <= 0) ? 'text-danger' : 'text-success'; ?>"><?= htmlspecialchars(number_format($kuota_brg['remaining_quota_barang'] ?? 0, 0, ',', '.')); ?> Unit</td>
+                            <td><?= htmlspecialchars($kuota_brg['nomor_skep_asal'] ?? '-'); ?></td>
+                            <td><?= (isset($kuota_brg['tanggal_skep_asal']) && $kuota_brg['tanggal_skep_asal'] != '0000-00-00') ? date('d M Y', strtotime($kuota_brg['tanggal_skep_asal'])) : '-'; ?></td>
+                            <td>
+                                <?php
+                                $status_kb_badge = 'secondary'; $status_kb_text = ucfirst(htmlspecialchars($kuota_brg['status_kuota_barang'] ?? 'N/A'));
+                                if (isset($kuota_brg['status_kuota_barang'])) {
+                                    if ($kuota_brg['status_kuota_barang'] == 'active') $status_kb_badge = 'success';
+                                    else if ($kuota_brg['status_kuota_barang'] == 'habis') $status_kb_badge = 'danger';
+                                    else if ($kuota_brg['status_kuota_barang'] == 'expired') $status_kb_badge = 'warning';
+                                }
+                                ?>
+                                <span class="badge badge-<?= $status_kb_badge; ?>"><?= $status_kb_text; ?></span>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php else: ?>
+                <p class="text-muted"><em>Belum ada data kuota per jenis barang untuk perusahaan ini.</em></p>
+            <?php endif; ?>
+            <small class="form-text text-muted mt-2">Daftar kuota di atas dikelola oleh Administrator. Anda dapat mengajukan penambahan kuota melalui menu "Pengajuan Kuota".</small>
+        </div>
+    </div>
+    <?php endif; ?>
+    <?php // --- AKHIR BAGIAN DAFTAR KUOTA PER BARANG --- ?>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Upload Dokumen Perusahaan</h6></div>
+        <div class="card-body">
+            <div class="form-group">
+                <label for="ttd">
+                    Upload File Tanda Tangan PIC (Gambar/PDF, maks 1MB)
+                    <?php if (isset($is_activating) && $is_activating): ?><span class="text-danger">*</span><?php else: ?> (Kosongkan jika tidak ingin mengubah)<?php endif; ?>
+                </label>
+                <div class="custom-file">
+                     <input type="file" class="custom-file-input <?= (form_error('ttd')) ? 'is-invalid' : ''; ?>" id="ttd" name="ttd" aria-describedby="ttdHelp" accept="image/jpeg,image/png,application/pdf">
+                     <label class="custom-file-label" for="ttd"><?= $existing_ttd_file ? htmlspecialchars($existing_ttd_file) : 'Pilih file TTD PIC...'; ?></label>
+                </div>
+                 <?= form_error('ttd', '<small class="text-danger d-block mt-1">', '</small>'); ?>
+                <small id="ttdHelp" class="form-text text-muted">Format: JPG, PNG, PDF. Maksimum ukuran 1MB.</small>
+                <?php if ($existing_ttd_file): ?>
+                    <small class="form-text text-info mt-1">File TTD saat ini: <a href="<?= base_url('uploads/ttd/' . htmlspecialchars($existing_ttd_file)); // Pastikan path ini benar ?>" target="_blank"><?= htmlspecialchars($existing_ttd_file); ?></a></small>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-user btn-block mt-4 mb-4">
+         <i class="fas fa-save fa-fw"></i> <?php echo (isset($is_activating) && $is_activating) ? 'Simpan Data & Aktifkan Akun' : 'Update Data Profil & Perusahaan'; ?>
+    </button>
     <?php echo form_close(); ?>
 
-</div>
-<?php // Tambahkan script kecil untuk menampilkan nama file di input file custom Bootstrap ?>
+</div> <?php // Penutup untuk <div class="container-fluid"> yang dibuka di awal file ini. ?>
+
 <script>
-// Script untuk menampilkan nama file pada custom file input Bootstrap 4
 document.addEventListener('DOMContentLoaded', function () {
+    // Skrip untuk custom file input
     var fileInputs = document.querySelectorAll('.custom-file-input');
     Array.prototype.forEach.call(fileInputs, function(input) {
+        var label = input.nextElementSibling;
+        // Simpan teks original dari atribut data atau dari innerHTML jika belum ada
+        var originalLabelText = label.getAttribute('data-original-text') || label.innerHTML;
+        label.setAttribute('data-original-text', originalLabelText); // Pastikan tersimpan
+
         input.addEventListener('change', function (e) {
-            // Cek apakah file dipilih
             if (e.target.files.length > 0) {
-                var fileName = e.target.files[0].name;
-                var nextSibling = e.target.nextElementSibling;
-                // Pastikan nextSibling ada dan merupakan label
-                if (nextSibling && nextSibling.classList.contains('custom-file-label')) {
-                    nextSibling.innerText = fileName;
-                }
+                label.innerText = e.target.files[0].name;
             } else {
-                // Jika tidak ada file dipilih (misalnya dibatalkan), kembalikan ke teks default
-                 var nextSibling = e.target.nextElementSibling;
-                 if (nextSibling && nextSibling.classList.contains('custom-file-label')) {
-                    nextSibling.innerText = 'Choose file...';
-                }
+                label.innerText = originalLabelText;
             }
         });
     });
+
+    // Inisialisasi DataTables untuk tabel kuota barang jika ada dan library sudah dimuat
+    if (typeof $ !== 'undefined' && typeof $.fn.DataTable !== 'undefined' && $('#dataTableKuotaBarangUser').length) {
+        $('#dataTableKuotaBarangUser').DataTable({
+            "order": [[0, "asc"]],
+            "language": {
+                "emptyTable": "Tidak ada data kuota per jenis barang untuk ditampilkan.",
+                "zeroRecords": "Tidak ada data yang cocok ditemukan",
+                "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ entri",
+                "infoEmpty": "Menampilkan 0 sampai 0 dari 0 entri",
+                "infoFiltered": "(disaring dari _MAX_ total entri)",
+                "lengthMenu": "Tampilkan _MENU_ entri",
+                "search": "Cari:",
+                "paginate": { "first": "Awal", "last": "Akhir", "next": "Berikutnya", "previous": "Sebelumnya"}
+            },
+            "pageLength": 5, // Contoh: tampilkan 5 entri per halaman
+            "lengthMenu": [ [5, 10, 25, -1], [5, 10, 25, "Semua"] ]
+        });
+    }
 });
 </script>

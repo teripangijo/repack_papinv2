@@ -79,121 +79,154 @@ class User extends CI_Controller
         $this->load->view('templates/footer');
     }
 
-    public function edit()
+    public function edit() // Method untuk menampilkan dan memproses form edit profil & perusahaan
     {
-        // echo "CONTROLLER User->edit() DIEKSEKUSI PADA " . date('Y-m-d H:i:s');
-        // die();
         $data['title'] = 'Returnable Package';
-        $data['subtitle'] = 'Edit Profile & Perusahaan'; 
+        $data['subtitle'] = 'Edit Profil & Perusahaan';
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
-        $id = $data['user']['id']; 
+        $id_user_login = $data['user']['id'];
 
-        $data['user_perusahaan'] = $this->db->get_where('user_perusahaan', ['id_pers' => $id])->row_array();
+        $data['user_perusahaan'] = $this->db->get_where('user_perusahaan', ['id_pers' => $id_user_login])->row_array();
+        $is_activating = empty($data['user_perusahaan']); // True jika profil perusahaan belum ada (aktivasi)
+        $data['is_activating'] = $is_activating; // Kirim ke view
 
-        $this->form_validation->set_rules('NamaPers', 'Nama Perusahaan', 'trim|required');
-        $this->form_validation->set_rules('npwp', 'NPWP', 'trim|required');
-        $this->form_validation->set_rules('alamat', 'Alamat', 'trim|required');
-        $this->form_validation->set_rules('telp', 'Telp', 'trim|required');
-        $this->form_validation->set_rules('pic', 'PIC', 'trim|required');
-        $this->form_validation->set_rules('jabatanPic', 'Jabatan PIC', 'trim|required');
-        
-        if (empty($data['user_perusahaan'])) { 
-            $this->form_validation->set_rules('quota', 'Kuota Awal', 'trim|required|numeric|greater_than_equal_to[0]',
-                ['greater_than_equal_to' => 'The {field} must be a number greater than or equal to 0.']
-            );
+        // Ambil daftar kuota per barang untuk ditampilkan jika profil sudah ada
+        if (!$is_activating) {
+            $this->db->select('nama_barang, initial_quota_barang, remaining_quota_barang, nomor_skep_asal, tanggal_skep_asal, status_kuota_barang');
+            $this->db->from('user_kuota_barang');
+            $this->db->where('id_pers', $id_user_login);
+            $this->db->order_by('nama_barang', 'ASC');
+            $data['daftar_kuota_barang_user'] = $this->db->get()->result_array();
         } else {
-            $this->form_validation->set_rules('quota', 'Kuota Awal', 'trim|numeric|greater_than_equal_to[0]',
-                ['greater_than_equal_to' => 'The {field} must be a number greater than or equal to 0.']
-            ); 
+            $data['daftar_kuota_barang_user'] = [];
         }
 
-        if (empty($data['user_perusahaan']) || (isset($_FILES['ttd']) && $_FILES['ttd']['error'] != UPLOAD_ERR_NO_FILE)) {
-            $this->form_validation->set_rules('ttd', 'Tanda Tangan', 'callback_file_check[ttd]');
+        // --- Aturan Validasi Form ---
+        $this->form_validation->set_rules('NamaPers', 'Nama Perusahaan', 'trim|required|max_length[100]');
+        $this->form_validation->set_rules('npwp', 'NPWP', 'trim|required|regex_match[/^[0-9]{2}\.[0-9]{3}\.[0-9]{3}\.[0-9]{1}-[0-9]{3}\.[0-9]{3}$/]', ['regex_match' => 'Format NPWP tidak valid. Contoh: 00.000.000.0-000.000']);
+        $this->form_validation->set_rules('alamat', 'Alamat Perusahaan', 'trim|required|max_length[255]');
+        $this->form_validation->set_rules('telp', 'Nomor Telepon Perusahaan', 'trim|required|numeric|max_length[15]');
+        $this->form_validation->set_rules('pic', 'Nama PIC', 'trim|required|max_length[100]');
+        $this->form_validation->set_rules('jabatanPic', 'Jabatan PIC', 'trim|required|max_length[100]');
+        $this->form_validation->set_rules('NoSkepFasilitas', 'No. SKEP Fasilitas Umum', 'trim|max_length[100]'); // Opsional
+
+        // Validasi untuk input kuota awal hanya saat aktivasi
+        if ($is_activating) {
+            // Hanya validasi jika salah satu field kuota awal diisi, untuk mengindikasikan user ingin input
+            if ($this->input->post('initial_skep_no') || $this->input->post('initial_skep_tgl') || $this->input->post('initial_nama_barang') || $this->input->post('initial_kuota_jumlah')) {
+                $this->form_validation->set_rules('initial_skep_no', 'Nomor SKEP Kuota Awal', 'trim|required|max_length[100]');
+                $this->form_validation->set_rules('initial_skep_tgl', 'Tanggal SKEP Kuota Awal', 'trim|required');
+                $this->form_validation->set_rules('initial_nama_barang', 'Nama Barang Kuota Awal', 'trim|required|max_length[100]');
+                $this->form_validation->set_rules('initial_kuota_jumlah', 'Jumlah Kuota Awal', 'trim|required|numeric|greater_than[0]');
+            }
+        }
+
+        // Validasi file
+        if ($is_activating || (isset($_FILES['ttd']) && $_FILES['ttd']['error'] != UPLOAD_ERR_NO_FILE)) {
+            // Jika aktivasi, TTD wajib. Jika edit, TTD wajib diupload jika field file dipilih.
+            $this->form_validation->set_rules('ttd', 'Tanda Tangan PIC', 'callback_file_check[ttd]');
         }
         if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] != UPLOAD_ERR_NO_FILE) {
-             $this->form_validation->set_rules('profile_image', 'Profile Image/Logo', 'callback_file_check[profile_image]');
+             $this->form_validation->set_rules('profile_image', 'Gambar Profil/Logo', 'callback_file_check[profile_image]');
         }
-        
+        if (isset($_FILES['file_skep_fasilitas']) && $_FILES['file_skep_fasilitas']['error'] != UPLOAD_ERR_NO_FILE) {
+            $this->form_validation->set_rules('file_skep_fasilitas', 'File SKEP Fasilitas', 'callback_file_check[file_skep_fasilitas]');
+        }
+        if ($is_activating && isset($_FILES['initial_skep_file']) && $_FILES['initial_skep_file']['error'] != UPLOAD_ERR_NO_FILE) {
+            $this->form_validation->set_rules('initial_skep_file', 'File SKEP Kuota Awal', 'callback_file_check[initial_skep_file]');
+        }
+
+
         if ($this->form_validation->run() == false) {
-            $data['upload_error'] = $this->session->flashdata('upload_error'); 
+            $data['upload_error'] = $this->session->flashdata('upload_error_detail'); // Gunakan nama flashdata spesifik
             $this->load->view('templates/header', $data);
             $this->load->view('templates/sidebar', $data);
             $this->load->view('templates/topbar', $data);
-            $this->load->view('user/edit-profile', $data); 
-            $this->load->view('templates/footer');
+            $this->load->view('user/edit-profile', $data);
+            $this->load->view('templates/footer', $data);
         } else {
-            $nama_file_ttd = null;
-            $nama_file_profile_image = null; 
-            $is_activating = empty($data['user_perusahaan']);
+            // --- Persiapan Nama File ---
+            $nama_file_ttd = $data['user_perusahaan']['ttd'] ?? null;
+            $nama_file_profile_image = $data['user']['image'] ?? 'default.jpg';
+            $nama_file_skep_fasilitas = $data['user_perusahaan']['FileSkepFasilitas'] ?? null;
+            $nama_file_initial_skep = null; // Untuk SKEP kuota awal barang
 
             // --- Proses Upload TTD ---
             if (isset($_FILES['ttd']) && $_FILES['ttd']['error'] != UPLOAD_ERR_NO_FILE) {
-                $upload_dir_relative_ttd = 'uploads/ttd/'; 
-                $upload_path_absolute_ttd = FCPATH . $upload_dir_relative_ttd;
-                if (!is_dir($upload_path_absolute_ttd)) { @mkdir($upload_path_absolute_ttd, 0777, true); }
-                if (!is_writable($upload_path_absolute_ttd)) {
-                    $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Upload error: TTD directory is not writable.</div>');
-                    redirect('user/edit'); return;
-                }
-                $config_ttd['upload_path']   = $upload_path_absolute_ttd;
-                $config_ttd['allowed_types'] = 'jpg|png|jpeg|pdf';
-                $config_ttd['max_size']      = '1024';
-                $config_ttd['encrypt_name']  = TRUE;
-                $this->upload->initialize($config_ttd, TRUE); 
+                $config_ttd = $this->_get_upload_config('./uploads/ttd/', 'jpg|png|jpeg|pdf', 1024); // 1MB
+                $this->upload->initialize($config_ttd, TRUE);
                 if ($this->upload->do_upload('ttd')) {
                     if (!$is_activating && !empty($data['user_perusahaan']['ttd']) && file_exists($config_ttd['upload_path'] . $data['user_perusahaan']['ttd'])) {
                         @unlink($config_ttd['upload_path'] . $data['user_perusahaan']['ttd']);
                     }
                     $nama_file_ttd = $this->upload->data('file_name');
                 } else {
-                    $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">TTD Upload Error: ' . $this->upload->display_errors('', '') . '</div>');
+                    $this->session->set_flashdata('upload_error_detail', $this->upload->display_errors());
+                    $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Upload TTD Gagal: ' . $this->upload->display_errors('', '') . '</div>');
                     redirect('user/edit'); return;
-                }
-            } else {
-                if (!$is_activating && !empty($data['user_perusahaan']['ttd'])) {
-                     $nama_file_ttd = $data['user_perusahaan']['ttd'];
                 }
             }
 
             // --- Proses Upload Gambar Profil (Logo Perusahaan) ---
             if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] != UPLOAD_ERR_NO_FILE) {
-                $upload_dir_relative_profile = 'uploads/kop/'; 
-                $upload_path_absolute_profile = FCPATH . $upload_dir_relative_profile;
-                if (!is_dir($upload_path_absolute_profile)) { @mkdir($upload_path_absolute_profile, 0777, true); }
-                if (!is_writable($upload_path_absolute_profile)) {
-                    $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Upload error: Profile image/logo directory is not writable.</div>');
-                    redirect('user/edit'); return;
-                }
-                $config_profile['upload_path']   = $upload_path_absolute_profile;
-                $config_profile['allowed_types'] = 'jpg|png|jpeg|gif'; 
-                $config_profile['max_size']      = '1024'; 
-                $config_profile['max_width']     = '1024'; 
-                $config_profile['max_height']    = '1024';
-                $config_profile['encrypt_name']  = TRUE; 
-                $this->upload->initialize($config_profile, TRUE); 
+                $config_profile = $this->_get_upload_config('./uploads/profile_images/', 'jpg|png|jpeg|gif', 1024, 1024, 1024); // Path diubah
+                $this->upload->initialize($config_profile, TRUE);
                 if ($this->upload->do_upload('profile_image')) {
                     $old_image = $data['user']['image'];
-                    if ($old_image != 'default.jpg' && file_exists($config_profile['upload_path'] . $old_image)) {
+                    if ($old_image != 'default.jpg' && !empty($old_image) && file_exists($config_profile['upload_path'] . $old_image)) {
                         @unlink($config_profile['upload_path'] . $old_image);
                     }
                     $nama_file_profile_image = $this->upload->data('file_name');
                 } else {
-                    $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Profile Image/Logo Upload Error: ' . $this->upload->display_errors('', '') . '</div>');
+                    $this->session->set_flashdata('upload_error_detail', $this->upload->display_errors());
+                    $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Upload Gambar Profil Gagal: ' . $this->upload->display_errors('', '') . '</div>');
                     redirect('user/edit'); return;
                 }
-            } else {
-                $nama_file_profile_image = $data['user']['image'];
             }
 
+            // --- Proses Upload File SKEP Fasilitas ---
+            if (isset($_FILES['file_skep_fasilitas']) && $_FILES['file_skep_fasilitas']['error'] != UPLOAD_ERR_NO_FILE) {
+                $config_skep_f = $this->_get_upload_config('./uploads/skep_fasilitas/', 'pdf|jpg|jpeg|png', 2048);
+                $this->upload->initialize($config_skep_f, TRUE);
+                if ($this->upload->do_upload('file_skep_fasilitas')) {
+                    if (!empty($data['user_perusahaan']['FileSkepFasilitas']) && file_exists($config_skep_f['upload_path'] . $data['user_perusahaan']['FileSkepFasilitas'])) {
+                        @unlink($config_skep_f['upload_path'] . $data['user_perusahaan']['FileSkepFasilitas']);
+                    }
+                    $nama_file_skep_fasilitas = $this->upload->data('file_name');
+                } else {
+                    $this->session->set_flashdata('upload_error_detail', $this->upload->display_errors());
+                    $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Upload File SKEP Fasilitas Gagal: ' . $this->upload->display_errors('', '') . '</div>');
+                    redirect('user/edit'); return;
+                }
+            }
+
+            // --- Proses Upload File SKEP Kuota Awal (hanya saat aktivasi dan jika diisi) ---
+            if ($is_activating && isset($_FILES['initial_skep_file']) && $_FILES['initial_skep_file']['error'] != UPLOAD_ERR_NO_FILE) {
+                $config_skep_i = $this->_get_upload_config('./uploads/skep_awal_user/', 'pdf|jpg|jpeg|png', 2048); // Buat folder ini
+                $this->upload->initialize($config_skep_i, TRUE);
+                if ($this->upload->do_upload('initial_skep_file')) {
+                    $nama_file_initial_skep = $this->upload->data('file_name');
+                } else {
+                    $this->session->set_flashdata('upload_error_detail', $this->upload->display_errors());
+                    $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Upload File SKEP Kuota Awal Gagal: ' . $this->upload->display_errors('', '') . '</div>');
+                    redirect('user/edit'); return;
+                }
+            }
+
+
+            // --- Update Data User (Hanya Gambar Profil/Logo) ---
             $data_user_update = [];
-            if ($nama_file_profile_image !== null && $nama_file_profile_image != $data['user']['image']) { 
-                $data_user_update['image'] = $nama_file_profile_image; 
+            if ($nama_file_profile_image !== null && $nama_file_profile_image != $data['user']['image']) {
+                $data_user_update['image'] = $nama_file_profile_image;
             }
             if (!empty($data_user_update)) {
-                 $this->db->where('id', $id);
+                 $this->db->where('id', $id_user_login);
                  $this->db->update('user', $data_user_update);
+                 // Update session jika gambar berubah
+                 if(isset($data_user_update['image'])) $this->session->set_userdata('image', $data_user_update['image']);
             }
 
+            // --- Update/Insert Data Perusahaan ---
             $data_perusahaan = [
                 'NamaPers' => $this->input->post('NamaPers'),
                 'npwp' => $this->input->post('npwp'),
@@ -201,102 +234,167 @@ class User extends CI_Controller
                 'telp' => $this->input->post('telp'),
                 'pic' => $this->input->post('pic'),
                 'jabatanPic' => $this->input->post('jabatanPic'),
-                'NoSkep' => $this->input->post('NoSkep'),
-                'id_pers' => $id
+                'NoSkepFasilitas' => $this->input->post('NoSkepFasilitas') ?: null, // Simpan null jika kosong
             ];
              if ($nama_file_ttd !== null) {
-                 $data_perusahaan['ttd'] = $nama_file_ttd; 
+                 $data_perusahaan['ttd'] = $nama_file_ttd;
+             }
+             if ($nama_file_skep_fasilitas !== null) {
+                 $data_perusahaan['FileSkepFasilitas'] = $nama_file_skep_fasilitas;
              }
 
-            if ($is_activating) { 
-                $input_quota = (int)$this->input->post('quota');
-                $data_perusahaan['initial_quota'] = $input_quota;
-                $data_perusahaan['remaining_quota'] = $input_quota;
+            if ($is_activating) {
+                $data_perusahaan['id_pers'] = $id_user_login; // Primary key = user_id
+                // 'initial_quota' dan 'remaining_quota' umum tidak diisi dari sini lagi
                 $this->db->insert('user_perusahaan', $data_perusahaan);
-                $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Company profile saved and account has been activated! Welcome to your Dashboard.</div>');
-                $is_active_data = ['is_active' => 1];
-                $this->db->where('id', $id);
-                $this->db->update('user', $is_active_data);
-                $this->session->set_userdata('is_active', 1);
-                redirect('user/index'); 
-            } else {
-                if ($this->input->post('quota') !== null && is_numeric($this->input->post('quota'))) {
-                    // Jika ada input 'quota' saat edit, Anda bisa memutuskan apa yang akan dilakukan.
-                    // Untuk saat ini, kita tidak mengubah initial_quota atau remaining_quota di sini.
-                    // $data_perusahaan['quota'] = (int)$this->input->post('quota'); // Jika ada kolom 'quota' umum
+
+                // Proses SKEP dan Kuota Awal Barang yang diinput user
+                $initial_skep_no = trim($this->input->post('initial_skep_no'));
+                $initial_nama_barang = trim($this->input->post('initial_nama_barang'));
+                $initial_kuota_jumlah = (float)$this->input->post('initial_kuota_jumlah');
+
+                if (!empty($initial_skep_no) && !empty($initial_nama_barang) && $initial_kuota_jumlah > 0) {
+                    $data_kuota_awal_barang = [
+                        'id_pers' => $id_user_login,
+                        'nama_barang' => $initial_nama_barang,
+                        'initial_quota_barang' => $initial_kuota_jumlah,
+                        'remaining_quota_barang' => $initial_kuota_jumlah,
+                        'nomor_skep_asal' => $initial_skep_no,
+                        'tanggal_skep_asal' => $this->input->post('initial_skep_tgl'),
+                        'status_kuota_barang' => 'active',
+                        // 'file_skep_kuota_awal' => $nama_file_initial_skep, // TAMBAHKAN KOLOM INI DI user_kuota_barang JIKA PERLU
+                        'dicatat_oleh_user_id' => $id_user_login,
+                        'waktu_pencatatan' => date('Y-m-d H:i:s')
+                    ];
+                    if ($nama_file_initial_skep) { // Hanya tambahkan jika file diupload
+                        // $data_kuota_awal_barang['file_skep_kuota_awal'] = $nama_file_initial_skep;
+                    }
+                    $this->db->insert('user_kuota_barang', $data_kuota_awal_barang);
+                    log_message('info', 'KUOTA AWAL BARANG dicatat saat aktivasi untuk user: ' . $id_user_login . ', barang: ' . $initial_nama_barang . ', jumlah: ' . $initial_kuota_jumlah);
+
+                    // PEMANGGILAN LOG DARI USER CONTROLLER DIKOMENTARI KARENA METHOD ADA DI ADMIN
+                    // Anda perlu membuat mekanisme logging yang bisa diakses dari sini, misal via Helper/Library.
+                    /*
+                    $this->_log_perubahan_kuota_user_side( // Buat method ini jika perlu
+                        $id_user_login, 'penambahan', $initial_kuota_jumlah, 0, $initial_kuota_jumlah,
+                        'Input kuota awal oleh pengguna saat aktivasi. SKEP: ' . $initial_skep_no . ' Barang: ' . $initial_nama_barang,
+                        $this->db->insert_id(), 'input_kuota_awal_user', $id_user_login
+                    );
+                    */
                 }
-                $this->db->where('id_pers', $id);
+
+                $this->db->where('id', $id_user_login);
+                $this->db->update('user', ['is_active' => 1]);
+                $this->session->set_userdata('is_active', 1);
+                $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Profil perusahaan berhasil disimpan dan akun Anda telah diaktifkan! Anda sekarang dapat mengajukan kuota atau membuat permohonan.</div>');
+                redirect('user/index');
+            } else { // Update data perusahaan yang sudah ada
+                // Untuk field 'quota' lama, kita tidak mengupdatenya lagi di user_perusahaan
+                // karena sudah digantikan oleh sistem kuota per barang.
+                $this->db->where('id_pers', $id_user_login);
                 $this->db->update('user_perusahaan', $data_perusahaan);
-                 if (empty($data_user_update) && ($nama_file_ttd === null || (isset($data['user_perusahaan']['ttd']) && $nama_file_ttd === $data['user_perusahaan']['ttd']))) { 
-                     $this->session->set_flashdata('message', '<div class="alert alert-info" role="alert">No changes detected in profile or company data.</div>');
+
+                // Cek apakah ada perubahan sebelum menampilkan pesan
+                $perubahan_terdeteksi = false;
+                if (!empty($data_user_update)) $perubahan_terdeteksi = true;
+                if ($nama_file_ttd !== null && (!isset($data['user_perusahaan']['ttd']) || $nama_file_ttd !== $data['user_perusahaan']['ttd'])) $perubahan_terdeteksi = true;
+                if ($nama_file_skep_fasilitas !== null && (!isset($data['user_perusahaan']['FileSkepFasilitas']) || $nama_file_skep_fasilitas !== $data['user_perusahaan']['FileSkepFasilitas'])) $perubahan_terdeteksi = true;
+                // Cek perubahan pada field perusahaan lainnya
+                foreach ($data_perusahaan as $key => $value) {
+                    if ($value !== ($data['user_perusahaan'][$key] ?? null)) {
+                        $perubahan_terdeteksi = true;
+                        break;
+                    }
+                }
+
+                 if ($perubahan_terdeteksi) {
+                     $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Profil dan data perusahaan berhasil diperbarui!</div>');
                  } else {
-                     $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Profile and company data have been updated successfully!</div>');
+                     $this->session->set_flashdata('message', '<div class="alert alert-info" role="alert">Tidak ada perubahan data yang terdeteksi.</div>');
                  }
-                redirect('user/index'); 
+                redirect('user/index');
             }
         }
     }
 
+    // Helper function untuk konfigurasi upload (DRY principle)
+    private function _get_upload_config($upload_path, $allowed_types, $max_size_kb, $max_width = null, $max_height = null) {
+        if (!is_dir($upload_path)) {
+            if (!@mkdir($upload_path, 0777, true)) {
+                // Gagal membuat direktori, bisa throw exception atau return false/array error
+                log_message('error', 'Gagal membuat direktori upload: ' . $upload_path);
+                return false; // Indikasi error
+            }
+        }
+        if (!is_writable($upload_path)) {
+            log_message('error', 'Direktori upload tidak writable: ' . $upload_path);
+            return false; // Indikasi error
+        }
+
+        $config['upload_path']   = $upload_path;
+        $config['allowed_types'] = $allowed_types;
+        $config['max_size']      = $max_size_kb; // Dalam kilobytes
+        if ($max_width) $config['max_width'] = $max_width;
+        if ($max_height) $config['max_height'] = $max_height;
+        $config['encrypt_name']  = TRUE;
+        return $config;
+    }
+
     public function file_check($str, $field)
     {
-        if ($field == 'ttd') {
-            $allowed_mime_type_arr = ['image/jpeg', 'image/png', 'application/pdf', 'image/pjpeg'];
-            $max_size = 1048576; // 1MB
-            $error_field_name = 'Tanda Tangan';
-            $allowed_types_str = 'jpg, png, pdf';
-        } elseif ($field == 'profile_image') { 
-            $allowed_mime_type_arr = ['image/jpeg', 'image/png', 'image/gif', 'image/pjpeg'];
-            $max_size = 1048576; // 1MB
-            $error_field_name = 'Profile Image/Logo';
-            $allowed_types_str = 'jpg, png, gif';
-        } else {
-            $this->form_validation->set_message('file_check', 'Invalid field specified for file check.');
-            return false;
+        // $is_activating diambil dari data yang sudah di-load sebelumnya
+        $user_id_for_file_check = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row()->id;
+        $user_perusahaan_for_file_check = $this->db->get_where('user_perusahaan', ['id_pers' => $user_id_for_file_check])->row_array();
+        $is_activating_for_file_check = empty($user_perusahaan_for_file_check);
+
+        $config = [];
+        $error_field_name = '';
+
+        switch ($field) {
+            case 'ttd':
+                $config = ['allowed_types' => ['image/jpeg', 'image/png', 'application/pdf', 'image/pjpeg'], 'max_size' => 1024 * 1024, 'error_name' => 'Tanda Tangan PIC', 'allowed_str' => 'jpg, png, pdf'];
+                // Wajib jika aktivasi
+                if ($is_activating_for_file_check && (!isset($_FILES[$field]) || $_FILES[$field]['error'] == UPLOAD_ERR_NO_FILE)) {
+                    $this->form_validation->set_message('file_check', '{field} wajib diupload saat aktivasi akun.');
+                    return FALSE;
+                }
+                break;
+            case 'profile_image':
+                $config = ['allowed_types' => ['image/jpeg', 'image/png', 'image/gif', 'image/pjpeg'], 'max_size' => 1024 * 1024, 'error_name' => 'Gambar Profil/Logo', 'allowed_str' => 'jpg, png, gif'];
+                break;
+            case 'file_skep_fasilitas':
+                $config = ['allowed_types' => ['application/pdf', 'image/jpeg', 'image/png', 'image/pjpeg'], 'max_size' => 2048 * 1024, 'error_name' => 'File SKEP Fasilitas', 'allowed_str' => 'pdf, jpg, png'];
+                break;
+            case 'initial_skep_file':
+                $config = ['allowed_types' => ['application/pdf', 'image/jpeg', 'image/png', 'image/pjpeg'], 'max_size' => 2048 * 1024, 'error_name' => 'File SKEP Kuota Awal', 'allowed_str' => 'pdf, jpg, png'];
+                // Opsional, jadi tidak perlu cek wajib di sini jika tidak ada file. Controller akan menangani.
+                break;
+            default:
+                $this->form_validation->set_message('file_check', 'Field file tidak dikenal untuk validasi.');
+                return FALSE;
         }
 
         if (isset($_FILES[$field]) && $_FILES[$field]['error'] != UPLOAD_ERR_NO_FILE) {
             if (function_exists('mime_content_type')) {
                 $mime = mime_content_type($_FILES[$field]['tmp_name']);
-                if (!in_array($mime, $allowed_mime_type_arr)) {
-                    $this->form_validation->set_message('file_check', "The file type you are attempting to upload is not allowed for {$error_field_name} (Only {$allowed_types_str}). Detected: {$mime}");
-                    return false;
+                if (!in_array($mime, $config['allowed_types'])) {
+                    $this->form_validation->set_message('file_check', "Tipe file untuk {field} tidak diizinkan (Hanya {$config['allowed_str']}). Terdeteksi: {$mime}");
+                    return FALSE;
                 }
             } else {
-                 $ext_arr = explode('|', str_replace(['jpeg','pjpeg'], 'jpg', $allowed_types_str));
+                 $ext_arr = explode(', ', str_replace(['jpeg','pjpeg'], 'jpg', $config['allowed_str']));
                  $file_ext = strtolower(pathinfo($_FILES[$field]['name'], PATHINFO_EXTENSION));
                  if (!in_array($file_ext, $ext_arr)) {
-                     $this->form_validation->set_message('file_check', "The file extension you are attempting to upload is not allowed for {$error_field_name} (Only {$allowed_types_str}).");
-                     return false;
+                     $this->form_validation->set_message('file_check', "Ekstensi file untuk {field} tidak diizinkan (Hanya {$config['allowed_str']}).");
+                     return FALSE;
                  }
             }
-            if ($_FILES[$field]['size'] > $max_size) {
-                 $this->form_validation->set_message('file_check', "The file you are attempting to upload is larger than the permitted size (".($max_size/1024)."KB) for {$error_field_name}.");
-                 return false;
-            }
-            return true; 
-        } else {
-            // Jika file tidak diupload
-            if ($field == 'ttd') {
-                // Cek apakah ini aktivasi (ttd wajib) atau edit (ttd tidak wajib)
-                $user_id_from_session = $this->session->userdata('id');
-                if (!$user_id_from_session) {
-                    $this->form_validation->set_message('file_check', 'User session not found for TTD validation.');
-                    return false; 
-                }
-                $perusahaan_data = $this->db->get_where('user_perusahaan', ['id_pers' => $user_id_from_session])->row_array();
-                if (empty($perusahaan_data)) { // Jika data perusahaan belum ada (proses aktivasi)
-                    $this->form_validation->set_message('file_check', 'The Tanda Tangan field is required for account activation.');
-                    return false; // Wajib saat aktivasi
-                } else {
-                    return true; // Tidak wajib saat edit (jika tidak ada file baru)
-                }
-            } elseif ($field == 'profile_image') {
-                // Gambar profil/logo tidak wajib saat edit (jika tidak ada file baru)
-                return true;
-            } else {
-                 return true; // Field lain mungkin tidak wajib
+            if ($_FILES[$field]['size'] > $config['max_size']) {
+                 $this->form_validation->set_message('file_check', "Ukuran file untuk {field} melebihi batas (".($config['max_size']/1024/1024)."MB).");
+                 return FALSE;
             }
         }
+        return TRUE;
     }
 
     public function permohonan_impor_kembali() // Atau nama method Anda, misal: permohonan_impor_kembali()
@@ -425,145 +523,63 @@ class User extends CI_Controller
     }
 
     public function pengajuan_kuota()
-{
-    $data['title'] = 'Returnable Package';
-    $data['subtitle'] = 'Pengajuan Penambahan Kuota';
-    $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
-    $id_user_login = $data['user']['id'];
-
-    $data['user_perusahaan'] = $this->db->get_where('user_perusahaan', ['id_pers' => $id_user_login])->row_array();
-
-    if(empty($data['user_perusahaan'])) {
-         $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Mohon lengkapi profil perusahaan Anda terlebih dahulu di menu "Edit Profil & Perusahaan" sebelum mengajukan kuota.</div>');
-         redirect('user/edit');
-         return;
-    }
-    if ($data['user']['is_active'] == 0) {
-         $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Akun Anda belum aktif. Tidak dapat mengajukan kuota. Mohon lengkapi profil perusahaan Anda jika belum, atau hubungi Administrator.</div>');
-         redirect('user/edit');
-         return;
-    }
-
-    // Aturan validasi form (name input di form harus sama dengan parameter pertama set_rules)
-    $this->form_validation->set_rules('nomor_surat_pengajuan', 'Nomor Surat Pengajuan', 'trim|required');
-    $this->form_validation->set_rules('tanggal_surat_pengajuan', 'Tanggal Surat Pengajuan', 'trim|required');
-    $this->form_validation->set_rules('perihal_pengajuan', 'Perihal Surat Pengajuan', 'trim|required');
-    $this->form_validation->set_rules('nama_barang_kuota', 'Nama/Jenis Barang', 'trim|required');
-    $this->form_validation->set_rules('requested_quota', 'Jumlah Kuota Diajukan', 'trim|required|numeric|greater_than[0]');
-    $this->form_validation->set_rules('reason', 'Alasan Pengajuan', 'trim|required');
-    // Jika file lampiran opsional, tidak perlu rule 'required' di sini, cukup tangani uploadnya
-    // Jika wajib: if (empty($_FILES['file_lampiran_pengajuan']['name'])) { $this->form_validation->set_rules('file_lampiran_pengajuan', 'File Lampiran', 'required');}
-
-    if ($this->form_validation->run() == false) {
-        $this->load->view('templates/header', $data);
-        $this->load->view('templates/sidebar', $data);
-        $this->load->view('templates/topbar', $data);
-        $this->load->view('user/pengajuan_kuota_form', $data);
-        $this->load->view('templates/footer', $data);
-    } else {
-        $nama_file_lampiran = null;
-
-        if (isset($_FILES['file_lampiran_pengajuan']) && $_FILES['file_lampiran_pengajuan']['error'] != UPLOAD_ERR_NO_FILE) {
-            $upload_dir_lampiran = './uploads/lampiran_kuota/';
-            if (!is_dir($upload_dir_lampiran)) {
-                if (!@mkdir($upload_dir_lampiran, 0777, true)) {
-                     $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Gagal membuat direktori upload lampiran.</div>');
-                     redirect('user/pengajuan_kuota');
-                     return;
-                }
-            }
-            $config_lampiran['upload_path']   = $upload_dir_lampiran;
-            $config_lampiran['allowed_types'] = 'pdf|doc|docx|jpg|jpeg|png';
-            $config_lampiran['max_size']      = '2048';
-            $config_lampiran['encrypt_name']  = TRUE;
-            $this->load->library('upload', $config_lampiran, 'lampiran_kuota_upload');
-            $this->lampiran_kuota_upload->initialize($config_lampiran);
-
-            if ($this->lampiran_kuota_upload->do_upload('file_lampiran_pengajuan')) {
-                $nama_file_lampiran = $this->lampiran_kuota_upload->data('file_name');
-            } else {
-                $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Upload File Lampiran Gagal: ' . $this->lampiran_kuota_upload->display_errors('', '') . '</div>');
-                redirect('user/pengajuan_kuota');
-                return;
-            }
-        }
-
-        $data_pengajuan = [
-            'id_pers'                   => $id_user_login,
-            'nomor_surat_pengajuan'     => $this->input->post('nomor_surat_pengajuan'), // Sesuai DB
-            'tanggal_surat_pengajuan'   => $this->input->post('tanggal_surat_pengajuan'), // Sesuai DB
-            'perihal_pengajuan'         => $this->input->post('perihal_pengajuan'), // Sesuai DB
-            'nama_barang_kuota'         => $this->input->post('nama_barang_kuota'), // Sesuai DB
-            'requested_quota'           => $this->input->post('requested_quota'),   // Sesuai DB
-            'reason'                    => $this->input->post('reason'), // Sesuai DB
-            // 'file_lampiran_user'     => $nama_file_lampiran, // Sesuaikan nama kolom ini jika ada di DB
-            'submission_date'           => date('Y-m-d H:i:s'),   // Sesuai DB
-            'status'                    => 'pending'    // Sesuai DB
-        ];
-
-        // Tambahkan file lampiran ke array jika ada dan jika ada kolomnya di DB
-        if ($nama_file_lampiran !== null) {
-            // GANTI 'nama_kolom_file_lampiran_di_db' DENGAN NAMA KOLOM YANG BENAR
-            // JIKA TIDAK ADA KOLOM UNTUK INI, HAPUS BLOK IF INI DAN BARIS DI ATASNYA
-            // $data_pengajuan['nama_kolom_file_lampiran_di_db'] = $nama_file_lampiran;
-        }
-
-        $this->db->insert('user_pengajuan_kuota', $data_pengajuan);
-
-        $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Pengajuan kuota Anda telah berhasil dikirim dan akan diproses oleh administrator.</div>');
-        redirect('user/daftar_pengajuan_kuota');
-    }
-}
-
-    public function daftar_pengajuan_kuota()
     {
         $data['title'] = 'Returnable Package';
-        $data['subtitle'] = 'Daftar Pengajuan Kuota Saya';
+        $data['subtitle'] = 'Pengajuan Penambahan Kuota';
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
-        
-        $this->db->where('id_pers', $data['user']['id']);
-        $this->db->order_by('submission_date', 'DESC');
-        $data['daftar_pengajuan'] = $this->db->get('user_pengajuan_kuota')->result_array();
+        $id_user_login = $data['user']['id'];
 
-        $this->load->view('templates/header', $data);
-        $this->load->view('templates/sidebar', $data);
-        $this->load->view('templates/topbar', $data);
-        $this->load->view('user/daftar_pengajuan_kuota_view', $data); 
-        $this->load->view('templates/footer');
-    }
+        $data['user_perusahaan'] = $this->db->get_where('user_perusahaan', ['id_pers' => $id_user_login])->row_array();
 
-    public function print_bukti_pengajuan_kuota($id_pengajuan)
-    {
-        $data['title'] = 'Bukti Pengajuan Kuota';
-        $data['user_login'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
-
-        $this->db->select('upk.*, upr.NamaPers, upr.npwp AS npwp_perusahaan, upr.alamat as alamat_perusahaan, upr.pic, upr.jabatanPic, upr.ttd as ttd_perusahaan_pic, u.email AS user_email, u.name AS user_name_pengaju, u.image AS logo_perusahaan_file');
-        $this->db->from('user_pengajuan_kuota upk');
-        $this->db->join('user_perusahaan upr', 'upk.id_pers = upr.id_pers', 'left');
-        $this->db->join('user u', 'upk.id_pers = u.id', 'left'); 
-        $this->db->where('upk.id', $id_pengajuan);
-        $this->db->where('upk.id_pers', $data['user_login']['id']); 
-        $data['pengajuan'] = $this->db->get()->row_array();
-
-        if (!$data['pengajuan']) {
-            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Data pengajuan kuota tidak ditemukan atau Anda tidak berhak mengaksesnya.</div>');
-            redirect('user/daftar_pengajuan_kuota'); 
+        if(empty($data['user_perusahaan'])) {
+            $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Mohon lengkapi profil perusahaan Anda terlebih dahulu di menu "Edit Profil & Perusahaan" sebelum mengajukan kuota.</div>');
+            redirect('user/edit');
             return;
         }
-        
-        $data['user'] = $data['user_login']; 
-        $data['user_perusahaan'] = [ 
-            'NamaPers' => $data['pengajuan']['NamaPers'],
-            'npwp' => $data['pengajuan']['npwp_perusahaan'],
-            'alamat' => $data['pengajuan']['alamat_perusahaan'],
-            'pic' => $data['pengajuan']['pic'],
-            'jabatanPic' => $data['pengajuan']['jabatanPic'],
-            'ttd' => $data['pengajuan']['ttd_perusahaan_pic']
-        ];
+        if ($data['user']['is_active'] == 0) {
+            $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Akun Anda belum aktif. Tidak dapat mengajukan kuota. Mohon lengkapi profil perusahaan Anda jika belum, atau hubungi Administrator.</div>');
+        redirect('user/edit');
+            return;
+        }
 
-        $this->load->view('user/FormPengajuanKuota_print', $data); 
+        // Aturan validasi form (nama field di form harus sama dengan parameter pertama set_rules)
+        $this->form_validation->set_rules('nomor_surat_pengajuan', 'Nomor Surat Pengajuan', 'trim|required');
+        $this->form_validation->set_rules('tanggal_surat_pengajuan', 'Tanggal Surat Pengajuan', 'trim|required');
+        $this->form_validation->set_rules('perihal_pengajuan', 'Perihal Surat Pengajuan', 'trim|required');
+        $this->form_validation->set_rules('nama_barang_kuota', 'Nama/Jenis Barang untuk Kuota', 'trim|required'); // Nama barang spesifik
+        $this->form_validation->set_rules('requested_quota', 'Jumlah Kuota Diajukan', 'trim|required|numeric|greater_than[0]');
+        $this->form_validation->set_rules('reason', 'Alasan Pengajuan', 'trim|required');
+
+        if ($this->form_validation->run() == false) {
+            $this->load->view('templates/header', $data);
+            $this->load->view('templates/sidebar', $data);
+            $this->load->view('templates/topbar', $data);
+            $this->load->view('user/pengajuan_kuota_form', $data); // View ini sudah ada
+            $this->load->view('templates/footer', $data);
+        } else {
+            // ... (logika upload file jika ada) ...
+            $nama_file_lampiran = null; // Isi jika ada upload
+
+            // Data yang disimpan tetap sama, nama_barang_kuota akan jadi kunci
+            $data_pengajuan = [
+                'id_pers'                   => $id_user_login,
+                'nomor_surat_pengajuan'     => $this->input->post('nomor_surat_pengajuan'),
+                'tanggal_surat_pengajuan'   => $this->input->post('tanggal_surat_pengajuan'),
+                'perihal_pengajuan'         => $this->input->post('perihal_pengajuan'),
+                'nama_barang_kuota'         => $this->input->post('nama_barang_kuota'), // Penting untuk menyimpan jenis barang
+                'requested_quota'           => $this->input->post('requested_quota'),
+                'reason'                    => $this->input->post('reason'),
+                // 'file_lampiran_user'     => $nama_file_lampiran, // Jika ada kolomnya
+                'submission_date'           => date('Y-m-d H:i:s'),
+                'status'                    => 'pending'
+            ];
+
+            $this->db->insert('user_pengajuan_kuota', $data_pengajuan);
+
+            $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Pengajuan kuota Anda untuk barang "'.htmlspecialchars($this->input->post('nama_barang_kuota')).'" telah berhasil dikirim.</div>');
+            redirect('user/daftar_pengajuan_kuota_user');
+        }
     }
-
 
     public function daftarPermohonan()
     {
