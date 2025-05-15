@@ -33,3 +33,5 @@ user_guide_src/cilexer/pycilexer.egg-info/*
 buat_hash.php
 application/session/*
 application/logs/*
+
+ci/uploads/
