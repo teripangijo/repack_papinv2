@@ -1,262 +1,213 @@
-<!-- Begin Page Content -->
 <div class="container-fluid">
 
-    <!-- Page Heading -->
-    <h1 class="h3 mb-4 text-gray-800"> <?= $subtitle; ?></h1>
-    <?= $this->session->flashdata('message'); ?>
-    <?php if (validation_errors()) : ?>
-        <div class="alert alert-danger" role="alert"><?= validation_errors(); ?></div>
+    <h1 class="h3 mb-2 text-gray-800"><?= htmlspecialchars($subtitle ?? 'Proses Finalisasi Permohonan'); ?></h1>
+    <p class="mb-4">Lakukan finalisasi persetujuan atau penolakan permohonan impor returnable package.</p>
+
+    <?php if ($this->session->flashdata('message')) : ?>
         <?= $this->session->flashdata('message'); ?>
     <?php endif; ?>
-    <h5>Status: <?php
-                if ($user['role_id'] != 1) {
-                    if ($user['is_active'] == 1) {
-                        echo "Active";
-                    } else {
-                        echo "Not Active! Please Update Profile Data Below";
-                    }
-                } else {
-                    echo "Admin";
-                }
-                ?></h5>
+    <?php if ($this->session->flashdata('message_error_quota')) : ?>
+        <?= $this->session->flashdata('message_error_quota'); ?>
+    <?php endif; ?>
 
-    <div class="col-lg">
-
-        <!-- Default Card Example -->
-        <div class="card mb-4">
-            <div class="card-header m-0 font-weight-bold text-primary">
-                Data Kegiatan Returnable Package
-            </div>
-            <div class="card-body">
-
-                <form action="<?= base_url() ?>admin/prosesSurat/<?= $permohonan['id']; ?>" method="POST">
-                    <div class="row">
-                        <div class="col">
-                            <label>Nama Perusahaan</label>
-                            <input type="text" class="form-control" id="NamaPers" name="NamaPers" value="<?= $user_perusahaan['NamaPers'] ?>" disabled>
-                        </div>
-                        <div class="col">
-                            <label>Alamat</label>
-                            <input type="text" class="form-control" id="alamat" name="alamat" value="<?= $user_perusahaan['alamat'] ?>" disabled>
-                        </div>
-                    </div>
-                    </br>
-                    <div class="row">
-                        <div class="col">
-                            <label>Nomor Surat</label>
-                            <input type="text" class="form-control" id="nomorSurat" name="nomorSurat" placeholder="Nomor Surat" value="<?= $permohonan['nomorSurat']; ?>" disabled>
-                        </div>
-                        <div class="col">
-                            <label>Tanggal Surat</label>
-                            <input id="TglSurat" name="TglSurat" value="<?= $permohonan['TglSurat']; ?>" placeholder="Tanggal Surat" disabled>
-                        </div>
-                        <div class="col">
-                            <label>Perihal</label>
-                            <input type="text" class="form-control" id="Perihal" name="Perihal" value="<?= $permohonan['Perihal']; ?>" placeholder="Perihal" disabled />
-                        </div>
-                    </div>
-                    </br>
-                    <div class="row">
-                        <div class="col">
-                            <label>Nama / Jenis Barang</label>
-                            <input type="text" class="form-control" id="NamaBarang" name="NamaBarang" value="<?= $permohonan['NamaBarang']; ?>" placeholder="Nama / Jenis Barang" disabled>
-                        </div>
-                        <div class="col">
-                            <label>Jumlah Barang</label>
-                            <input type="text" class="form-control" id="JumlahBarang" name="JumlahBarang" value="<?= $permohonan['JumlahBarang']; ?>" placeholder="Jumlah Barang" disabled>
-                        </div>
-                        <div class="col">
-                            <label>Negara Asal Barang</label>
-                            <input type="text" class="form-control" id="NegaraAsal" name="NegaraAsal" value="<?= $permohonan['NegaraAsal']; ?>" placeholder="Negara Asal barang" disabled>
-                        </div>
-                    </div>
-                    </br>
-                    <div class="row">
-                        <div class="col">
-                            <label>Nama Kapal</label>
-                            <input type="text" class="form-control" id="NamaKapal" name="NamaKapal" value="<?= $permohonan['NamaKapal']; ?>" placeholder="Nama Kapal" disabled>
-                        </div>
-                        <div class="col">
-                            <label>No Voyage</label>
-                            <input type="text" class="form-control" id="noVoyage" name="noVoyage" value="<?= $permohonan['noVoyage']; ?>" placeholder="No Voyage" disabled>
-                        </div>
-                        <div class="col">
-                            <label>No SKEP</label>
-                            <input type="text" class="form-control" id="NoSkep" name="NoSkep" value="<?= $user_perusahaan['NoSkep'] ?>" disabled>
-                        </div>
-                    </div>
-                    </br>
-                    <div class="row">
-                        <div class="col">
-                            <label>Tanggal Kegiatan</label>
-                            <input id="TglKedatangan" name="TglKedatangan" value="<?= $permohonan['TglKedatangan']; ?>" placeholder="Tanggal Kegiatan" disabled>
-                        </div>
-                        <div class="col">
-                            <label>Tanggal Bongkar</label>
-                            <input id="TglBongkar" name="TglBongkar" value="<?= $permohonan['TglBongkar']; ?>" placeholder="Tanggal Bongkar" disabled>
-                        </div>
-                        <div class="col">
-                            <label>Lokasi Bongkar</label>
-                            <input type="text" class="form-control" id="lokasi" name="lokasi" value="<?= $permohonan['lokasi']; ?>" placeholder="Lokasi Bongkar" disabled>
-                        </div>
-                    </div>
-                    </br>
-                    <div class="row">
-                        <div class="col">
-                            <label>Tanggal Pemeriksaan</label>
-                            <input id="TglPeriksa" name="TglPeriksa" value="<?= $lhp['TglPeriksa']; ?>" placeholder="Tanggal Pemeriksaan" disabled>
-                        </div>
-                        <div class="col">
-                            <label>Waktu Mulai</label>
-                            <input id="wkmulai" name="wkmulai" value="<?= $lhp['wkmulai']; ?>" placeholder="Tanggal Pemeriksaan" disabled>
-                        </div>
-                        <div class="col">
-                            <label>Waktu Selesai</label>
-                            <input id="wkselesai" name="wkselesai" value="<?= $lhp['wkselesai']; ?>" placeholder="Tanggal Pemeriksaan" disabled>
-                        </div>
-                        <div class="col">
-                            <label>Lokasi</label>
-                            <input type="text" class="form-control" type="text" class="form-control" id="lokasi" name="lokasi" value="<?= $permohonan['lokasi']; ?>" placeholder="Lokasi Bongkar" disabled>
-                        </div>
-                        <div class="col">
-                            <label>Nama Sarana Pengangkut</label>
-                            <input type="text" class="form-control" id="NamaKapal" name="NamaKapal" value="<?= $permohonan['NamaKapal']; ?>" placeholder="Nama Kapal" disabled>
-                        </div>
-                    </div>
-                    </br>
-                    <div class="row">
-                        <div class="col">
-                            <label>Nama Perusahaan</label>
-                            <input type="text" class="form-control" id="NamaPers" name="NamaPers" placeholder="Nomor Surat" value="<?= $permohonan['NamaPers']; ?>" disabled>
-                        </div>
-                        <div class="col">
-                            <label>Nomor Surat</label>
-                            <input type="text" class="form-control" id="nomorSurat" name="nomorSurat" value="<?= $permohonan['nomorSurat']; ?>" placeholder="Tanggal Surat" disabled>
-                        </div>
-                        <div class="col">
-                            <label>Nomor ST</label>
-                            <input type="text" class="form-control" id="nomorST" name="nomorST" value="<?= $lhp['nomorST']; ?>" placeholder="Nomor Surat Tugas" disabled>
-                        </div>
-                        <div class="col">
-                            <label>Tanggal ST</label>
-                            <input id="tgl_st" name="tgl_st" value="<?= $lhp['tgl_st']; ?>" placeholder="Tanggal Surat Tugas" disabled>
-                        </div>
-                    </div>
-                    </br>
-                    <div class="row">
-                        <div class="col">
-                            <label>Jenis Kemasan</label>
-                            <input type="text" class="form-control" id="NamaBarang" name="NamaBarang" value="<?= $permohonan['NamaBarang']; ?>" placeholder="Nama / Jenis Barang" disabled>
-                        </div>
-                        <div class="col">
-                            <label>Jumlah Barang Diberitahukan</label>
-                            <input type="text" class="form-control" id="JumlahBarang" name="JumlahBarang" value="<?= $permohonan['JumlahBarang']; ?>" placeholder="Jumlah Barang" disabled>
-                        </div>
-                        <div class="col">
-                            <label>Jumlah Barang Sebenarnya</label>
-                            <input type="text" class="form-control" id="JumlahBenar" name="JumlahBenar" value="<?= $lhp['JumlahBenar']; ?>" placeholder="Jumlah Sebenarnya" disabled>
-                        </div>
-                        <div class="col">
-                            <label>Kondisi</label>
-                            <input type="text" class="form-control" id="Kondisi" name="Kondisi" value="<?= $lhp['Kondisi']; ?>" placeholder="Kondisi" disabled>
-                        </div>
-                        <div class="col">
-                            <label>Pemilik Barang</label>
-                            <input type="text" class="form-control" id="pemilik" name="pemilik" value="<?= $lhp['pemilik']; ?>" placeholder="Pemilik Barang" disabled>
-                        </div>
-                    </div>
-                    </br>
-                    <div class="row">
-                        <div class="col">
-                            <label>Keterangan / Kesimpulan</label>set_
-                            <textarea rows="3" type="text" class="form-control" id="Kesimpulan" name="Kesimpulan" value="<?= $lhp['Kesimpulan']; ?>" disabled><?= $lhp['Kesimpulan']; ?> </textarea>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">
-                            <label>Hasil Keputusan</label>
-                            <?php
-                            if ($lhp['hasil'] == 1) {
-                                $lhp['hasil'] = 'Sesuai';
-                            } else {
-                                $lhp['hasil'] = 'Tidak Sesuai';
-                            }
-
-                            ?>
-                            <input type="text" class="form-control" id="hasil" name="hasil" value="<?= $lhp['hasil']; ?>" placeholder="Hasil" disabled>
-                        </div>
-                    </div>
-                    </br>
-                    <div class="row">
-                        <div class="col">
-                            <label>Nomor Surat Persetujuan</label>
-                            <input type="text" class="form-control" id="nomorSetuju" name="nomorSetuju" value="<?= set_value('nomorSetuju') ?>" placeholder="Nomor Surat Persetujuan">
-                        </div>
-                        <div class="col">
-                            <label>Tanggal Surat Persetujuan</label>
-                            <input id="tgl_S" name="tgl_S" value="<?= set_value('tgl_S'); ?>" placeholder="Tanggal Surat Persetujuan">
-                        </div>
-                        <div class="col">
-                            <label>Nomor ND Persetujuan</label>
-                            <input type="text" class="form-control" id="nomorND" name="nomorND" value="<?= set_value('nomorND'); ?>" placeholder="Tanggal Surat Persetujuan">
-                        </div>
-                        <div class="col">
-                            <label>Tanggal ND Persetujuan</label>
-                            <input id="tgl_ND" name="tgl_ND" value="<?= set_value('tgl_ND'); ?>" placeholder="Tanggal Nota Dinas Persetujuan">
-                        </div>
-                    </div>
-                    </br>
-                    <div class="row">
-                        <div class="col-4">
-                            <input type="text" class="form-control" id="link" name="link" value="<?= set_value('link'); ?>" placeholder="Link Surat">
-                        </div>
-                        <div class="col-2">
-                            <button type="button" onclick=" window.open($('#link').val())" class="btn btn-primary ">Cek Link</button>
-                        </div>
-                        <div class="col-4">
-                            <input type="text" class="form-control" id="linkND" name="linkND" value="<?= set_value('linkND'); ?>" placeholder="Link ND">
-                        </div>
-                        <div class="col-2">
-                            <button type="button" onclick=" window.open($('#linkND').val())" class="btn btn-primary ">Cek link</button>
-                        </div>
-                    </div>
-                    </br>
-                    <button type="submit" class="btn btn-success">Simpan</button>
-            </div>
+    <?php if (validation_errors()) : ?>
+        <div class="alert alert-danger" role="alert">
+            <h4 class="alert-heading">Oops, ada kesalahan!</h4>
+            <p>Mohon periksa kembali data yang Anda masukkan:</p>
+            <hr>
+            <?= validation_errors('<div>', '</div>'); ?>
         </div>
+    <?php endif; ?>
 
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Formulir Finalisasi Permohonan - ID: <?= htmlspecialchars($permohonan['id']); ?></h6>
+        </div>
+        <div class="card-body">
+            <form action="<?= base_url('admin/prosesSurat/' . $permohonan['id']); ?>" method="POST">
+                <fieldset class="border p-3 mb-4">
+                    <legend class="w-auto px-2 small font-weight-bold">Data Perusahaan</legend>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="small mb-1">Nama Perusahaan</label>
+                            <input type="text" class="form-control form-control-sm" value="<?= htmlspecialchars($user_perusahaan['NamaPers'] ?? ($permohonan['NamaPers'] ?? 'N/A')) ?>" readonly>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="small mb-1">NPWP</label>
+                            <input type="text" class="form-control form-control-sm" value="<?= htmlspecialchars($user_perusahaan['npwp'] ?? ($permohonan['npwp'] ?? 'N/A')) ?>" readonly>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="small mb-1">Alamat</label>
+                            <textarea class="form-control form-control-sm" rows="2" readonly><?= htmlspecialchars($user_perusahaan['alamat'] ?? ($permohonan['alamat'] ?? 'N/A')) ?></textarea>
+                        </div>
+                    </div>
+                     <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="small mb-1">No. SKEP Perusahaan (Jika Ada)</label>
+                            <input type="text" class="form-control form-control-sm" value="<?= htmlspecialchars($user_perusahaan['NoSkep'] ?? ($permohonan['NoSkep'] ?? 'N/A')) ?>" readonly>
+                        </div>
+                    </div>
+                </fieldset>
 
-        <!-- /.container-fluid -->
+                <fieldset class="border p-3 mb-4">
+                    <legend class="w-auto px-2 small font-weight-bold">Data Permohonan Awal</legend>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="small mb-1">Nomor Surat Pemohon</label>
+                            <input type="text" class="form-control form-control-sm" value="<?= htmlspecialchars($permohonan['nomorSurat']); ?>" readonly>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="small mb-1">Tanggal Surat Pemohon</label>
+                            <input type="text" class="form-control form-control-sm" value="<?= htmlspecialchars(date('d F Y', strtotime($permohonan['TglSurat']))); ?>" readonly>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="small mb-1">Perihal</label>
+                            <input type="text" class="form-control form-control-sm" value="<?= htmlspecialchars($permohonan['Perihal']); ?>" readonly />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="small mb-1">Nama / Jenis Barang</label>
+                            <input type="text" class="form-control form-control-sm" value="<?= htmlspecialchars($permohonan['NamaBarang']); ?>" readonly>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="small mb-1">Jumlah Barang Diajukan</label>
+                            <input type="text" class="form-control form-control-sm" value="<?= htmlspecialchars($permohonan['JumlahBarang'] . ' ' . ($permohonan['SatuanBarang'] ?? '')); ?>" readonly>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="small mb-1">Negara Asal Barang</label>
+                            <input type="text" class="form-control form-control-sm" value="<?= htmlspecialchars($permohonan['NegaraAsal']); ?>" readonly>
+                        </div>
+                    </div>
+                </fieldset>
 
+                <fieldset class="border p-3 mb-4">
+                    <legend class="w-auto px-2 small font-weight-bold">Data Laporan Hasil Pemeriksaan (LHP)</legend>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="small mb-1">No. LHP</label>
+                            <input type="text" class="form-control form-control-sm" value="<?= htmlspecialchars($lhp['NoLHP'] ?? 'N/A'); ?>" readonly>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="small mb-1">Tgl. LHP</label>
+                            <input type="text" class="form-control form-control-sm" value="<?= htmlspecialchars(isset($lhp['TglLHP']) && $lhp['TglLHP'] != '0000-00-00' ? date('d F Y', strtotime($lhp['TglLHP'])) : 'N/A'); ?>" readonly>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="small mb-1">Jumlah Barang Sebenarnya</label>
+                            <input type="text" class="form-control form-control-sm" value="<?= htmlspecialchars($lhp['JumlahBenar'] ?? 'N/A'); ?>" readonly>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="small mb-1">Hasil Pemeriksaan LHP</label>
+                            <?php
+                            $hasil_lhp_text = 'N/A';
+                            if (isset($lhp['hasil'])) {
+                                if ($lhp['hasil'] == 1) $hasil_lhp_text = 'Sesuai';
+                                else if ($lhp['hasil'] == 0) $hasil_lhp_text = 'Tidak Sesuai';
+                            }
+                            ?>
+                            <input type="text" class="form-control form-control-sm" value="<?= htmlspecialchars($hasil_lhp_text); ?>" readonly>
+                        </div>
+                    </div>
+                    <div class="row">
+                         <div class="col-md-12 mb-3">
+                            <label class="small mb-1">Keterangan / Kesimpulan LHP</label>
+                            <textarea class="form-control form-control-sm" rows="3" readonly><?= htmlspecialchars($lhp['Kesimpulan'] ?? 'N/A'); ?></textarea>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset class="border p-3 mb-4">
+                    <legend class="w-auto px-2 small font-weight-bold text-danger">Keputusan Akhir Admin</legend>
+                     <div class="form-group mb-3">
+                        <label class="small mb-1" for="status_final">Status Final Permohonan <span class="text-danger">*</span></label>
+                        <div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="status_final" id="status_disetujui" value="3" <?= set_radio('status_final', '3', TRUE); ?>>
+                                <label class="form-check-label small" for="status_disetujui">Disetujui</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="status_final" id="status_ditolak" value="4" <?= set_radio('status_final', '4'); ?>>
+                                <label class="form-check-label small" for="status_ditolak">Ditolak</label>
+                            </div>
+                        </div>
+                        <?= form_error('status_final', '<small class="text-danger d-block mt-1">', '</small>'); ?>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="small mb-1" for="nomorSetuju">Nomor Surat Keputusan <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm <?= (form_error('nomorSetuju')) ? 'is-invalid' : ''; ?>" id="nomorSetuju" name="nomorSetuju" value="<?= set_value('nomorSetuju', $lhp['NoLHP'] ?? '') ?>" placeholder="Contoh: S-123/WBC.02/KPP.MP.01/2025">
+                            <?= form_error('nomorSetuju', '<small class="text-danger">', '</small>'); ?>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="small mb-1" for="tgl_S">Tanggal Surat Keputusan <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm datepicker <?= (form_error('tgl_S')) ? 'is-invalid' : ''; ?>" id="tgl_S" name="tgl_S" value="<?= set_value('tgl_S', isset($lhp['TglLHP']) && $lhp['TglLHP'] != '0000-00-00' ? date('Y-m-d', strtotime($lhp['TglLHP'])) : date('Y-m-d')) ?>" placeholder="YYYY-MM-DD">
+                            <?= form_error('tgl_S', '<small class="text-danger">', '</small>'); ?>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="small mb-1" for="nomorND">Nomor Nota Dinas (Opsional)</label>
+                            <input type="text" class="form-control form-control-sm <?= (form_error('nomorND')) ? 'is-invalid' : ''; ?>" id="nomorND" name="nomorND" value="<?= set_value('nomorND'); ?>" placeholder="Contoh: ND-123/WBC.02/2025">
+                            <?= form_error('nomorND', '<small class="text-danger">', '</small>'); ?>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="small mb-1" for="tgl_ND">Tanggal Nota Dinas (Opsional)</label>
+                            <input type="text" class="form-control form-control-sm datepicker <?= (form_error('tgl_ND')) ? 'is-invalid' : ''; ?>" id="tgl_ND" name="tgl_ND" value="<?= set_value('tgl_ND'); ?>" placeholder="YYYY-MM-DD">
+                            <?= form_error('tgl_ND', '<small class="text-danger">', '</small>'); ?>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="small mb-1" for="link">Link Surat Keputusan (Google Drive, dsb. - Opsional)</label>
+                            <div class="input-group input-group-sm">
+                                <input type="url" class="form-control form-control-sm <?= (form_error('link')) ? 'is-invalid' : ''; ?>" id="link" name="link" value="<?= set_value('link'); ?>" placeholder="https://docs.google.com/document/d/...">
+                                <div class="input-group-append">
+                                    <button type="button" onclick="if ($('#link').val()) { window.open($('#link').val(), '_blank'); } else { alert('Link kosong!'); }" class="btn btn-outline-secondary btn-sm"><i class="fas fa-external-link-alt"></i> Cek</button>
+                                </div>
+                            </div>
+                            <?= form_error('link', '<small class="text-danger">', '</small>'); ?>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                             <label class="small mb-1" for="linkND">Link Nota Dinas (Google Drive, dsb. - Opsional)</label>
+                             <div class="input-group input-group-sm">
+                                <input type="url" class="form-control form-control-sm <?= (form_error('linkND')) ? 'is-invalid' : ''; ?>" id="linkND" name="linkND" value="<?= set_value('linkND'); ?>" placeholder="https://docs.google.com/document/d/...">
+                                <div class="input-group-append">
+                                     <button type="button" onclick="if ($('#linkND').val()) { window.open($('#linkND').val(), '_blank'); } else { alert('Link kosong!'); }" class="btn btn-outline-secondary btn-sm"><i class="fas fa-external-link-alt"></i> Cek</button>
+                                </div>
+                            </div>
+                            <?= form_error('linkND', '<small class="text-danger">', '</small>'); ?>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <hr>
+                <div class="form-group text-right">
+                    <a href="<?= base_url('admin/permohonanMasuk') ?>" class="btn btn-secondary btn-icon-split mr-2">
+                        <span class="icon text-white-50"><i class="fas fa-arrow-left"></i></span>
+                        <span class="text">Kembali</span>
+                    </a>
+                    <button type="submit" class="btn btn-success btn-icon-split">
+                        <span class="icon text-white-50"><i class="fas fa-save"></i></span>
+                        <span class="text">Simpan Keputusan</span>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-    <!-- End of Main Content -->
-
-    <script>
-        $('#TglSurat').datepicker({
-            uiLibrary: 'bootstrap4'
+</div>
+<script>
+    $(document).ready(function() {
+        // Inisialisasi datepicker untuk input yang menggunakan class 'datepicker'
+        $('.datepicker').datepicker({
+            format: 'yyyy-mm-dd', // Format standar YYYY-MM-DD
+            autoclose: true,
+            todayHighlight: true,
+            uiLibrary: 'bootstrap4', // Jika menggunakan Gijgo Datepicker
+            // Untuk Bootstrap Datepicker standar, uiLibrary tidak diperlukan
+            // orientation: "bottom auto" // Sesuaikan orientasi jika perlu
         });
-        $('#TglKedatangan').datepicker({
-            uiLibrary: 'bootstrap4'
-        });
-        $('#TglBongkar').datepicker({
-            uiLibrary: 'bootstrap4'
-        });
-        $('#TglPeriksa').datepicker({
-            uiLibrary: 'bootstrap4'
-        });
-        $('#tgl_st').datepicker({
-            uiLibrary: 'bootstrap4'
-        });
-        $('#wkmulai').timepicker({
-            uiLibrary: 'bootstrap4'
-        });
-        $('#wkselesai').timepicker({
-            uiLibrary: 'bootstrap4'
-        });
-        $('#tgl_S').datepicker({
-            uiLibrary: 'bootstrap4'
-        });
-        $('#tgl_ND').datepicker({
-            uiLibrary: 'bootstrap4'
-        });
-    </script>
+    });
+</script>

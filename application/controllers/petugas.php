@@ -396,4 +396,87 @@ class Petugas extends CI_Controller {
         $this->load->view('petugas/form_edit_profil_petugas', $data);
         $this->load->view('templates/footer');
     }
+
+    public function riwayat_lhp_direkam()
+    {
+        $data['title'] = 'Returnable Package';
+        $data['subtitle'] = 'Riwayat LHP yang Telah Direkam';
+        $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+        $petugas_user_id = $data['user']['id']; // Ini adalah user.id dari petugas yang login
+
+        // Ambil semua LHP yang direkam oleh petugas ini
+        // Kita akan join dengan user_permohonan dan user_perusahaan untuk info tambahan
+        $this->db->select(
+            'lhp.*, '.
+            'up.nomorSurat as nomor_surat_permohonan, '.
+            'up.TglSurat as tanggal_surat_permohonan, '.
+            'upr.NamaPers as nama_perusahaan_pemohon, '.
+            'up.status as status_permohonan_terkini, '.
+            'up.NamaBarang as nama_barang_permohonan' // Ambil nama barang dari permohonan
+        );
+        $this->db->from('lhp');
+        $this->db->join('user_permohonan up', 'lhp.id_permohonan = up.id', 'left');
+        $this->db->join('user_perusahaan upr', 'up.id_pers = upr.id_pers', 'left');
+        $this->db->where('lhp.id_petugas_pemeriksa', $petugas_user_id); // Hanya LHP dari petugas ini
+        $this->db->order_by('lhp.submit_time', 'DESC'); // Tampilkan yang terbaru dulu
+        $data['riwayat_lhp'] = $this->db->get()->result_array();
+
+        // Logging untuk debug
+        log_message('debug', 'PETUGAS RIWAYAT LHP - User ID: ' . $petugas_user_id);
+        log_message('debug', 'PETUGAS RIWAYAT LHP - Query: ' . $this->db->last_query());
+        log_message('debug', 'PETUGAS RIWAYAT LHP - Jumlah Data: ' . count($data['riwayat_lhp']));
+
+        $this->load->view('templates/header', $data);
+        $this->load->view('templates/sidebar', $data);
+        $this->load->view('templates/topbar', $data);
+        $this->load->view('petugas/riwayat_lhp_direkam_view', $data); // Buat view baru ini
+        $this->load->view('templates/footer', $data);
+    }
+
+    public function detail_lhp_direkam($id_lhp = 0)
+    {
+        if ($id_lhp == 0 || !is_numeric($id_lhp)) {
+            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">ID LHP tidak valid.</div>');
+            redirect('petugas/riwayat_lhp_direkam'); // Arahkan kembali ke daftar riwayat LHP
+            return;
+        }
+
+        $data['title'] = 'Returnable Package';
+        $data['subtitle'] = 'Detail LHP Direkam (ID LHP: '.htmlspecialchars($id_lhp).')';
+        $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+        $petugas_user_id = $data['user']['id']; // ID user dari petugas yang login
+
+        // Ambil detail LHP spesifik
+        // Pastikan hanya LHP yang direkam oleh petugas yang login yang bisa diakses
+        // Join dengan user_permohonan dan user_perusahaan untuk mendapatkan info terkait
+        $this->db->select(
+            'lhp.*, '.
+            'up.id as id_permohonan_ajuan, up.nomorSurat as nomor_surat_permohonan, up.TglSurat as tanggal_surat_pemohon, '.
+            'up.NamaBarang as nama_barang_di_permohonan, up.JumlahBarang as jumlah_barang_di_permohonan, '.
+            'upr.NamaPers as nama_perusahaan_pemohon, upr.npwp as npwp_perusahaan'
+        );
+        $this->db->from('lhp'); // Asumsi PK tabel lhp adalah 'id' atau 'id_lhp'
+        $this->db->join('user_permohonan up', 'lhp.id_permohonan = up.id', 'left');
+        $this->db->join('user_perusahaan upr', 'up.id_pers = upr.id_pers', 'left');
+        $this->db->where('lhp.id', $id_lhp); // Ganti 'lhp.id' dengan 'lhp.id_lhp' jika PK Anda adalah id_lhp
+        $this->db->where('lhp.id_petugas_pemeriksa', $petugas_user_id); // Keamanan: Hanya LHP miliknya
+        $data['lhp_detail'] = $this->db->get()->row_array();
+
+        if (!$data['lhp_detail']) {
+            $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Detail LHP tidak ditemukan atau Anda tidak memiliki akses untuk melihatnya.</div>');
+            redirect('petugas/riwayat_lhp_direkam');
+            return;
+        }
+
+        // Anda bisa juga mengambil data permohonan terkait secara terpisah jika perlu lebih banyak field
+        // $data['permohonan_terkait'] = $this->db->get_where('user_permohonan', ['id' => $data['lhp_detail']['id_permohonan']])->row_array();
+
+        log_message('debug', 'PETUGAS DETAIL LHP - Data LHP: ' . print_r($data['lhp_detail'], true));
+
+        $this->load->view('templates/header', $data);
+        $this->load->view('templates/sidebar', $data);
+        $this->load->view('templates/topbar', $data);
+        $this->load->view('petugas/detail_lhp_view', $data); // Anda perlu membuat view ini
+        $this->load->view('templates/footer', $data);
+    }
 }

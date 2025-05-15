@@ -28,6 +28,7 @@
                             <th>Tgl. Submit</th>
                             <th>No. Surat Anda</th>
                             <th>Perihal</th>
+                            <th>Nama Barang</th>
                             <th class="text-right">Jml. Diajukan</th>
                             <th>Status</th>
                             <th class="text-right">Jml. Disetujui</th>
@@ -45,6 +46,7 @@
                                     <td><?= isset($dp['submission_date']) && $dp['submission_date'] != '0000-00-00 00:00:00' ? date('d/m/Y H:i', strtotime($dp['submission_date'])) : '-'; ?></td>
                                     <td><?= htmlspecialchars($dp['nomor_surat_pengajuan'] ?? '-'); ?></td>
                                     <td><?= htmlspecialchars($dp['perihal_pengajuan'] ?? '-'); ?></td>
+                                    <td><?= htmlspecialchars($dp['nama_barang_kuota'] ?? '-'); ?></td>
                                     <td class="text-right"><?= isset($dp['requested_quota']) ? number_format($dp['requested_quota'],0,',','.') : '-'; ?> Unit</td>
                                     <td>
                                         <?php

@@ -1,20 +1,36 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+// Variabel dari controller:
+// $user, $user_perusahaan, $title, $subtitle
+// $total_kuota_awal_disetujui_barang
+// $total_sisa_kuota_barang
+// $total_kuota_terpakai_barang
+// $daftar_kuota_per_barang (array)
+// $recent_permohonan (array)
+?>
 <div class="container-fluid">
 
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800"><?= isset($subtitle) ? htmlspecialchars($subtitle) : 'Dashboard'; ?></h1>
+        <h1 class="h3 mb-0 text-gray-800"><?= htmlspecialchars($subtitle ?? 'Dashboard'); ?></h1>
+        <?php if (isset($user_perusahaan) && !empty($user_perusahaan) && $user['is_active'] == 1) : ?>
+            <a href="<?= site_url('user/permohonan_impor_kembali'); ?>" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                <i class="fas fa-plus fa-sm text-white-50"></i> Buat Permohonan Impor Kembali
+            </a>
+        <?php endif; ?>
     </div>
 
-    <?php
-    // Flashdata seharusnya sudah ditampilkan secara global oleh templates/topbar.php
-    // Jika Anda sudah memastikannya, baris ini bisa tetap dikomentari atau dihapus.
-    // if ($this->session->flashdata('message')) {
-    //     echo $this->session->flashdata('message');
-    // }
-    ?>
+    <!-- <?php
+    if ($this->session->flashdata('message')) { echo $this->session->flashdata('message'); }
+    if ($this->session->flashdata('message_dashboard')) { echo $this->session->flashdata('message_dashboard'); } // Untuk pesan dari controller index
+    ?> -->
 
-    <?php if (empty($user_perusahaan)) : ?>
+    <?php if (isset($user['is_active']) && $user['is_active'] == 0 && empty($user_perusahaan)) : ?>
         <div class="alert alert-warning" role="alert">
-            Data perusahaan Anda belum lengkap. Silakan <a href="<?= site_url('user/edit'); ?>" class="alert-link">lengkapi profil perusahaan Anda</a> untuk mengaktifkan semua fitur.
+            <h4 class="alert-heading">Akun Belum Aktif!</h4>
+            <p>Untuk mengaktifkan akun Anda dan mulai menggunakan layanan, mohon lengkapi data profil dan perusahaan Anda.</p>
+            <hr>
+            <p class="mb-0"><a href="<?= site_url('user/edit'); ?>" class="btn btn-primary">Lengkapi Profil Sekarang</a></p>
         </div>
     <?php else : ?>
         <div class="row">
@@ -24,9 +40,9 @@
                         <div class="row no-gutters align-items-center">
                             <div class="col mr-2">
                                 <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                    Kuota Awal Disetujui</div>
+                                    Total Kuota Awal Disetujui (Semua Barang)</div>
                                 <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                    <?= isset($kuota_awal) ? number_format($kuota_awal, 0, ',', '.') : '0'; // Menggunakan variabel dari controller ?> Unit
+                                    <?= htmlspecialchars(number_format($total_kuota_awal_disetujui_barang ?? 0, 0, ',', '.')); ?> Unit
                                 </div>
                             </div>
                             <div class="col-auto">
@@ -43,9 +59,9 @@
                         <div class="row no-gutters align-items-center">
                             <div class="col mr-2">
                                 <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                    Sisa Kuota</div>
+                                    Total Sisa Kuota (Semua Barang)</div>
                                 <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                     <?= isset($sisa_kuota) ? number_format($sisa_kuota, 0, ',', '.') : '0'; // Menggunakan variabel dari controller ?> Unit
+                                    <?= htmlspecialchars(number_format($total_sisa_kuota_barang ?? 0, 0, ',', '.')); ?> Unit
                                 </div>
                             </div>
                             <div class="col-auto">
@@ -55,19 +71,24 @@
                     </div>
                 </div>
             </div>
-             <div class="col-xl-4 col-md-6 mb-4">
+
+            <div class="col-xl-4 col-md-6 mb-4">
                 <div class="card border-left-info shadow h-100 py-2">
                     <div class="card-body">
                         <div class="row no-gutters align-items-center">
                             <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                    Total Kuota Terpakai</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                    <?= isset($total_kuota_terpakai) ? number_format($total_kuota_terpakai, 0, ',', '.') : '0'; // Menggunakan variabel dari controller ?> Unit
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Kuota Terpakai (Semua Barang)
                                 </div>
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col-auto">
+                                        <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">
+                                            <?= htmlspecialchars(number_format($total_kuota_terpakai_barang ?? 0, 0, ',', '.')); ?> Unit
+                                        </div>
+                                    </div>
+                                    </div>
                             </div>
                             <div class="col-auto">
-                                <i class="fas fa-exchange-alt fa-2x text-gray-300"></i>
+                                <i class="fas fa-dolly-flatbed fa-2x text-gray-300"></i>
                             </div>
                         </div>
                     </div>
@@ -75,82 +96,116 @@
             </div>
         </div>
 
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Ringkasan Permohonan Impor Kembali Terbaru</h6>
-            </div>
-            <div class="card-body">
-                <?php if (!empty($recent_permohonan) && is_array($recent_permohonan)) : ?>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover" width="100%" cellspacing="0">
-                            <thead>
-                                <tr>
-                                    <th>No Surat</th>
-                                    <th>Tgl Surat</th>
-                                    <th>Nama Barang</th>
-                                    <th class="text-right">Jumlah</th>
-                                    <th>Status</th>
-                                    <th>Waktu Submit</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($recent_permohonan as $p) : // Menggunakan $p agar konsisten dengan kode Anda sebelumnya, bukan $rp ?>
+        <?php if (isset($daftar_kuota_per_barang) && !empty($daftar_kuota_per_barang)): ?>
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Rincian Sisa Kuota Aktif per Jenis Barang</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover" id="dataTableRincianKuotaDashboard">
+                                <thead>
                                     <tr>
-                                        <td><?= isset($p['nomorSurat']) ? htmlspecialchars($p['nomorSurat']) : '-'; ?></td>
-                                        <td><?= isset($p['TglSurat']) && $p['TglSurat'] != '0000-00-00' ? date('d/m/Y', strtotime($p['TglSurat'])) : '-'; ?></td>
-                                        <td><?= isset($p['NamaBarang']) ? htmlspecialchars($p['NamaBarang']) : '-'; // Pastikan kolom ini ada di query controller User::index() ?></td>
-                                        <td class="text-right"><?= isset($p['JumlahBarang']) ? number_format($p['JumlahBarang'], 0, ',', '.') : '-'; // Ganti 'Jumlah' menjadi 'JumlahBarang' jika itu nama kolomnya ?> Unit</td>
-                                        <td>
-                                            <?php
-                                            $status_text_user = '-';
-                                            $status_badge_user = 'secondary'; // Default badge
-                                            if (isset($p['status'])) {
-                                                switch ($p['status']) {
-                                                    case '0': // Baru diajukan oleh user
-                                                        $status_text_user = 'Diajukan';
-                                                        $status_badge_user = 'info';
-                                                        break;
-                                                    case '5': // Admin sedang memproses (sebelum menunjuk petugas)
-                                                        $status_text_user = 'Sedang Diproses Kantor'; // Status yang diinginkan
-                                                        $status_badge_user = 'info'; // Warna bisa disesuaikan, misal 'warning'
-                                                        break;
-                                                    case '1': // Admin sudah menunjuk petugas/pemeriksa
-                                                        $status_text_user = 'Pemeriksaan Petugas';
-                                                        $status_badge_user = 'primary';
-                                                        break;
-                                                    case '2': // LHP sudah direkam oleh petugas/pemeriksa
-                                                        $status_text_user = 'Menunggu Keputusan';
-                                                        $status_badge_user = 'warning';
-                                                        break;
-                                                    case '3': // Selesai dan disetujui
-                                                        $status_text_user = 'Disetujui';
-                                                        $status_badge_user = 'success';
-                                                        break;
-                                                    case '4': // Selesai dan ditolak
-                                                        $status_text_user = 'Ditolak';
-                                                        $status_badge_user = 'danger';
-                                                        break;
-                                                    default:
-                                                        $status_text_user = 'Status Proses Tdk Dikenal (' . htmlspecialchars($p['status']) . ')';
-                                                        $status_badge_user = 'dark';
-                                                }
-                                            }
-                                            echo '<span class="badge badge-pill badge-' . $status_badge_user . '">' . htmlspecialchars($status_text_user) . '</span>';
-                                            ?>
-                                        </td>
-                                        <td><?= isset($p['time_stamp']) && $p['time_stamp'] != '0000-00-00 00:00:00' ? date('d/m/Y H:i:s', strtotime($p['time_stamp'])) : '-'; ?></td>
+                                        <th>Nama Barang</th>
+                                        <th class="text-right">Kuota Awal Diberikan</th>
+                                        <th class="text-right">Sisa Kuota</th>
+                                        <th>No. SKEP Asal</th>
                                     </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    <?php foreach($daftar_kuota_per_barang as $kuota_brg): ?>
+                                    <tr>
+                                        <td><?= htmlspecialchars($kuota_brg['nama_barang']); ?></td>
+                                        <td class="text-right"><?= htmlspecialchars(number_format($kuota_brg['initial_quota_barang'] ?? 0, 0, ',', '.')); ?></td>
+                                        <td class="text-right font-weight-bold text-success"><?= htmlspecialchars(number_format($kuota_brg['remaining_quota_barang'] ?? 0, 0, ',', '.')); ?></td>
+                                        <td><?= htmlspecialchars($kuota_brg['nomor_skep_asal'] ?? '-'); ?></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                         <small class="form-text text-muted">Untuk mengajukan penambahan kuota barang tertentu, silakan ke menu "Pengajuan Kuota".</small>
                     </div>
-                    <div class="text-right mt-2">
-                        <a href="<?= site_url('user/daftarPermohonan'); ?>">Lihat Semua Permohonan &rarr;</a>
-                    </div>
-                <?php else : ?>
-                    <p class="text-center">Belum ada data permohonan impor kembali terbaru.</p>
-                <?php endif; ?>
+                </div>
             </div>
         </div>
-    <?php endif; // Penutup untuk if (empty($user_perusahaan)) ?>
+        <?php endif; ?>
+
+
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                        <h6 class="m-0 font-weight-bold text-primary">Ringkasan Permohonan Impor Kembali Terbaru</h6>
+                        <a href="<?= site_url('user/daftarPermohonan'); ?>">Lihat Semua Permohonan &rarr;</a>
+                    </div>
+                    <div class="card-body">
+                        <?php if (!empty($recent_permohonan)) : ?>
+                            <div class="table-responsive">
+                                <table class="table table-hover table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>No Surat</th>
+                                            <th>Tgl Surat</th>
+                                            <th>Nama Barang</th>
+                                            <th class="text-right">Jumlah</th>
+                                            <th>Status</th>
+                                            <th>Waktu Submit</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($recent_permohonan as $p) : ?>
+                                            <tr>
+                                                <td><?= htmlspecialchars($p['nomorSurat'] ?? '-'); ?></td>
+                                                <td><?= isset($p['TglSurat']) && $p['TglSurat'] != '0000-00-00' ? date('d/m/Y', strtotime($p['TglSurat'])) : '-'; ?></td>
+                                                <td><?= htmlspecialchars($p['NamaBarang'] ?? '-'); ?></td>
+                                                <td class="text-right"><?= htmlspecialchars(number_format($p['JumlahBarang'] ?? 0, 0, ',', '.')); ?> Unit</td>
+                                                <td>
+                                                    <?php
+                                                    $status_text = '-'; $status_badge = 'secondary';
+                                                    if (isset($p['status'])) {
+                                                        switch ($p['status']) {
+                                                            case '0': $status_text = 'Baru Masuk'; $status_badge = 'dark'; break;
+                                                            case '5': $status_text = 'Diproses Admin'; $status_badge = 'info'; break;
+                                                            case '1': $status_text = 'Penunjukan Petugas'; $status_badge = 'primary'; break;
+                                                            case '2': $status_text = 'LHP Direkam'; $status_badge = 'warning'; break;
+                                                            case '3': $status_text = 'Selesai (Disetujui)'; $status_badge = 'success'; break;
+                                                            case '4': $status_text = 'Selesai (Ditolak)'; $status_badge = 'danger'; break;
+                                                            default: $status_text = 'N/A';
+                                                        }
+                                                    }
+                                                    echo '<span class="badge badge-pill badge-' . $status_badge . '">' . $status_text . '</span>';
+                                                    ?>
+                                                </td>
+                                                <td><?= isset($p['time_stamp']) ? date('d/m/Y H:i', strtotime($p['time_stamp'])) : '-'; ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php else : ?>
+                            <p class="text-center text-muted">Belum ada data permohonan impor kembali terbaru.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+
 </div>
+<script>
+$(document).ready(function() {
+    if (typeof $.fn.DataTable !== 'undefined' && $('#dataTableRincianKuotaDashboard').length) {
+        $('#dataTableRincianKuotaDashboard').DataTable({
+            "order": [[0, "asc"]], // Urut berdasarkan Nama Barang
+            "pageLength": 5,
+            "lengthMenu": [ [5, 10, -1], [5, 10, "Semua"] ],
+            "searching": false, // Nonaktifkan search jika tidak perlu untuk tabel ringkasan ini
+            "info": false, // Sembunyikan info "Showing x to y of z entries"
+            "language": { "emptyTable": "Tidak ada rincian kuota aktif per barang." }
+        });
+    }
+});
+</script>

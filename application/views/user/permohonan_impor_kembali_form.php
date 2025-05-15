@@ -1,31 +1,58 @@
-<?php // application/views/user/permohonan_impor_kembali_form.php
+<?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-// Inisialisasi variabel untuk data SKEP dan sisa kuota jika ada barang yang dipilih
-$selected_nama_barang = set_value('NamaBarang');
-$nomor_skep_terpilih = '';
-$sisa_kuota_barang_terpilih = 'N/A';
+// Variabel yang dikirim dari Controller:
+// $user (array): Data user yang login
+// $user_perusahaan (array): Data perusahaan terkait
+// $list_barang_berkuota (array): Daftar barang yang memiliki kuota aktif untuk user ini
+// $title (string)
+// $subtitle (string)
+// $this->session->flashdata('message_form_permohonan') (jika ada pesan spesifik untuk form ini)
 
-if (!empty($selected_nama_barang) && !empty($list_barang_berkuota)) {
-    foreach ($list_barang_berkuota as $barang) {
-        if ($barang['nama_barang'] == $selected_nama_barang) {
-            $nomor_skep_terpilih = $barang['nomor_skep_asociado'] ?? 'SKEP Tidak Ada';
-            $sisa_kuota_barang_terpilih = number_format($barang['remaining_quota_barang'] ?? 0) . ' Unit';
+// Inisialisasi untuk JavaScript jika ada value lama dari form_error atau set_value
+$selected_id_kuota_barang_js = set_value('id_kuota_barang_selected', ''); // Ambil dari set_value jika ada
+$selected_nama_barang_js = set_value('NamaBarang', '');
+$prefill_skep = '';
+$prefill_sisa_kuota = 0;
+
+// Jika ada data $list_barang_berkuota dan ada barang yang sudah terpilih sebelumnya (misal karena validasi gagal)
+if (!empty($selected_id_kuota_barang_js) && !empty($list_barang_berkuota)) {
+    foreach ($list_barang_berkuota as $barang_opt) {
+        if ($barang_opt['id_kuota_barang'] == $selected_id_kuota_barang_js) {
+            $prefill_skep = $barang_opt['nomor_skep_asal'] ?? 'SKEP Tidak Ada';
+            $prefill_sisa_kuota = $barang_opt['remaining_quota_barang'] ?? 0;
+            // Pastikan nama barang juga konsisten jika id_kuota_barang yang jadi acuan utama
+            $selected_nama_barang_js = $barang_opt['nama_barang'];
+            break;
+        }
+    }
+} elseif (empty($selected_id_kuota_barang_js) && !empty($selected_nama_barang_js) && !empty($list_barang_berkuota)) {
+    // Fallback jika hanya NamaBarang yang di-set_value (misal callback validasi hanya berdasarkan nama)
+    foreach ($list_barang_berkuota as $barang_opt) {
+        if ($barang_opt['nama_barang'] == $selected_nama_barang_js) {
+            // Ambil data dari barang pertama yang cocok namanya (bisa kurang akurat jika ada duplikasi nama barang dengan skep berbeda)
+            $prefill_skep = $barang_opt['nomor_skep_asal'] ?? 'SKEP Tidak Ada';
+            $prefill_sisa_kuota = $barang_opt['remaining_quota_barang'] ?? 0;
+            $selected_id_kuota_barang_js = $barang_opt['id_kuota_barang']; // Set ID kuota barang juga
             break;
         }
     }
 }
+
+
 ?>
 <div class="container-fluid">
+
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800"><?= isset($subtitle) ? htmlspecialchars($subtitle) : 'Form Permohonan Impor Kembali'; ?></h1>
-        <a href="<?= site_url('user/index'); ?>" class="btn btn-sm btn-secondary shadow-sm">
-            <i class="fas fa-arrow-left fa-sm text-white-50"></i> Kembali ke Dashboard
+        <a href="<?= site_url('user/daftarPermohonan'); // Ke daftar permohonan user ?>" class="btn btn-sm btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm text-white-50"></i> Kembali ke Daftar Permohonan
         </a>
     </div>
 
     <?php
-    if ($this->session->flashdata('message')) { echo $this->session->flashdata('message'); }
+    // if ($this->session->flashdata('message')) { echo $this->session->flashdata('message'); }
+    if ($this->session->flashdata('message_form_permohonan')) { echo $this->session->flashdata('message_form_permohonan'); }
     if (validation_errors()) { echo '<div class="alert alert-danger" role="alert">' . validation_errors() . '</div>';}
     ?>
 
@@ -64,31 +91,33 @@ if (!empty($selected_nama_barang) && !empty($list_barang_berkuota)) {
 
                 <div class="form-row">
                     <div class="form-group col-md-5">
-                        <label for="NamaBarang">Nama / Jenis Barang (sesuai kuota) <span class="text-danger">*</span></label>
-                        <select class="form-control <?= (form_error('NamaBarang')) ? 'is-invalid' : ''; ?>" id="NamaBarang" name="NamaBarang" required>
-                            <option value="">-- Pilih Barang Berkuota --</option>
+                        <label for="id_kuota_barang_selected">Pilih Barang Berdasarkan Kuota <span class="text-danger">*</span></label>
+                        <select class="form-control <?= (form_error('id_kuota_barang_selected') || form_error('NamaBarang')) ? 'is-invalid' : ''; ?>" id="id_kuota_barang_selected" name="id_kuota_barang_selected" required>
+                            <option value="">-- Pilih Barang & Kuota SKEP --</option>
                             <?php if (!empty($list_barang_berkuota)): ?>
                                 <?php foreach($list_barang_berkuota as $barang): ?>
-                                    <option value="<?= htmlspecialchars($barang['nama_barang']); ?>"
+                                    <option value="<?= htmlspecialchars($barang['id_kuota_barang']); ?>"
+                                            data-nama_barang="<?= htmlspecialchars($barang['nama_barang']); ?>"
                                             data-sisa_kuota="<?= htmlspecialchars($barang['remaining_quota_barang'] ?? 0); ?>"
-                                            data-skep="<?= htmlspecialchars($barang['nomor_skep_asociado'] ?? ''); ?>"
-                                            <?= set_select('NamaBarang', $barang['nama_barang']); ?>>
-                                        <?= htmlspecialchars($barang['nama_barang']); ?> (Sisa: <?= number_format($barang['remaining_quota_barang'] ?? 0); ?> Unit)
+                                            data-skep="<?= htmlspecialchars($barang['nomor_skep_asal'] ?? ''); ?>"
+                                            <?= set_select('id_kuota_barang_selected', $barang['id_kuota_barang']); ?>>
+                                        <?= htmlspecialchars($barang['nama_barang']); ?> (Sisa: <?= number_format($barang['remaining_quota_barang'] ?? 0, 0, ',', '.'); ?> Unit - SKEP: <?= htmlspecialchars($barang['nomor_skep_asal'] ?? 'N/A'); ?>)
                                     </option>
                                 <?php endforeach; ?>
                             <?php endif; ?>
                         </select>
-                        <?= form_error('NamaBarang', '<small class="text-danger pl-1">', '</small>'); ?>
+                        <?= form_error('id_kuota_barang_selected', '<small class="text-danger pl-1">', '</small>'); ?>
+                        <?= form_error('NamaBarang', '<small class="text-danger pl-1">', '</small>'); // Jika masih ada validasi NamaBarang terpisah ?>
                         <small id="sisaKuotaInfo" class="form-text text-info"></small>
-                    </div>
+                        <input type="hidden" name="NamaBarang" id="NamaBarangHidden" value="<?= $selected_nama_barang_js; ?>"> </div>
                     <div class="form-group col-md-3">
                         <label for="JumlahBarang">Jumlah Barang Diajukan <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control <?= (form_error('JumlahBarang')) ? 'is-invalid' : ''; ?>" id="JumlahBarang" name="JumlahBarang" value="<?= set_value('JumlahBarang'); ?>" required min="1" max="0"> <?php // Max akan diupdate oleh JS ?>
+                        <input type="number" class="form-control <?= (form_error('JumlahBarang')) ? 'is-invalid' : ''; ?>" id="JumlahBarang" name="JumlahBarang" value="<?= set_value('JumlahBarang'); ?>" required min="1" max="0">
                         <?= form_error('JumlahBarang', '<small class="text-danger pl-1">', '</small>'); ?>
                     </div>
                     <div class="form-group col-md-4">
                         <label for="NoSkepOtomatis">No. SKEP (Dasar Permohonan)</label>
-                        <input type="text" class="form-control" id="NoSkepOtomatis" name="NoSkepOtomatis" value="<?= set_value('NoSkepOtomatis', $nomor_skep_terpilih); ?>" readonly title="No. SKEP otomatis terisi berdasarkan barang yang dipilih.">
+                        <input type="text" class="form-control" id="NoSkepOtomatis" name="NoSkepOtomatis" value="<?= set_value('NoSkepOtomatis', $prefill_skep); ?>" readonly title="No. SKEP otomatis terisi berdasarkan barang yang dipilih.">
                     </div>
                 </div>
 
@@ -152,15 +181,17 @@ $(document).ready(function () {
         $('#TglBongkar').datepicker(datepickerConfig);
     }
 
-    // Update Sisa Kuota Info, No SKEP, dan Max Jumlah Barang saat NamaBarang berubah
-    $('#NamaBarang').on('change', function() {
+    // Event handler untuk dropdown barang
+    $('#id_kuota_barang_selected').on('change', function() {
         var selectedOption = $(this).find('option:selected');
         var sisaKuota = selectedOption.data('sisa_kuota') || 0;
-        var skep = selectedOption.data('skep') || 'SKEP Tidak Ada';
+        var skep = selectedOption.data('skep') || 'SKEP Tidak Tersedia';
+        var namaBarang = selectedOption.data('nama_barang') || '';
 
-        $('#sisaKuotaInfo').text('Sisa kuota untuk barang ini: ' + parseInt(sisaKuota).toLocaleString() + ' Unit');
+        $('#sisaKuotaInfo').text('Sisa kuota untuk barang (' + namaBarang + ') ini: ' + parseInt(sisaKuota).toLocaleString() + ' Unit');
         $('#NoSkepOtomatis').val(skep);
-        $('#JumlahBarang').attr('max', parseInt(sisaKuota)); // Set max untuk input jumlah
+        $('#JumlahBarang').attr('max', parseInt(sisaKuota)).val(''); // Set max dan reset jumlah barang
+        $('#NamaBarangHidden').val(namaBarang); // Set hidden input untuk nama barang
 
         if(parseInt(sisaKuota) <= 0 || $(this).val() === "") {
             $('#submitPermohonanBtn').prop('disabled', true).attr('title', 'Tidak ada kuota tersedia untuk barang ini atau barang belum dipilih.');
@@ -169,20 +200,31 @@ $(document).ready(function () {
             $('#submitPermohonanBtn').prop('disabled', false).attr('title', '');
             $('#JumlahBarang').prop('readonly', false);
         }
-    }).trigger('change'); // Trigger saat halaman load untuk inisialisasi
+    }).trigger('change'); // Trigger saat halaman load untuk inisialisasi jika ada set_value
 
     // Validasi jumlah barang tidak melebihi sisa kuota (client-side)
     $('#JumlahBarang').on('input', function() {
         var jumlahDimohon = parseInt($(this).val()) || 0;
-        var sisaKuota = parseInt($(this).attr('max')) || 0;
-        if (jumlahDimohon > sisaKuota) {
-            $(this).val(sisaKuota); // Batasi ke sisa kuota
-            // Anda bisa tambahkan notifikasi di sini jika mau
+        var sisaKuota = parseInt($(this).attr('max')) || 0; // Ambil dari max attribute
+        var idKuotaBarang = $('#id_kuota_barang_selected').val();
+
+        if (jumlahDimohon > sisaKuota && idKuotaBarang !== "") { // Hanya validasi jika barang sudah dipilih
+            $(this).val(sisaKuota);
+            // Notifikasi sederhana, bisa diganti dengan toast atau alert yang lebih baik
+            $('#sisaKuotaInfo').append(' <strong class="text-danger">(Jumlah melebihi sisa!)</strong>');
+            setTimeout(function(){
+                 $('#sisaKuotaInfo .text-danger').remove();
+            }, 3000);
+        } else {
+            $('#sisaKuotaInfo .text-danger').remove();
         }
-        if (jumlahDimohon <= 0) {
+
+        if (jumlahDimohon <= 0 && idKuotaBarang !== "") {
              $('#submitPermohonanBtn').prop('disabled', true).attr('title', 'Jumlah barang harus lebih dari 0.');
-        } else if (sisaKuota > 0 && jumlahDimohon <= sisaKuota) {
+        } else if (sisaKuota > 0 && jumlahDimohon > 0 && jumlahDimohon <= sisaKuota && idKuotaBarang !== "") {
              $('#submitPermohonanBtn').prop('disabled', false).attr('title', '');
+        } else if (idKuotaBarang === "") { // Jika belum ada barang dipilih
+            $('#submitPermohonanBtn').prop('disabled', true).attr('title', 'Pilih barang berkuota terlebih dahulu.');
         }
     });
 });

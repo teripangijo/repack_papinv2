@@ -7,15 +7,15 @@ $userImageName = isset($user['image']) && !empty($user['image']) ? $user['image'
 $role_id_for_topbar = $this->session->userdata('role_id'); // Ambil role_id dari session
 $profile_image_folder = 'uploads/kop/'; // Default untuk Pengguna Jasa (logo perusahaan)
 
-if ($role_id_for_topbar == 1) { // Admin
-    $profile_image_folder = 'uploads/profile_admin/'; // Contoh path untuk admin
-} elseif ($role_id_for_topbar == 3) { // Petugas
-    $profile_image_folder = 'uploads/profile_images/'; // Path yang Anda gunakan di Petugas::edit_profil()
-} elseif ($role_id_for_topbar == 4) { // Monitoring
-    $profile_image_folder = 'uploads/profile_monitoring/'; // Contoh path untuk monitoring
-}
+// if ($role_id_for_topbar == 1) { // Admin
+//     $profile_image_folder = 'uploads/profile_admin/'; // Contoh path untuk admin
+// } elseif ($role_id_for_topbar == 3) { // Petugas
+//     $profile_image_folder = 'uploads/profile_images/'; // Path yang Anda gunakan di Petugas::edit_profil()
+// } elseif ($role_id_for_topbar == 4) { // Monitoring
+//     $profile_image_folder = 'uploads/profile_monitoring/'; // Contoh path untuk monitoring
+// }
 // Jika Anda menggunakan satu folder untuk semua foto profil user (selain logo perusahaan), sederhanakan:
-// $profile_image_folder = 'uploads/profile_images/'; 
+$profile_image_folder = 'uploads/profile_images/'; 
 
 $profileImagePath = base_url($profile_image_folder . htmlspecialchars($userImageName));
 $fallbackImagePath = base_url('assets/img/default-avatar.png'); // Fallback umum

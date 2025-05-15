@@ -122,7 +122,7 @@
         <tr>
             <td style="width: 25%; text-align: center; vertical-align: middle;">
                 <?php if ($logo_perusahaan_file) : ?>
-                    <img src="<?= base_url('uploads/kop/' . htmlspecialchars($logo_perusahaan_file)); ?>" alt="Logo Perusahaan" style="max-width: 100px; max-height: 100px; object-fit: contain;">
+                    <img src="<?= base_url('uploads/profile_images/' . htmlspecialchars($logo_perusahaan_file)); ?>" alt="Logo Perusahaan" style="max-width: 100px; max-height: 100px; object-fit: contain;">
                 <?php else: ?>
                     <div style="width:100px; height:100px; border:1px solid #ccc; display:flex; align-items:center; justify-content:center; margin:auto; font-size:10px;">No Logo</div>
                 <?php endif; ?>
