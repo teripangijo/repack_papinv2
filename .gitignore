@@ -9,9 +9,11 @@ application/logs/log-*.php
 application/cache/
 !application/cache/index.html
 !application/cache/.htaccess
+/Applications/XAMPP/xamppfiles/htdocs/ci/application/session
 
 # Vendor directory (if using Composer)
 /vendor/
 
 # Environment file
 .env
+ci/buat_hash.php
