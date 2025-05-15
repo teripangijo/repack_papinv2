@@ -299,71 +299,117 @@ class User extends CI_Controller
         }
     }
 
-    public function permohonan_impor_kembali() 
+    public function permohonan_impor_kembali() // Atau nama method Anda, misal: permohonan_impor_kembali()
     {
         $data['title'] = 'Returnable Package';
-        $data['subtitle'] = 'Permohonan Impor Kembali'; 
+        $data['subtitle'] = 'Permohonan Impor Kembali'; // Sesuaikan judul
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
-        $id = $data['user']['id'];
-        $data['user_perusahaan'] = $this->db->get_where('user_perusahaan', ['id_pers' => $id])->row_array();
+        $id_user_login = $data['user']['id']; // ID user yang login
 
-        if(empty($data['user_perusahaan'])) {
-             $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Please complete your company profile first in the Edit Profile menu before submitting a request.</div>');
-             redirect('user/edit'); 
+        // Ambil data perusahaan (ini sudah ada di kode Anda)
+        $data['user_perusahaan'] = $this->db->get_where('user_perusahaan', ['id_pers' => $id_user_login])->row_array();
+
+        // Jika data perusahaan belum lengkap, redirect ke edit profil (sudah ada di kode Anda)
+        if (empty($data['user_perusahaan']) && $data['user']['is_active'] == 1) {
+             $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Mohon lengkapi profil perusahaan Anda terlebih dahulu di menu Edit Profil.</div>');
+             redirect('user/edit');
              return;
         }
-        if (!isset($data['user_perusahaan']['remaining_quota']) || $data['user_perusahaan']['remaining_quota'] <= 0) {
-            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Your remaining quota is insufficient. Please submit a quota request.</div>');
-            redirect('user/pengajuan_kuota'); 
+        // Jika akun belum aktif dan perusahaan belum ada, juga redirect
+        if ($data['user']['is_active'] == 0 && empty($data['user_perusahaan'])) {
+             $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Akun Anda belum aktif. Mohon lengkapi profil perusahaan Anda untuk aktivasi.</div>');
+             redirect('user/edit');
+             return;
+        }
+
+
+        // --- LOGIKA PENGAMBILAN NO SKEP ---
+        $nomor_skep_valid = null;
+
+        // Prioritas 1: Ambil dari profil perusahaan (user_perusahaan.NoSkep)
+        if (isset($data['user_perusahaan']['NoSkep']) && !empty(trim($data['user_perusahaan']['NoSkep']))) {
+            $nomor_skep_valid = trim($data['user_perusahaan']['NoSkep']);
+            log_message('debug', 'SKEP ditemukan dari profil perusahaan: ' . $nomor_skep_valid);
+        } else {
+            // Prioritas 2: Ambil dari pengajuan kuota terakhir yang disetujui
+            $this->db->select('nomor_sk_petugas');
+            $this->db->from('user_pengajuan_kuota');
+            $this->db->where('id_pers', $id_user_login); // Pengajuan kuota milik perusahaan ini
+            $this->db->where('status', 'approved');     // Yang statusnya disetujui
+            $this->db->where('nomor_sk_petugas IS NOT NULL');
+            $this->db->where("nomor_sk_petugas != ''");
+            $this->db->order_by('processed_date', 'DESC'); // Ambil yang terbaru
+            $this->db->limit(1);
+            $pengajuan_kuota_terakhir = $this->db->get()->row_array();
+
+            if ($pengajuan_kuota_terakhir && isset($pengajuan_kuota_terakhir['nomor_sk_petugas']) && !empty(trim($pengajuan_kuota_terakhir['nomor_sk_petugas']))) {
+                $nomor_skep_valid = trim($pengajuan_kuota_terakhir['nomor_sk_petugas']);
+                log_message('debug', 'SKEP ditemukan dari pengajuan kuota terakhir: ' . $nomor_skep_valid);
+            }
+        }
+        $data['nomor_skep_otomatis'] = $nomor_skep_valid;
+        // ------------------------------------
+
+        // Jika tidak ada SKEP valid dari kedua sumber, cegah pengajuan
+        if ($nomor_skep_valid === null) {
+            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Tidak ditemukan No. SKEP yang valid (baik dari profil perusahaan maupun dari histori pengajuan kuota yang disetujui). Anda tidak dapat membuat Permohonan Impor Kembali saat ini.</div>');
+            // Arahkan ke halaman di mana user bisa mengupdate SKEP atau mengajukan kuota
+            // Misalnya, ke dashboard atau daftar pengajuan kuota
+            redirect('user/index'); // Atau 'user/daftar_pengajuan_kuota_user'
             return;
         }
 
+
+        // Aturan validasi form (seperti yang sudah ada di kode Anda)
         $this->form_validation->set_rules('nomorSurat', 'Nomor Surat', 'trim|required');
         $this->form_validation->set_rules('TglSurat', 'Tanggal Surat', 'trim|required');
         $this->form_validation->set_rules('Perihal', 'Perihal', 'trim|required');
         $this->form_validation->set_rules('NamaBarang', 'Nama Barang', 'trim|required');
-        $this->form_validation->set_rules('JumlahBarang', 'Jumlah Barang', 'trim|required|numeric|callback_check_quota['.(isset($data['user_perusahaan']['remaining_quota']) ? $data['user_perusahaan']['remaining_quota'] : 0).']');
+        $this->form_validation->set_rules('JumlahBarang', 'Jumlah Barang', 'trim|required|numeric|greater_than[0]');
         $this->form_validation->set_rules('NegaraAsal', 'Negara Asal', 'trim|required');
         $this->form_validation->set_rules('NamaKapal', 'Nama Kapal', 'trim|required');
         $this->form_validation->set_rules('noVoyage', 'Nomor Voyage', 'trim|required');
-        $this->form_validation->set_rules('TglKedatangan', 'Tanggal Kedatangan', 'trim|required');
-        $this->form_validation->set_rules('TglBongkar', 'Tanggal Bongkar', 'trim|required');
+        // No. SKEP sekarang diambil otomatis, jadi tidak perlu divalidasi sebagai input
+        // $this->form_validation->set_rules('NoSkep', 'No. SKEP', 'trim|required');
+        $this->form_validation->set_rules('TglKedatangan', 'Tanggal Perkiraan Kedatangan', 'trim|required');
+        $this->form_validation->set_rules('TglBongkar', 'Tanggal Perkiraan Bongkar', 'trim|required');
         $this->form_validation->set_rules('lokasi', 'Lokasi Bongkar', 'trim|required');
 
+
         if ($this->form_validation->run() == false) {
+            log_message('debug', 'Form Permohonan Impor Validasi Gagal. Errors: ' . validation_errors());
             $this->load->view('templates/header', $data);
             $this->load->view('templates/sidebar', $data);
             $this->load->view('templates/topbar', $data);
-            $this->load->view('user/permohonan_impor_kembali_form', $data); 
+            $this->load->view('user/permohonan_impor_kembali_form', $data); // atau nama view Anda: 'user/form_permohonan_impor_kembali_view.php'
             $this->load->view('templates/footer');
         } else {
+            // Proses penyimpanan data permohonan
             $time = time();
             $timenow = date("Y-m-d H:i:s", $time);
-            $jumlah_barang_dimohon = (int)$this->input->post('JumlahBarang');
-            
             $data_insert = [
-                'NamaPers' => $data['user_perusahaan']['NamaPers'],
-                'alamat' => $data['user_perusahaan']['alamat'],
-                'nomorSurat' => $this->input->post('nomorSurat'),
-                'TglSurat' => $this->input->post('TglSurat'),
-                'Perihal' => $this->input->post('Perihal'),
-                'NamaBarang' => $this->input->post('NamaBarang'),
-                'JumlahBarang' => $jumlah_barang_dimohon,
-                'NegaraAsal' => $this->input->post('NegaraAsal'),
-                'NamaKapal' => $this->input->post('NamaKapal'),
-                'noVoyage' => $this->input->post('noVoyage'),
-                'NoSkep' => isset($data['user_perusahaan']['NoSkep']) ? $data['user_perusahaan']['NoSkep'] : null,
+                'NamaPers'      => $data['user_perusahaan']['NamaPers'],
+                'alamat'        => $data['user_perusahaan']['alamat'],
+                'nomorSurat'    => $this->input->post('nomorSurat'),
+                'TglSurat'      => $this->input->post('TglSurat'),
+                'Perihal'       => $this->input->post('Perihal'),
+                'NamaBarang'    => $this->input->post('NamaBarang'),
+                'JumlahBarang'  => $this->input->post('JumlahBarang'),
+                'NegaraAsal'    => $this->input->post('NegaraAsal'),
+                'NamaKapal'     => $this->input->post('NamaKapal'),
+                'noVoyage'      => $this->input->post('noVoyage'),
+                'NoSkep'        => $nomor_skep_valid, // Simpan No. SKEP yang valid
                 'TglKedatangan' => $this->input->post('TglKedatangan'),
-                'TglBongkar' => $this->input->post('TglBongkar'),
-                'lokasi' => $this->input->post('lokasi'),
-                'id_pers' => $id,
-                'time_stamp' => $timenow,
-                'status' => '0'
+                'TglBongkar'    => $this->input->post('TglBongkar'),
+                'lokasi'        => $this->input->post('lokasi'),
+                'id_pers'       => $id_user_login,
+                'time_stamp'    => $timenow,
+                'status'        => '0'
             ];
             $this->db->insert('user_permohonan', $data_insert);
 
-            $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Permohonan Impor Kembali Telah Disimpan.</div>');
-            redirect('user/daftarPermohonan');
+            $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Permohonan Impor Kembali Telah Disimpan dan akan segera diproses.</div>');
+            redirect('user/daftarPermohonan'); // atau ke halaman konfirmasi/dashboard
         }
     }
 
@@ -379,49 +425,95 @@ class User extends CI_Controller
     }
 
     public function pengajuan_kuota()
-    {
-        $data['title'] = 'Returnable Package';
-        $data['subtitle'] = 'Pengajuan Kuota';
-        $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
-        $data['user_perusahaan'] = $this->db->get_where('user_perusahaan', ['id_pers' => $data['user']['id']])->row_array();
+{
+    $data['title'] = 'Returnable Package';
+    $data['subtitle'] = 'Pengajuan Penambahan Kuota';
+    $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+    $id_user_login = $data['user']['id'];
 
-        if(empty($data['user_perusahaan'])) {
-             $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Please complete your company profile first in the Edit Profile menu before submitting a quota request.</div>');
-             redirect('user/edit');
-             return;
-        }
+    $data['user_perusahaan'] = $this->db->get_where('user_perusahaan', ['id_pers' => $id_user_login])->row_array();
 
-        $this->form_validation->set_rules('nomor_surat_pengajuan', 'Nomor Surat Pengajuan', 'trim|required');
-        $this->form_validation->set_rules('tanggal_surat_pengajuan', 'Tanggal Surat Pengajuan', 'trim|required');
-        $this->form_validation->set_rules('perihal_pengajuan', 'Perihal Surat Pengajuan', 'trim|required');
-        $this->form_validation->set_rules('nama_barang_kuota', 'Nama/Jenis Barang', 'trim|required');
-        $this->form_validation->set_rules('requested_quota', 'Jumlah Kuota Diajukan', 'trim|required|numeric|greater_than[0]');
-        $this->form_validation->set_rules('reason', 'Alasan Pengajuan', 'trim|required');
-
-        if ($this->form_validation->run() == false) {
-            $this->load->view('templates/header', $data);
-            $this->load->view('templates/sidebar', $data);
-            $this->load->view('templates/topbar', $data);
-            $this->load->view('user/pengajuan_kuota_form', $data); 
-            $this->load->view('templates/footer');
-        } else {
-            $data_pengajuan = [
-                'id_pers' => $data['user']['id'],
-                'nomor_surat_pengajuan' => $this->input->post('nomor_surat_pengajuan'),
-                'tanggal_surat_pengajuan' => $this->input->post('tanggal_surat_pengajuan'),
-                'perihal_pengajuan' => $this->input->post('perihal_pengajuan'),
-                'nama_barang_kuota' => $this->input->post('nama_barang_kuota'),
-                'requested_quota' => $this->input->post('requested_quota'),
-                'reason' => $this->input->post('reason'),
-                'submission_date' => date('Y-m-d H:i:s'),
-                'status' => 'pending' 
-            ];
-            $this->db->insert('user_pengajuan_kuota', $data_pengajuan); 
-
-            $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Pengajuan kuota Anda telah berhasil dikirim dan akan diproses oleh administrator.</div>');
-            redirect('user/index'); 
-        }
+    if(empty($data['user_perusahaan'])) {
+         $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Mohon lengkapi profil perusahaan Anda terlebih dahulu di menu "Edit Profil & Perusahaan" sebelum mengajukan kuota.</div>');
+         redirect('user/edit');
+         return;
     }
+    if ($data['user']['is_active'] == 0) {
+         $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Akun Anda belum aktif. Tidak dapat mengajukan kuota. Mohon lengkapi profil perusahaan Anda jika belum, atau hubungi Administrator.</div>');
+         redirect('user/edit');
+         return;
+    }
+
+    // Aturan validasi form (name input di form harus sama dengan parameter pertama set_rules)
+    $this->form_validation->set_rules('nomor_surat_pengajuan', 'Nomor Surat Pengajuan', 'trim|required');
+    $this->form_validation->set_rules('tanggal_surat_pengajuan', 'Tanggal Surat Pengajuan', 'trim|required');
+    $this->form_validation->set_rules('perihal_pengajuan', 'Perihal Surat Pengajuan', 'trim|required');
+    $this->form_validation->set_rules('nama_barang_kuota', 'Nama/Jenis Barang', 'trim|required');
+    $this->form_validation->set_rules('requested_quota', 'Jumlah Kuota Diajukan', 'trim|required|numeric|greater_than[0]');
+    $this->form_validation->set_rules('reason', 'Alasan Pengajuan', 'trim|required');
+    // Jika file lampiran opsional, tidak perlu rule 'required' di sini, cukup tangani uploadnya
+    // Jika wajib: if (empty($_FILES['file_lampiran_pengajuan']['name'])) { $this->form_validation->set_rules('file_lampiran_pengajuan', 'File Lampiran', 'required');}
+
+    if ($this->form_validation->run() == false) {
+        $this->load->view('templates/header', $data);
+        $this->load->view('templates/sidebar', $data);
+        $this->load->view('templates/topbar', $data);
+        $this->load->view('user/pengajuan_kuota_form', $data);
+        $this->load->view('templates/footer', $data);
+    } else {
+        $nama_file_lampiran = null;
+
+        if (isset($_FILES['file_lampiran_pengajuan']) && $_FILES['file_lampiran_pengajuan']['error'] != UPLOAD_ERR_NO_FILE) {
+            $upload_dir_lampiran = './uploads/lampiran_kuota/';
+            if (!is_dir($upload_dir_lampiran)) {
+                if (!@mkdir($upload_dir_lampiran, 0777, true)) {
+                     $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Gagal membuat direktori upload lampiran.</div>');
+                     redirect('user/pengajuan_kuota');
+                     return;
+                }
+            }
+            $config_lampiran['upload_path']   = $upload_dir_lampiran;
+            $config_lampiran['allowed_types'] = 'pdf|doc|docx|jpg|jpeg|png';
+            $config_lampiran['max_size']      = '2048';
+            $config_lampiran['encrypt_name']  = TRUE;
+            $this->load->library('upload', $config_lampiran, 'lampiran_kuota_upload');
+            $this->lampiran_kuota_upload->initialize($config_lampiran);
+
+            if ($this->lampiran_kuota_upload->do_upload('file_lampiran_pengajuan')) {
+                $nama_file_lampiran = $this->lampiran_kuota_upload->data('file_name');
+            } else {
+                $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Upload File Lampiran Gagal: ' . $this->lampiran_kuota_upload->display_errors('', '') . '</div>');
+                redirect('user/pengajuan_kuota');
+                return;
+            }
+        }
+
+        $data_pengajuan = [
+            'id_pers'                   => $id_user_login,
+            'nomor_surat_pengajuan'     => $this->input->post('nomor_surat_pengajuan'), // Sesuai DB
+            'tanggal_surat_pengajuan'   => $this->input->post('tanggal_surat_pengajuan'), // Sesuai DB
+            'perihal_pengajuan'         => $this->input->post('perihal_pengajuan'), // Sesuai DB
+            'nama_barang_kuota'         => $this->input->post('nama_barang_kuota'), // Sesuai DB
+            'requested_quota'           => $this->input->post('requested_quota'),   // Sesuai DB
+            'reason'                    => $this->input->post('reason'), // Sesuai DB
+            // 'file_lampiran_user'     => $nama_file_lampiran, // Sesuaikan nama kolom ini jika ada di DB
+            'submission_date'           => date('Y-m-d H:i:s'),   // Sesuai DB
+            'status'                    => 'pending'    // Sesuai DB
+        ];
+
+        // Tambahkan file lampiran ke array jika ada dan jika ada kolomnya di DB
+        if ($nama_file_lampiran !== null) {
+            // GANTI 'nama_kolom_file_lampiran_di_db' DENGAN NAMA KOLOM YANG BENAR
+            // JIKA TIDAK ADA KOLOM UNTUK INI, HAPUS BLOK IF INI DAN BARIS DI ATASNYA
+            // $data_pengajuan['nama_kolom_file_lampiran_di_db'] = $nama_file_lampiran;
+        }
+
+        $this->db->insert('user_pengajuan_kuota', $data_pengajuan);
+
+        $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Pengajuan kuota Anda telah berhasil dikirim dan akan diproses oleh administrator.</div>');
+        redirect('user/daftar_pengajuan_kuota');
+    }
+}
 
     public function daftar_pengajuan_kuota()
     {
