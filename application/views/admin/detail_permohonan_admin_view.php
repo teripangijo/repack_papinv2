@@ -128,6 +128,21 @@
                                 <?php else: ?>
                                     <tr><td>File LHP</td><td>: <span class="text-muted"><em>Tidak ada file</em></span></td></tr>
                                 <?php endif; ?>
+                                <?php if (isset($lhp_detail['file_dokumentasi_foto']) && !empty($lhp_detail['file_dokumentasi_foto'])): ?>
+                                    <tr>
+                                        <td>File Dokumentasi Foto</td>
+                                        <td>: 
+                                            <a href="<?= base_url('uploads/dokumentasi_lhp/' . htmlspecialchars($lhp_detail['file_dokumentasi_foto'])); ?>" target="_blank" title="Unduh/Lihat Dokumentasi Foto">
+                                                <i class="fas fa-camera"></i> <?= htmlspecialchars($lhp_detail['file_dokumentasi_foto']); ?>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <?php else: ?>
+                                    <tr>
+                                        <td>File Dokumentasi Foto</td>
+                                        <td>: <span class="text-muted"><em>Tidak ada file dokumentasi foto</em></span></td>
+                                    </tr>
+                                <?php endif; ?>
                             </table>
                         </div>
                     </div>
