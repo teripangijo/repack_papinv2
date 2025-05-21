@@ -56,9 +56,9 @@ class Admin extends CI_Controller
                 if ($this->form_validation->run() == TRUE) {
                      $update_data_user['email'] = htmlspecialchars($new_login_identifier);
                 } else {
-                    $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">' . validation_errors() . '</div>');
-                    redirect('admin/edit_profil');
-                    return;
+                    // $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">' . validation_errors() . '</div>');
+                    // redirect('admin/edit_profil');
+                    // return;
                 }
             }
 
