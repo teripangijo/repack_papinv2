@@ -18,7 +18,6 @@
         </div>
         <div class="card-body">
             <?php
-            // ** PERBAIKAN DI SINI: Gunakan 'JumlahBarang' **
             $jumlahDiajukanDariPermohonan = $permohonan['JumlahBarang'] ?? 0;
             // Logging di view (hanya untuk debug, hapus atau komentari setelah selesai)
             // log_message('debug', 'VIEW FORM REKAM LHP - Data Permohonan: ' . print_r($permohonan, true));

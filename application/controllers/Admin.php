@@ -12,13 +12,140 @@ class Admin extends CI_Controller
             redirect('auth/blocked');
             exit; 
         }
-        $this->load->helper(array('form', 'url', 'repack_helper', 'download')); // Tambahkan helper download
+        $this->load->helper(array('form', 'url', 'repack_helper', 'download'));
         $this->load->library('form_validation');
         $this->load->library('upload');
         $this->load->library('session');
         if (!isset($this->db)) {
             $this->load->database();
         }
+    }
+
+    public function edit_profil()
+    {
+        // Tidak perlu _check_auth_petugas() karena otentikasi admin sudah ada di __construct()
+
+        $data['title'] = 'Returnable Package';
+        $data['subtitle'] = 'Edit Profil Saya';
+        $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+        $user_id = $data['user']['id'];
+
+        // Bagian untuk 'petugas_detail' tidak diperlukan untuk Admin, kecuali Admin juga memiliki entri detail di tabel lain.
+        // Jika Admin hanya menggunakan tabel 'user', maka baris di bawah ini bisa dihilangkan.
+        // Jika ada tabel detail khusus admin, misalnya 'admin_details', Anda bisa menambahkannya di sini.
+        // Untuk saat ini, kita asumsikan tidak ada tabel detail tambahan.
+
+        if ($this->input->method() === 'post') {
+            // Proses update nama atau data lainnya (jika ada di form)
+            $update_data_user = [];
+            $name_input = $this->input->post('name', true); // Ambil input nama dari form
+
+            // Hanya update nama jika berbeda dan tidak kosong
+            if (!empty($name_input) && $name_input !== $data['user']['name']) {
+                $update_data_user['name'] = htmlspecialchars($name_input);
+            }
+            
+            // Tambahkan validasi jika NIP/Email diubah (mirip dengan edit_user)
+            $current_login_identifier = $data['user']['email'];
+            $new_login_identifier = $this->input->post('login_identifier', true); // Field di form harus 'login_identifier'
+
+            if (!empty($new_login_identifier) && $new_login_identifier !== $current_login_identifier) {
+                // Admin (role_id 1) biasanya menggunakan email
+                // Anda bisa menambahkan validasi is_unique jika memang diizinkan untuk diubah
+                $this->form_validation->set_rules('login_identifier', 'Email Login', 'trim|required|valid_email|is_unique[user.email.id.'.$user_id.']');
+                if ($this->form_validation->run() == TRUE) {
+                     $update_data_user['email'] = htmlspecialchars($new_login_identifier);
+                } else {
+                    $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">' . validation_errors() . '</div>');
+                    redirect('admin/edit_profil');
+                    return;
+                }
+            }
+
+
+            // Jika ada data yang akan diupdate (selain foto)
+            if (!empty($update_data_user)) {
+                $this->db->where('id', $user_id);
+                $this->db->update('user', $update_data_user);
+                $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Profil berhasil diupdate.</div>');
+                 // Update session jika nama atau email (login identifier) berubah
+                if (isset($update_data_user['name'])) {
+                    $this->session->set_userdata('name', $update_data_user['name']);
+                }
+                if (isset($update_data_user['email'])) {
+                    $this->session->set_userdata('email', $update_data_user['email']);
+                }
+            }
+
+
+            // Proses upload foto profil (jika ada file yang diupload)
+            if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] != UPLOAD_ERR_NO_FILE) {
+                $upload_dir_profile = 'uploads/profile_images/';
+                $upload_path_profile = FCPATH . $upload_dir_profile;
+
+                if (!is_dir($upload_path_profile)) {
+                    if (!@mkdir($upload_path_profile, 0777, true)) {
+                        $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Gagal membuat direktori upload foto profil.</div>');
+                        redirect('admin/edit_profil');
+                        return;
+                    }
+                }
+
+                if (!is_writable($upload_path_profile)) {
+                    $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Upload error: Direktori foto profil tidak writable.</div>');
+                    redirect('admin/edit_profil');
+                    return;
+                }
+
+                $config_profile['upload_path']   = $upload_path_profile;
+                $config_profile['allowed_types'] = 'jpg|png|jpeg|gif';
+                $config_profile['max_size']      = '2048'; // 2MB
+                $config_profile['max_width']     = '1024';
+                $config_profile['max_height']    = '1024';
+                $config_profile['encrypt_name']  = TRUE;
+
+                // Inisialisasi library upload dengan konfigurasi
+                // Nama instance 'profile_upload' untuk menghindari konflik jika ada upload lain
+                $this->load->library('upload', $config_profile, 'profile_upload');
+                $this->profile_upload->initialize($config_profile);
+
+
+                if ($this->profile_upload->do_upload('profile_image')) {
+                    $old_image = $data['user']['image'];
+                    if ($old_image != 'default.jpg' && !empty($old_image) && file_exists($upload_path_profile . $old_image)) {
+                        @unlink($upload_path_profile . $old_image);
+                    }
+
+                    $new_image_name = $this->profile_upload->data('file_name');
+                    $this->db->where('id', $user_id);
+                    $this->db->update('user', ['image' => $new_image_name]);
+
+                    // Update session user_image
+                    $this->session->set_userdata('user_image', $new_image_name);
+                    // Tambahkan atau gabungkan dengan flashdata sebelumnya
+                    $current_flash = $this->session->flashdata('message');
+                    $this->session->set_flashdata('message', ($current_flash ? $current_flash . '<br>' : '') . '<div class="alert alert-success" role="alert">Foto profil berhasil diupdate.</div>');
+
+                } else {
+                     // Tambahkan atau gabungkan dengan flashdata sebelumnya
+                    $current_flash = $this->session->flashdata('message');
+                    $this->session->set_flashdata('message', ($current_flash ? $current_flash . '<br>' : '') .'<div class="alert alert-danger" role="alert">Upload Foto Profil Gagal: ' . $this->profile_upload->display_errors('', '') . '</div>');
+                }
+            }
+            // Redirect setelah semua proses POST selesai
+            redirect('admin/edit_profil');
+            return; // Penting untuk menghentikan eksekusi lebih lanjut setelah redirect
+        }
+
+        // Load ulang data user untuk ditampilkan di view setelah potensi update atau jika bukan POST request
+        $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+
+        $this->load->view('templates/header', $data);
+        $this->load->view('templates/sidebar', $data);
+        $this->load->view('templates/topbar', $data);
+        // Pastikan Anda membuat view ini: application/views/admin/form_edit_profil_admin.php
+        $this->load->view('admin/form_edit_profil_admin', $data);
+        $this->load->view('templates/footer');
     }
 
     public function index()
