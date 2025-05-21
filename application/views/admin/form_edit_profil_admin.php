@@ -3,7 +3,7 @@
 
     <div class="row">
         <div class="col-lg-8">
-            <?= $this->session->flashdata('message'); ?>
+            <!-- <?= $this->session->flashdata('message'); ?> -->
 
             <?= form_open_multipart('admin/edit_profil'); ?>
             <div class="form-group row">
