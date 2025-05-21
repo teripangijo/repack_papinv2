@@ -9,14 +9,11 @@ class Petugas extends CI_Controller {
         $this->load->library('form_validation');
         $this->load->library('upload');
         $this->load->library('session');
-        $this->load->helper(array('url', 'form', 'download')); // Tambahkan download jika perlu
+        $this->load->helper(array('url', 'form', 'download')); 
         if (!isset($this->db)) {
              $this->load->database();
         }
-        // Asumsikan Anda memiliki model ini
-        // $this->load->model('Permohonan_model');
-        // $this->load->model('Lhp_model');
-
+              
         $excluded_methods = ['force_change_password_page', 'edit_profil', 'logout'];
         $current_method = $this->router->fetch_method();
 
@@ -73,16 +70,16 @@ class Petugas extends CI_Controller {
         $data['title'] = 'Returnable Package';
         $data['subtitle'] = 'Dashboard Petugas';
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
-        $petugas_user_id = $data['user']['id']; // ID dari tabel user
+        $petugas_user_id = $data['user']['id']; 
 
-        // Ambil ID petugas dari tabel 'petugas' berdasarkan 'id_user'
+        
         $petugas_detail = $this->db->get_where('petugas', ['id_user' => $petugas_user_id])->row_array();
         $petugas_id_in_petugas_table = $petugas_detail ? $petugas_detail['id'] : null;
 
 
-        // Jumlah tugas LHP yang menunggu (status '1' dan ditugaskan ke petugas.id dari tabel petugas)
+        
         if ($petugas_id_in_petugas_table) {
-            $this->db->where('petugas', $petugas_id_in_petugas_table); // 'petugas' di user_permohonan merujuk ke 'petugas.id'
+            $this->db->where('petugas', $petugas_id_in_petugas_table); 
             $this->db->where('status', '1');
             $data['jumlah_tugas_lhp'] = $this->db->count_all_results('user_permohonan');
         } else {
@@ -90,7 +87,7 @@ class Petugas extends CI_Controller {
         }
 
 
-        // Jumlah LHP yang sudah direkam oleh petugas ini (id_petugas_pemeriksa di lhp merujuk ke user.id)
+        
         $this->db->where('id_petugas_pemeriksa', $petugas_user_id);
         $data['jumlah_lhp_selesai'] = $this->db->count_all_results('lhp');
 
@@ -108,7 +105,7 @@ class Petugas extends CI_Controller {
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
         $petugas_user_id = $data['user']['id'];
 
-        // Ambil ID petugas dari tabel 'petugas' berdasarkan 'id_user'
+        
         $petugas_detail = $this->db->get_where('petugas', ['id_user' => $petugas_user_id])->row_array();
         $petugas_id_in_petugas_table = $petugas_detail ? $petugas_detail['id'] : null;
 
@@ -120,7 +117,7 @@ class Petugas extends CI_Controller {
             $this->db->from('user_permohonan up');
             $this->db->join('user_perusahaan upr', 'up.id_pers = upr.id_pers', 'left');
             $this->db->join('user u_pemohon', 'upr.id_pers = u_pemohon.id', 'left');
-            $this->db->where('up.petugas', $petugas_id_in_petugas_table); // 'petugas' di user_permohonan merujuk ke 'petugas.id'
+            $this->db->where('up.petugas', $petugas_id_in_petugas_table); 
             $this->db->where('up.status', '1');
             $this->db->order_by('up.TglSuratTugas DESC, up.WaktuPenunjukanPetugas DESC');
             $data['daftar_tugas'] = $this->db->get()->result_array();
@@ -149,8 +146,8 @@ class Petugas extends CI_Controller {
         $petugas_detail_db = $this->db->get_where('petugas', ['id_user' => $petugas_user_id])->row_array();
         $petugas_id_for_permohonan = $petugas_detail_db ? $petugas_detail_db['id'] : null;
 
-        // Ambil data permohonan, pastikan SELECT semua kolom yang dibutuhkan termasuk jumlah diajukan
-        // 'up.*' akan mengambil semua kolom dari user_permohonan, termasuk 'JumlahBarang'
+        
+        
         $this->db->select('up.*, upr.NamaPers, upr.npwp, u_pemohon.name as nama_pemohon');
         $this->db->from('user_permohonan up');
         $this->db->join('user_perusahaan upr', 'up.id_pers = upr.id_pers', 'left');
@@ -164,7 +161,7 @@ class Petugas extends CI_Controller {
              redirect('petugas/daftar_pemeriksaan');
              return;
         }
-        $this->db->where('up.status', '1'); // Hanya status 'Penunjukan Pemeriksa'
+        $this->db->where('up.status', '1'); 
         $permohonan = $this->db->get()->row_array();
 
         if (!$permohonan) {
@@ -172,19 +169,19 @@ class Petugas extends CI_Controller {
             redirect('petugas/daftar_pemeriksaan');
             return;
         }
-        // Logging untuk memastikan data permohonan dan kolom jumlah terambil
+        
         log_message('debug', 'Petugas Rekam LHP - Data Permohonan: ' . print_r($permohonan, true));
         $data['permohonan'] = $permohonan;
 
 
         $existing_lhp = $this->db->get_where('lhp', ['id_permohonan' => $id_permohonan])->row_array();
         if ($existing_lhp && $this->input->method() !== 'post') {
-             // $this->session->set_flashdata('message_transient', '<div class="alert alert-info" role="alert">LHP sudah ada, Anda dapat mengeditnya.</div>');
+             
         }
         $data['lhp_data'] = $existing_lhp;
 
 
-        // Validasi form LHP
+        
         $this->form_validation->set_rules('NoLHP', 'Nomor LHP', 'trim|required');
         $this->form_validation->set_rules('TglLHP', 'Tanggal LHP', 'trim|required');
         $this->form_validation->set_rules('JumlahBenar', 'Jumlah Disetujui (LHP)', 'trim|required|numeric|greater_than_equal_to[0]');
@@ -203,12 +200,12 @@ class Petugas extends CI_Controller {
             $this->load->view('petugas/form_rekam_lhp_view', $data);
             $this->load->view('templates/footer');
         } else {
-            // Ambil JumlahAju dari data permohonan yang sudah di-load
-            // ** PERBAIKAN DI SINI: Gunakan 'JumlahBarang' **
+            
+            
             $jumlah_diajukan_pemohon = $permohonan['JumlahBarang'] ?? 0;
             if (!isset($permohonan['JumlahBarang'])) {
                 log_message('error', 'Petugas Rekam LHP - Kolom "JumlahBarang" tidak ditemukan dalam data permohonan untuk ID: ' . $id_permohonan);
-                // Anda mungkin ingin menghentikan proses atau memberikan nilai default yang aman jika kolom tidak ada
+                
             } else if ($jumlah_diajukan_pemohon == 0) {
                 log_message('warning', 'Petugas Rekam LHP - Jumlah diajukan dari permohonan (JumlahBarang) adalah 0 untuk ID: ' . $id_permohonan);
             }
@@ -218,7 +215,7 @@ class Petugas extends CI_Controller {
                 'id_petugas_pemeriksa'  => $petugas_user_id,
                 'NoLHP'                 => $this->input->post('NoLHP'),
                 'TglLHP'                => $this->input->post('TglLHP'),
-                'JumlahAju'             => (int)$jumlah_diajukan_pemohon, // ** Sudah menggunakan nilai yang benar **
+                'JumlahAju'             => (int)$jumlah_diajukan_pemohon, 
                 'JumlahBenar'           => (int)$this->input->post('JumlahBenar'),
                 'JumlahSalah'           => (int)$this->input->post('JumlahSalah'),
                 'Catatan'               => $this->input->post('Catatan'),
@@ -228,7 +225,7 @@ class Petugas extends CI_Controller {
             }
 
 
-            // Proses Upload File LHP (dokumen resmi)
+            
             $nama_file_lhp_resmi = $existing_lhp['FileLHP'] ?? null;
             if (isset($_FILES['FileLHP']) && $_FILES['FileLHP']['error'] != UPLOAD_ERR_NO_FILE) {
                 $upload_dir_lhp = './uploads/lhp/';
@@ -254,7 +251,7 @@ class Petugas extends CI_Controller {
             $data_lhp_to_save['FileLHP'] = $nama_file_lhp_resmi;
 
 
-            // Proses Upload File Dokumentasi Foto
+            
             $nama_file_doc_foto = $existing_lhp['file_dokumentasi_foto'] ?? null;
             if (isset($_FILES['file_dokumentasi_foto']) && $_FILES['file_dokumentasi_foto']['error'] != UPLOAD_ERR_NO_FILE) {
                 $upload_dir_doc_foto = './uploads/dokumentasi_lhp/';
@@ -402,26 +399,26 @@ class Petugas extends CI_Controller {
         $data['title'] = 'Returnable Package';
         $data['subtitle'] = 'Riwayat LHP yang Telah Direkam';
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
-        $petugas_user_id = $data['user']['id']; // Ini adalah user.id dari petugas yang login
+        $petugas_user_id = $data['user']['id']; 
 
-        // Ambil semua LHP yang direkam oleh petugas ini
-        // Kita akan join dengan user_permohonan dan user_perusahaan untuk info tambahan
+        
+        
         $this->db->select(
             'lhp.*, '.
             'up.nomorSurat as nomor_surat_permohonan, '.
             'up.TglSurat as tanggal_surat_permohonan, '.
             'upr.NamaPers as nama_perusahaan_pemohon, '.
             'up.status as status_permohonan_terkini, '.
-            'up.NamaBarang as nama_barang_permohonan' // Ambil nama barang dari permohonan
+            'up.NamaBarang as nama_barang_permohonan' 
         );
         $this->db->from('lhp');
         $this->db->join('user_permohonan up', 'lhp.id_permohonan = up.id', 'left');
         $this->db->join('user_perusahaan upr', 'up.id_pers = upr.id_pers', 'left');
-        $this->db->where('lhp.id_petugas_pemeriksa', $petugas_user_id); // Hanya LHP dari petugas ini
-        $this->db->order_by('lhp.submit_time', 'DESC'); // Tampilkan yang terbaru dulu
+        $this->db->where('lhp.id_petugas_pemeriksa', $petugas_user_id); 
+        $this->db->order_by('lhp.submit_time', 'DESC'); 
         $data['riwayat_lhp'] = $this->db->get()->result_array();
 
-        // Logging untuk debug
+        
         log_message('debug', 'PETUGAS RIWAYAT LHP - User ID: ' . $petugas_user_id);
         log_message('debug', 'PETUGAS RIWAYAT LHP - Query: ' . $this->db->last_query());
         log_message('debug', 'PETUGAS RIWAYAT LHP - Jumlah Data: ' . count($data['riwayat_lhp']));
@@ -429,7 +426,7 @@ class Petugas extends CI_Controller {
         $this->load->view('templates/header', $data);
         $this->load->view('templates/sidebar', $data);
         $this->load->view('templates/topbar', $data);
-        $this->load->view('petugas/riwayat_lhp_direkam_view', $data); // Buat view baru ini
+        $this->load->view('petugas/riwayat_lhp_direkam_view', $data); 
         $this->load->view('templates/footer', $data);
     }
 
@@ -437,29 +434,29 @@ class Petugas extends CI_Controller {
     {
         if ($id_lhp == 0 || !is_numeric($id_lhp)) {
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">ID LHP tidak valid.</div>');
-            redirect('petugas/riwayat_lhp_direkam'); // Arahkan kembali ke daftar riwayat LHP
+            redirect('petugas/riwayat_lhp_direkam'); 
             return;
         }
 
         $data['title'] = 'Returnable Package';
         $data['subtitle'] = 'Detail LHP Direkam (ID LHP: '.htmlspecialchars($id_lhp).')';
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
-        $petugas_user_id = $data['user']['id']; // ID user dari petugas yang login
+        $petugas_user_id = $data['user']['id']; 
 
-        // Ambil detail LHP spesifik
-        // Pastikan hanya LHP yang direkam oleh petugas yang login yang bisa diakses
-        // Join dengan user_permohonan dan user_perusahaan untuk mendapatkan info terkait
+        
+        
+        
         $this->db->select(
             'lhp.*, '.
             'up.id as id_permohonan_ajuan, up.nomorSurat as nomor_surat_permohonan, up.TglSurat as tanggal_surat_pemohon, '.
             'up.NamaBarang as nama_barang_di_permohonan, up.JumlahBarang as jumlah_barang_di_permohonan, '.
             'upr.NamaPers as nama_perusahaan_pemohon, upr.npwp as npwp_perusahaan'
         );
-        $this->db->from('lhp'); // Asumsi PK tabel lhp adalah 'id' atau 'id_lhp'
+        $this->db->from('lhp'); 
         $this->db->join('user_permohonan up', 'lhp.id_permohonan = up.id', 'left');
         $this->db->join('user_perusahaan upr', 'up.id_pers = upr.id_pers', 'left');
-        $this->db->where('lhp.id', $id_lhp); // Ganti 'lhp.id' dengan 'lhp.id_lhp' jika PK Anda adalah id_lhp
-        $this->db->where('lhp.id_petugas_pemeriksa', $petugas_user_id); // Keamanan: Hanya LHP miliknya
+        $this->db->where('lhp.id', $id_lhp); 
+        $this->db->where('lhp.id_petugas_pemeriksa', $petugas_user_id); 
         $data['lhp_detail'] = $this->db->get()->row_array();
 
         if (!$data['lhp_detail']) {
@@ -468,15 +465,15 @@ class Petugas extends CI_Controller {
             return;
         }
 
-        // Anda bisa juga mengambil data permohonan terkait secara terpisah jika perlu lebih banyak field
-        // $data['permohonan_terkait'] = $this->db->get_where('user_permohonan', ['id' => $data['lhp_detail']['id_permohonan']])->row_array();
+        
+        
 
         log_message('debug', 'PETUGAS DETAIL LHP - Data LHP: ' . print_r($data['lhp_detail'], true));
 
         $this->load->view('templates/header', $data);
         $this->load->view('templates/sidebar', $data);
         $this->load->view('templates/topbar', $data);
-        $this->load->view('petugas/detail_lhp_view', $data); // Anda perlu membuat view ini
+        $this->load->view('petugas/detail_lhp_view', $data); 
         $this->load->view('templates/footer', $data);
     }
 }

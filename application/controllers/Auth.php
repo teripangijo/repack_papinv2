@@ -7,21 +7,21 @@ class Auth extends CI_Controller
     {
         parent::__construct();
         $this->load->library('form_validation');
-        $this->load->library('session'); // Pastikan session di-load
-        $this->load->helper('url');    // Pastikan helper url di-load
-        // Load database library jika belum di autoload
+        $this->load->library('session'); 
+        $this->load->helper('url');    
+        
         if (!isset($this->db)) {
              $this->load->database();
         }
     }
 
-    public function index() // Halaman Login
+    public function index() 
     {
-        if ($this->session->userdata('email')) { // 'email' di session tetap digunakan sebagai identifier unik setelah login
+        if ($this->session->userdata('email')) { 
             $this->_redirect_user_by_role($this->session->userdata('is_active'));
         }
 
-        // Validasi menggunakan nama input field baru 'login_identifier'
+        
         $this->form_validation->set_rules('login_identifier', 'Email / NIP', 'trim|required', [
             'required' => 'Kolom Email / NIP wajib diisi.'
         ]);
@@ -32,10 +32,10 @@ class Auth extends CI_Controller
         if ($this->form_validation->run() == false) {
             $data['title'] = "REPACK Login";
             $this->load->view('templates/auth_header', $data);
-            $this->load->view('auth/login'); // Pastikan view login.php menggunakan name="login_identifier"
+            $this->load->view('auth/login'); 
             $this->load->view('templates/auth_footer');
         } else {
-            // Jika validasi sukses, panggil private method _login
+            
             $this->_login();
         }
     }
@@ -43,30 +43,30 @@ class Auth extends CI_Controller
     private function _redirect_user_by_role($is_active = 1)
     {
         $role_id = $this->session->userdata('role_id');
-        $user_id = $this->session->userdata('id'); // Ambil user_id untuk query force_change_password
+        $user_id = $this->session->userdata('id'); 
 
-        // Cek ulang force_change_password di sini juga, untuk kasus jika user sudah login tapi belum ganti password
-        // dan mencoba akses halaman lain. Ini lebih aman ditangani di __construct masing-masing controller role.
-        // Namun, untuk redirect awal setelah login, pengecekan di _login() sudah cukup.
+        
+        
+        
 
-        // Logika untuk pengguna jasa yang belum aktif (is_active = 0)
+        
         if ($role_id == 2 && $is_active == 0) {
             $this->session->set_flashdata('message', '<div class="alert alert-info" role="alert">Akun Anda belum aktif. Silakan lengkapi profil perusahaan Anda untuk aktivasi.</div>');
-            redirect('user/edit'); // Arahkan ke halaman edit profil
+            redirect('user/edit'); 
             return;
         }
         
-        // Jika user aktif atau bukan pengguna jasa yang belum aktif
-        if ($role_id == 1) { // Admin
+        
+        if ($role_id == 1) { 
             redirect('admin');
-        } elseif ($role_id == 2) { // Pengguna Jasa (yang sudah aktif)
+        } elseif ($role_id == 2) { 
             redirect('user');
-        } elseif ($role_id == 3) { // Petugas
+        } elseif ($role_id == 3) { 
             redirect('petugas');
-        } elseif ($role_id == 4) { // Monitoring
+        } elseif ($role_id == 4) { 
             redirect('monitoring');
         } else {
-            // Jika role tidak dikenal atau tidak ada, hancurkan session dan kembali ke login
+            
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Role tidak dikenal. Silakan login kembali.</div>');
             $this->session->sess_destroy();
             redirect('auth');
@@ -75,7 +75,7 @@ class Auth extends CI_Controller
 
     public function bypass($id_or_email) 
     {
-        // Pastikan database sudah di-load
+        
         if (!isset($this->db)) {
              $this->load->database();
         }
@@ -93,16 +93,16 @@ class Auth extends CI_Controller
             $this->session->set_userdata($data_session);
             if ($user['force_change_password'] == 1) {
                 $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Untuk keamanan, Anda wajib mengganti password Anda.</div>');
-                // Arahkan ke halaman ganti password khusus untuk role tersebut
-                if ($user['role_id'] == 2) { // Pengguna Jasa
-                    redirect('user/force_change_password_page'); // Buat method dan view ini di User.php
-                } elseif ($user['role_id'] == 3) { // Petugas
-                    redirect('petugas/force_change_password_page'); // Buat method dan view ini di Petugas.php
+                
+                if ($user['role_id'] == 2) { 
+                    redirect('user/force_change_password_page'); 
+                } elseif ($user['role_id'] == 3) { 
+                    redirect('petugas/force_change_password_page'); 
                 } else {
-                    // Untuk role lain, mungkin langsung ke dashboard mereka jika tidak ada force change
+                    
                     $this->_redirect_user_by_role($user['is_active']);
                 }
-                return; // Hentikan eksekusi lebih lanjut
+                return; 
             } else {
                 $this->_redirect_user_by_role($user['is_active']);
         }
@@ -118,54 +118,54 @@ class Auth extends CI_Controller
         $login_identifier = $this->input->post('login_identifier');
         $password = $this->input->post('password');
 
-        // Cari user berdasarkan login_identifier di kolom 'email'
-        // karena NIP untuk Petugas/Monitoring disimpan di kolom 'email'
+        
+        
         $user = $this->db->get_where('user', ['email' => $login_identifier])->row_array();
 
         if ($user) {
-            // User ditemukan, cek status aktif (kecuali jika role_id 2 dan is_active 0, yang akan dihandle _redirect_user_by_role)
-            // if ($user['is_active'] == 1 || ($user['role_id'] == 2 && $user['is_active'] == 0) ) { // Logika ini lebih cocok di _redirect_user_by_role
-                // Verifikasi password
+            
+            
+                
                 if (password_verify($password, $user['password'])) {
                     $data_session = [
                         'id'        => $user['id'],
-                        'email'     => $user['email'], // Tetap simpan 'email' (yang berisi NIP atau email asli) sebagai identifier di session
+                        'email'     => $user['email'], 
                         'role_id'   => $user['role_id'],
-                        'nama'      => $user['name'], // Ganti 'name' menjadi 'nama' jika itu yang Anda gunakan di session
+                        'nama'      => $user['name'], 
                         'is_active' => $user['is_active'],
-                        'force_change_password' => $user['force_change_password'] ?? 0 // Ambil status force_change_password
+                        'force_change_password' => $user['force_change_password'] ?? 0 
                     ];
                     $this->session->set_userdata($data_session);
 
-                    // Cek apakah user wajib ganti password
+                    
                     if ($user['force_change_password'] == 1) {
                         $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Untuk keamanan, Anda wajib mengganti password Anda.</div>');
-                        if ($user['role_id'] == 2) { // Pengguna Jasa
-                            redirect('user/force_change_password_page'); // Buat method ini di User.php
-                        } elseif ($user['role_id'] == 3) { // Petugas
-                            redirect('petugas/force_change_password_page'); // Buat method ini di Petugas.php
-                        } elseif ($user['role_id'] == 4) { // Monitoring
-                            redirect('monitoring/force_change_password_page'); // Buat method ini di Monitoring.php
+                        if ($user['role_id'] == 2) { 
+                            redirect('user/force_change_password_page'); 
+                        } elseif ($user['role_id'] == 3) { 
+                            redirect('petugas/force_change_password_page'); 
+                        } elseif ($user['role_id'] == 4) { 
+                            redirect('monitoring/force_change_password_page'); 
                         } else {
-                            // Untuk Admin atau role lain yang mungkin tidak ada halaman force change password khusus
-                            // Anda bisa arahkan ke halaman ganti password umum atau dashboard
+                            
+                            
                             $this->_redirect_user_by_role($user['is_active']);
                         }
                     } else {
                         $this->_redirect_user_by_role($user['is_active']);
                     }
                 } else {
-                    // Password salah
+                    
                     $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Password salah!</div>');
                     redirect('auth');
                 }
-            // } else {
-                // Akun tidak aktif (selain kasus Pengguna Jasa yang belum aktivasi profil)
-                // $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Akun ini belum aktif atau dinonaktifkan.</div>');
-                // redirect('auth');
-            // }
+            
+                
+                
+                
+            
         } else {
-            // Email atau NIP tidak terdaftar
+            
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Email atau NIP tidak terdaftar!</div>');
             redirect('auth');
         }
@@ -199,12 +199,12 @@ class Auth extends CI_Controller
         
             $data_insert = [
                 'name' => htmlspecialchars($this->input->post('name', true)),
-                'email' => htmlspecialchars($this->input->post('email', true)), // Registrasi Pengguna Jasa tetap pakai email
+                'email' => htmlspecialchars($this->input->post('email', true)), 
                 'image' => 'default.jpg',
                 'password' => password_hash($this->input->post('password'), PASSWORD_DEFAULT),
-                'role_id' => 2, // Default role untuk registrasi adalah Pengguna Jasa
-                'is_active' => 0, // Awalnya tidak aktif, perlu lengkapi profil
-                'force_change_password' => 0, // Tidak perlu force ganti password saat registrasi awal
+                'role_id' => 2, 
+                'is_active' => 0, 
+                'force_change_password' => 0, 
                 'date_created' => time()
             ];            
             $this->db->insert('user', $data_insert);
@@ -216,10 +216,10 @@ class Auth extends CI_Controller
 
     public function logout()
     {
-        // Hancurkan semua data session
+        
         $this->session->sess_destroy();
         $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Anda telah berhasil logout!</div>');
-        redirect('auth'); // Arahkan ke halaman login
+        redirect('auth'); 
     }
 
     public function blocked()
@@ -234,9 +234,9 @@ class Auth extends CI_Controller
         if ($this->session->userdata('email')) {
             $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
         } else {
-            // Jika tidak ada session email, mungkin user belum login atau session sudah destroy
-            // Set $data['user'] ke array kosong atau null untuk menghindari error di view jika view mengharapkannya
-            $data['user'] = null; // atau array()
+            
+            
+            $data['user'] = null; 
         }
         $this->load->view('templates/auth_header', $data);
         $this->load->view('auth/blocked', $data);
@@ -250,7 +250,7 @@ class Auth extends CI_Controller
             redirect('auth');
         }
         
-        // Pastikan database sudah di-load
+        
         if (!isset($this->db)) {
              $this->load->database();
         }
@@ -280,10 +280,10 @@ class Auth extends CI_Controller
 
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
 
-        // === TAMBAHKAN DEFINISI TITLE & SUBTITLE ===
+        
         $data['title'] = "Change Password";
-        $data['subtitle'] = "Change Password"; // Atau sesuaikan jika perlu
-        // ==========================================
+        $data['subtitle'] = "Change Password"; 
+        
 
         $this->form_validation->set_rules('password', 'New Password', 'required|trim|min_length[3]|matches[password2]', [
             'matches' => 'Passwords don\'t match!',
@@ -292,9 +292,9 @@ class Auth extends CI_Controller
         $this->form_validation->set_rules('password2', 'Repeat New Password', 'required|trim|matches[password]');
 
         if ($this->form_validation->run() == false) {
-            // Gunakan template utama karena user sudah login
+            
             $this->load->view('templates/header', $data);
-            $this->load->view('templates/sidebar', $data); // Sidebar memerlukan $subtitle
+            $this->load->view('templates/sidebar', $data); 
             $this->load->view('templates/topbar', $data);
             $this->load->view('auth/changepass', $data); 
             $this->load->view('templates/footer');
@@ -327,4 +327,4 @@ class Auth extends CI_Controller
         }
     }
 
-} // End class Auth
+} 

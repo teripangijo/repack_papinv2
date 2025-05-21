@@ -15,7 +15,7 @@ class Admin extends CI_Controller
         $this->load->helper(array('form', 'url', 'repack_helper', 'download')); // Tambahkan helper download
         $this->load->library('form_validation');
         $this->load->library('upload');
-        $this->load->library('session'); // Pastikan session di-load
+        $this->load->library('session');
         if (!isset($this->db)) {
             $this->load->database();
         }
@@ -66,8 +66,7 @@ public function monitoring_kuota()
     ');
     $this->db->from('user_perusahaan up');
     $this->db->join('user u', 'up.id_pers = u.id', 'left');
-    // Kita mungkin tidak perlu join ke user_pengajuan_kuota lagi di sini untuk kep_terakhir,
-    // karena SKEP sekarang terikat pada user_kuota_barang
+  
     $this->db->order_by('up.NamaPers', 'ASC');
     $data['monitoring_data'] = $this->db->get()->result_array();
 
@@ -77,7 +76,7 @@ public function monitoring_kuota()
     $this->load->view('templates/header', $data);
     $this->load->view('templates/sidebar', $data);
     $this->load->view('templates/topbar', $data);
-    $this->load->view('admin/monitoring_kuota_view', $data); // View ini perlu disesuaikan
+    $this->load->view('admin/monitoring_kuota_view', $data);
     $this->load->view('templates/footer');
 }
 
@@ -140,7 +139,6 @@ public function monitoring_kuota()
             $this->db->delete('user_access_menu', $data);
         }
         $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Access Changed!</div>');
-        // Tidak perlu redirect di sini, biarkan AJAX yang handle respons jika perlu
     }
 
     public function permohonanMasuk()
@@ -181,7 +179,7 @@ public function monitoring_kuota()
     public function prosesSurat($id_permohonan = 0)
     {
         // echo "ADMIN PROSES SURAT - Method prosesSurat() DIPANGGIL dengan ID: " . $id_permohonan . "<br>";
-        // die("Eksekusi dihentikan di awal prosesSurat."); // TES 1: Hentikan di sini
+        // die("Eksekusi dihentikan di awal prosesSurat.");
 
         $admin_user = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
         $data['user'] = $admin_user; // Untuk header, sidebar, topbar
@@ -196,7 +194,7 @@ public function monitoring_kuota()
         }
 
         // Ambil data permohonan
-        $this->db->select('up.*, upr.NamaPers, upr.npwp, upr.alamat, upr.NoSkep'); // Tambahkan kolom dari user_perusahaan yang dibutuhkan view
+        $this->db->select('up.*, upr.NamaPers, upr.npwp, upr.alamat, upr.NoSkep');
         $this->db->from('user_permohonan up');
         $this->db->join('user_perusahaan upr', 'up.id_pers = upr.id_pers', 'left');
         $this->db->where('up.id', $id_permohonan);
@@ -213,15 +211,10 @@ public function monitoring_kuota()
         // Namun, lebih eksplisit jika kita definisikan seperti ini atau pastikan semua field ada
         $data['user_perusahaan'] = [
             'NamaPers' => $data['permohonan']['NamaPers'],
-            'alamat' => $data['permohonan']['alamat'], // Pastikan 'alamat' ada di select join
-            'NoSkep' => $data['permohonan']['NoSkep']  // Pastikan 'NoSkep' ada di select join
+            'alamat' => $data['permohonan']['alamat'],
+            'NoSkep' => $data['permohonan']['NoSkep'] 
         ];
-        // Atau, jika Anda yakin semua field user_perusahaan sudah ter-SELECT, Anda bisa langsung gunakan $data['permohonan'] di view untuk field tsb
-        // Namun, untuk kejelasan, $data['user_perusahaan'] lebih baik jika fieldnya banyak.
-        // Untuk contoh ini, kita akan asumsikan field yang dibutuhkan sudah ada di $data['permohonan'] hasil join.
-        // Jadi, di view, Anda mungkin bisa menggunakan $permohonan['NamaPers'], $permohonan['alamat'], dll.
-        // Mari kita tetap buat $data['user_perusahaan'] agar sesuai dengan view yang ada.
-        // Ambil data perusahaan terkait
+    
         $perusahaan_terkait = $this->db->get_where('user_perusahaan', ['id_pers' => $data['permohonan']['id_pers']])->row_array();
         if ($perusahaan_terkait) {
             $data['user_perusahaan'] = $perusahaan_terkait;
@@ -259,8 +252,6 @@ public function monitoring_kuota()
         $this->form_validation->set_rules('linkND', 'Link Nota Dinas (Opsional)', 'trim|callback__valid_url_format_check');
 
         if ($this->form_validation->run() == false) {
-            // Ini adalah bagian yang akan dijalankan saat halaman pertama kali di-load (GET request)
-            // atau jika validasi form gagal setelah POST
             log_message('debug', 'ADMIN PROSES SURAT - Form validation failed or initial load. Loading view prosesSurat.');
             $this->load->view('templates/header', $data);
             $this->load->view('templates/sidebar', $data);
@@ -276,21 +267,14 @@ public function monitoring_kuota()
             $nomor_surat_keputusan = $this->input->post('nomorSetuju');
             $tanggal_surat_keputusan = $this->input->post('tgl_S');
 
-            // Jika status_final = 3 (Disetujui) dan nomorSetuju/tgl_S kosong, gunakan dari LHP
-            // Kebijakan ini perlu disesuaikan. View sudah menyediakan input untuk nomorSetuju dan tgl_S
-            // if ($status_final_permohonan == '3' && (empty($nomor_surat_keputusan) || empty($tanggal_surat_keputusan))) {
-            //     $nomor_surat_keputusan = $data['lhp']['NoLHP'];
-            //     $tanggal_surat_keputusan = $data['lhp']['TglLHP'];
-            // }
-
-            // Pastikan nomor dan tanggal surat keputusan terisi jika disetujui atau ditolak, sesuai aturan baru di form validation.
+            // Validasi nomor surat keputusan dan tanggal surat keputusan
             if (empty($nomor_surat_keputusan) && ($status_final_permohonan == '3' || $status_final_permohonan == '4')) {
                 $this->form_validation->set_rules('nomorSetuju', 'Nomor Surat Keputusan', 'required');
             }
             if (empty($tanggal_surat_keputusan) && ($status_final_permohonan == '3' || $status_final_permohonan == '4')) {
                 $this->form_validation->set_rules('tgl_S', 'Tanggal Surat Keputusan', 'required');
             }
-            // Re-run validation if we added rules
+            // Re-run validation
             if (!$this->form_validation->run()) {
                 log_message('debug', 'ADMIN PROSES SURAT - Re-validation failed for nomorSetuju/tgl_S. Loading view prosesSurat.');
                 $this->load->view('templates/header', $data);
@@ -319,7 +303,7 @@ public function monitoring_kuota()
 
 
             // --- LOGIKA PEMOTONGAN KUOTA BARANG ---
-            // (Logika pemotongan kuota barang Anda sudah cukup baik, pastikan 'NamaBarang' dan 'id_kuota_barang_digunakan' ada di $data['permohonan'])
+            // Jika status final adalah '3' (Disetujui) dan ada data LHP yang valid
             if ($status_final_permohonan == '3' && isset($data['lhp']['JumlahBenar']) && $data['lhp']['JumlahBenar'] > 0) {
                 // ... (kode pemotongan kuota Anda) ...
                 $id_pers_terkait = $data['permohonan']['id_pers'];
@@ -361,7 +345,6 @@ public function monitoring_kuota()
                         );
                     } else {
                         log_message('error', 'ADMIN PROSES SURAT - Gagal potong kuota barang: Data user_kuota_barang (ID: '.$id_kuota_barang_yang_digunakan.') tidak ditemukan untuk perusahaan atau nama barang tidak cocok (' . $nama_barang_dimohonkan . ' vs ' . ($kuota_barang_db['nama_barang'] ?? 'Tidak ada') . ').');
-                        // Pertimbangkan untuk memberi tahu admin jika pemotongan gagal meskipun disetujui
                         $this->session->set_flashdata('message_error_quota', '<div class="alert alert-danger" role="alert">Peringatan: Permohonan disetujui tetapi pemotongan kuota otomatis gagal. Harap periksa log dan data kuota perusahaan secara manual.</div>');
                     }
                 } else {
@@ -379,18 +362,11 @@ public function monitoring_kuota()
 
     public function _valid_url_format_check($str)
     {
-        if (empty($str)) { // Izinkan kosong karena field opsional
+        if (empty($str)) { // Jika tidak ada input, anggap valid
             return TRUE;
         }
-        // Menggunakan filter_var untuk validasi URL yang lebih robust
+        // Validasi format URL menggunakan filter_var
         if (filter_var($str, FILTER_VALIDATE_URL)) {
-            // Tambahan: Anda bisa memeriksa apakah URL menggunakan http atau https jika diperlukan
-            // if (preg_match("/^https?:\/\//i", $str)) {
-            //    return TRUE;
-            // } else {
-            //    $this->form_validation->set_message('_valid_url_format_check', '{field} harus dimulai dengan http:// atau https://.');
-            //    return FALSE;
-            // }
             return TRUE;
         } else {
             $this->form_validation->set_message('_valid_url_format_check', '{field} harus berisi URL yang valid (contoh: http://example.com).');
@@ -408,15 +384,15 @@ private function _log_perubahan_kuota(
     $id_referensi_param = null,
     $tipe_referensi_param = null,
     $dicatat_oleh_user_id_param = null,
-    $nama_barang_terkait_param = null,    // Parameter baru
-    $id_kuota_barang_ref_param = null   // Parameter baru
+    $nama_barang_terkait_param = null,
+    $id_kuota_barang_ref_param = null   
 ) {
-    // ... (logika $dicatat_oleh_user_id_param) ...
+    // Log perubahan kuota barang ke tabel user_kuota_barang_log
 
     $log_data = [
         'id_pers'                 => $id_pers_param,
-        'nama_barang_terkait'     => $nama_barang_terkait_param,     // Simpan
-        'id_kuota_barang_referensi'=> $id_kuota_barang_ref_param,   // Simpan
+        'nama_barang_terkait'     => $nama_barang_terkait_param,
+        'id_kuota_barang_referensi'=> $id_kuota_barang_ref_param,
         'jenis_transaksi'         => $jenis_transaksi_param,
         'jumlah_perubahan'        => $jumlah_param,
         'sisa_kuota_sebelum'      => $kuota_sebelum_param,
@@ -427,7 +403,6 @@ private function _log_perubahan_kuota(
         'dicatat_oleh_user_id'    => $dicatat_oleh_user_id_param,
         'tanggal_transaksi'       => date('Y-m-d H:i:s')
     ];
-    // ... (insert dan logging seperti sebelumnya) ...
 }
 
     public function penunjukanPetugas($id_permohonan)
@@ -448,33 +423,26 @@ private function _log_perubahan_kuota(
             redirect('admin/permohonanMasuk');
             return;
         }
-        $data['permohonan'] = $permohonan; // Data permohonan ini akan digunakan untuk pre-fill form
+        $data['permohonan'] = $permohonan;
 
         if ($permohonan['status'] == '0' && $this->input->method() !== 'post') {
             $this->db->where('id', $id_permohonan);
             $this->db->update('user_permohonan', ['status' => '5']);
-            $permohonan['status'] = '5'; // Update variabel lokal juga
+            $permohonan['status'] = '5'; // Update variabel lokal
             $data['permohonan']['status'] = '5'; // Update data yang dikirim ke view
             $this->session->set_flashdata('message_transient', '<div class="alert alert-info" role="alert">Status permohonan ID ' . htmlspecialchars($id_permohonan) . ' telah diubah menjadi "Diproses Admin". Lanjutkan dengan menunjuk petugas.</div>');
         }
 
         // Ambil daftar petugas dari tabel 'petugas'
-        // Pastikan tabel 'petugas' memiliki kolom 'id' (PK), 'Nama', 'NIP'
         $data['list_petugas'] = $this->db->order_by('Nama', 'ASC')->get('petugas')->result_array();
         if (empty($data['list_petugas'])) {
             log_message('warning', 'Tidak ada data petugas ditemukan di tabel petugas.');
-            // Anda bisa menambahkan flashdata error di sini jika tidak ada petugas sama sekali
-            // $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Data petugas tidak tersedia. Tidak dapat melakukan penunjukan.</div>');
         }
 
         // Validasi form
         $this->form_validation->set_rules('petugas_id', 'Petugas Pemeriksa', 'required|numeric');
         $this->form_validation->set_rules('nomor_surat_tugas', 'Nomor Surat Tugas', 'required|trim');
         $this->form_validation->set_rules('tanggal_surat_tugas', 'Tanggal Surat Tugas', 'required');
-        // Validasi file upload bisa ditambahkan jika file wajib, misal dengan callback
-        // if (empty($_FILES['file_surat_tugas']['name']) && empty($permohonan['FileSuratTugas'])) {
-        //     $this->form_validation->set_rules('file_surat_tugas', 'File Surat Tugas', 'required');
-        // }
 
 
         if ($this->form_validation->run() == false) {
@@ -486,7 +454,6 @@ private function _log_perubahan_kuota(
         } else {
             // Proses data form
             $update_data = [
-                // PERBAIKAN DI SINI:
                 'petugas' => $this->input->post('petugas_id'), // Ambil langsung dari 'petugas_id'
                 'NoSuratTugas' => $this->input->post('nomor_surat_tugas'),
                 'TglSuratTugas' => $this->input->post('tanggal_surat_tugas'),
@@ -494,10 +461,10 @@ private function _log_perubahan_kuota(
                 'WaktuPenunjukanPetugas' => date('Y-m-d H:i:s')
             ];
 
-            $nama_file_surat_tugas = $permohonan['FileSuratTugas'] ?? null; // Pertahankan file lama jika tidak ada upload baru
+            $nama_file_surat_tugas = $permohonan['FileSuratTugas'] ?? null;
 
             if (isset($_FILES['file_surat_tugas']) && $_FILES['file_surat_tugas']['error'] != UPLOAD_ERR_NO_FILE) {
-                $upload_dir_st = './uploads/surat_tugas/'; // Gunakan path relatif dari index.php atau FCPATH
+                $upload_dir_st = './uploads/surat_tugas/';
                 if (!is_dir($upload_dir_st)) {
                     if (!@mkdir($upload_dir_st, 0777, true)) {
                         $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Gagal membuat direktori upload Surat Tugas.</div>');
@@ -517,9 +484,9 @@ private function _log_perubahan_kuota(
                 $config_st['max_size']      = '2048'; // 2MB
                 $config_st['encrypt_name']  = TRUE;
 
-                // Penting untuk me-load library upload di sini jika belum di __construct atau hanya untuk instance ini
-                $this->load->library('upload', $config_st, 'st_upload'); // Menggunakan alias 'st_upload'
-                $this->st_upload->initialize($config_st); // Re-initialize dengan config spesifik
+                // Cek apakah file sudah ada sebelumnya
+                $this->load->library('upload', $config_st, 'st_upload');
+                $this->st_upload->initialize($config_st);
 
                 if ($this->st_upload->do_upload('file_surat_tugas')) {
                     // Hapus file lama jika ada dan file baru berhasil diupload
@@ -553,7 +520,6 @@ private function _log_perubahan_kuota(
 
     public function daftar_pengajuan_kuota()
     {
-        // ... (kode method daftar_pengajuan_kuota yang sudah ada) ...
         $data['title'] = 'Returnable Package';
         $data['subtitle'] = 'Daftar Pengajuan Kuota';
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
@@ -602,11 +568,11 @@ private function _log_perubahan_kuota(
         if ($this->input->post('status_pengajuan') == 'approved') {
             $this->form_validation->set_rules('approved_quota', 'Kuota Disetujui', 'trim|required|numeric|greater_than[0]');
             $this->form_validation->set_rules('nomor_sk_petugas', 'Nomor Surat Keputusan', 'trim|required|max_length[100]');
-            $this->form_validation->set_rules('tanggal_sk_petugas', 'Tanggal Surat Keputusan', 'trim|required'); // Input baru
+            $this->form_validation->set_rules('tanggal_sk_petugas', 'Tanggal Surat Keputusan', 'trim|required');
         } else {
             $this->form_validation->set_rules('approved_quota', 'Kuota Disetujui', 'trim|numeric');
             $this->form_validation->set_rules('nomor_sk_petugas', 'Nomor Surat Keputusan', 'trim|max_length[100]');
-            $this->form_validation->set_rules('tanggal_sk_petugas', 'Tanggal Surat Keputusan', 'trim'); // Input baru
+            $this->form_validation->set_rules('tanggal_sk_petugas', 'Tanggal Surat Keputusan', 'trim');
         }
         $this->form_validation->set_rules('admin_notes', 'Catatan Admin', 'trim');
         // Tambahkan validasi untuk file_sk_petugas jika wajib saat approved dan belum ada file lama
@@ -675,7 +641,6 @@ private function _log_perubahan_kuota(
                 $nama_barang_diajukan = $data['pengajuan']['nama_barang_kuota']; // Harus ada di $data['pengajuan']
 
                 if ($id_pers_terkait && !empty($nama_barang_diajukan)) {
-                    // Sisa kuota umum perusahaan sebelum penambahan ini (untuk referensi jika masih digunakan)
                     $sisa_kuota_umum_sebelum_tambah = (float)($data['pengajuan']['remaining_quota_umum_sebelum'] ?? 0);
 
                     $data_kuota_barang = [
@@ -716,7 +681,6 @@ private function _log_perubahan_kuota(
 
     public function print_pengajuan_kuota($id_pengajuan)
     {
-        // ... (kode method print_pengajuan_kuota yang sudah ada) ...
         $data['title'] = 'Detail Proses Pengajuan Kuota';
         $data['user_login'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
 
@@ -737,10 +701,8 @@ private function _log_perubahan_kuota(
         $data['user'] = $this->db->get_where('user', ['id' => $data['pengajuan']['id_pers']])->row_array(); // Data user pengaju
         $data['user_perusahaan'] = $this->db->get_where('user_perusahaan', ['id_pers' => $data['pengajuan']['id_pers']])->row_array();
 
-        $this->load->view('user/FormPengajuanKuota_print', $data); // Menggunakan view cetak yang sama dengan user
+        $this->load->view('user/FormPengajuanKuota_print', $data);
     }
-
-    // Di dalam controllers/Admin.php
 
 public function detailPengajuanKuotaAdmin($id_pengajuan)
     {
@@ -761,10 +723,6 @@ public function detailPengajuanKuotaAdmin($id_pengajuan)
             return;
         }
 
-        // Data perusahaan dan user pemohon bisa juga diambil terpisah jika diperlukan informasi lebih banyak
-        // $data['user_pemohon_detail'] = $this->db->get_where('user', ['id' => $data['pengajuan']['id_pers']])->row_array();
-        // $data['perusahaan_detail'] = $this->db->get_where('user_perusahaan', ['id_pers' => $data['pengajuan']['id_pers']])->row_array();
-
 
         $this->load->view('templates/header', $data);
         $this->load->view('templates/sidebar', $data);
@@ -775,7 +733,6 @@ public function detailPengajuanKuotaAdmin($id_pengajuan)
 
     public function download_sk_kuota_admin($id_pengajuan)
     {
-        // ... (kode method download_sk_kuota_admin yang sudah ada) ...
         $this->load->helper('download'); // Pastikan helper download di-load
         $pengajuan = $this->db->get_where('user_pengajuan_kuota', ['id' => $id_pengajuan])->row_array();
 
@@ -802,14 +759,13 @@ public function detailPengajuanKuotaAdmin($id_pengajuan)
         $data['subtitle'] = 'Manajemen User';
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
 
-        // Ambil semua user kecuali admin yang sedang login (misalnya)
-        // Atau tampilkan semua user jika admin bisa mengelola admin lain (hati-hati)
+        // Ambil semua user kecuali admin yang sedang login
         $this->db->select('u.*, ur.role as role_name');
         $this->db->from('user u');
         $this->db->join('user_role ur', 'u.role_id = ur.id', 'left');
-        // $this->db->where('u.id !=', $data['user']['id']); // Opsional: jangan tampilkan admin sendiri
+        // $this->db->where('u.id !=', $data['user']['id']);
         $this->db->order_by('u.name', 'ASC');
-        $data['users_list'] = $this->db->get()->result_array(); // Ganti nama variabel agar tidak konflik dengan $data['user']
+        $data['users_list'] = $this->db->get()->result_array();
 
         // Ambil daftar role untuk dropdown di form tambah/edit (jika diperlukan)
         $data['roles'] = $this->db->get('user_role')->result_array();
@@ -818,19 +774,18 @@ public function detailPengajuanKuotaAdmin($id_pengajuan)
         $this->load->view('templates/header', $data);
         $this->load->view('templates/sidebar', $data);
         $this->load->view('templates/topbar', $data);
-        $this->load->view('admin/manajemen_user_view', $data); // View untuk menampilkan daftar user
+        $this->load->view('admin/manajemen_user_view', $data);
         $this->load->view('templates/footer');
     }
 
     
-public function tambah_user_petugas() // Atau bisa dinamai tambah_internal_user
+public function tambah_user_petugas()
     {
         $data['title'] = 'Returnable Package';
         $data['subtitle'] = 'Tambah User Petugas Baru'; // Judul bisa dinamis jika untuk role lain juga
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
 
         // Default role yang akan ditambahkan adalah Petugas (ID 3)
-        // Anda bisa membuat ini lebih dinamis jika form ini digunakan untuk role lain seperti Monitoring
         $target_role_id = 3; // Untuk Petugas
         // $target_role_id = $this->input->get('role_type'); // Contoh jika role dipilih dari link/parameter
 
@@ -841,7 +796,6 @@ public function tambah_user_petugas() // Atau bisa dinamai tambah_internal_user
             redirect('admin/manajemen_user');
             return;
         }
-        // Sesuaikan subtitle berdasarkan role target jika perlu
         $data['subtitle'] = 'Tambah User ' . htmlspecialchars($data['target_role_info']['role']);
 
 
@@ -854,7 +808,6 @@ public function tambah_user_petugas() // Atau bisa dinamai tambah_internal_user
         $this->form_validation->set_rules('password', 'Password Awal', 'required|trim|min_length[6]');
         $this->form_validation->set_rules('confirm_password', 'Konfirmasi Password', 'required|trim|matches[password]');
         
-        // Field tambahan khusus untuk tabel 'petugas' (jika role adalah Petugas)
         if ($target_role_id == 3) { // Asumsi Role ID 3 adalah Petugas
             // $this->form_validation->set_rules('nip_detail_petugas', 'NIP (Detail Petugas)', 'trim|required|numeric'); // NIP di tabel petugas harus sama dengan NIP login
             $this->form_validation->set_rules('jabatan_petugas', 'Jabatan Petugas', 'trim|required');
@@ -864,7 +817,7 @@ public function tambah_user_petugas() // Atau bisa dinamai tambah_internal_user
             $this->load->view('templates/header', $data);
             $this->load->view('templates/sidebar', $data);
             $this->load->view('templates/topbar', $data);
-            $this->load->view('admin/form_tambah_user_petugas', $data); // View ini perlu disesuaikan
+            $this->load->view('admin/form_tambah_user_petugas', $data);
             $this->load->view('templates/footer');
         } else {
             $nip_input = $this->input->post('nip');
@@ -890,11 +843,9 @@ public function tambah_user_petugas() // Atau bisa dinamai tambah_internal_user
                         'Nama' => $user_data_to_insert['name'], // Ambil dari nama user
                         'NIP' => $nip_input, // NIP dari input form
                         'Jabatan' => htmlspecialchars($this->input->post('jabatan_petugas', true))
-                        // Tambahkan kolom lain yang relevan untuk tabel petugas
                     ];
                     $this->db->insert('petugas', $petugas_data_to_insert);
                 }
-                // Tambahkan logika untuk role Monitoring jika ada tabel terpisah untuk detail Monitoring
 
                 $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">User ' . htmlspecialchars($data['target_role_info']['role']) . ' baru, ' . htmlspecialchars($user_data_to_insert['name']) . ', berhasil ditambahkan. User wajib mengganti password saat login pertama.</div>');
             } else {
@@ -931,7 +882,7 @@ public function ganti_password_user($target_user_id = 0)
         $this->load->view('templates/header', $data);
         $this->load->view('templates/sidebar', $data);
         $this->load->view('templates/topbar', $data);
-        $this->load->view('admin/form_ganti_password_user', $data); // Buat view ini
+        $this->load->view('admin/form_ganti_password_user', $data);
         $this->load->view('templates/footer');
     } else {
         $new_password_hash = password_hash($this->input->post('new_password'), PASSWORD_DEFAULT);
@@ -973,7 +924,6 @@ public function edit_user($target_user_id = 0)
 
         $is_editing_main_admin = ($data['target_user_data']['id'] == 1); // Asumsi Admin utama memiliki ID = 1
         
-        // Tentukan apakah target adalah Petugas (3) atau Monitoring (4) berdasarkan role_id yang akan disubmit atau yang sudah ada
         $target_role_id_for_check = $this->input->post('role_id') ? (int)$this->input->post('role_id') : (int)$data['target_user_data']['role_id'];
         $is_target_petugas_or_monitoring = in_array($target_role_id_for_check, [3, 4]); // Asumsi Role Petugas = 3, Monitoring = 4
 
@@ -1026,7 +976,6 @@ public function edit_user($target_user_id = 0)
         } else {
             $update_data_user = [
                 'name' => htmlspecialchars($this->input->post('name', true)),
-                // Hanya update 'email' (login identifier) jika ada input dan berbeda, atau jika memang diinput
                 'email' => htmlspecialchars($input_login_identifier, true), 
             ];
 
@@ -1034,7 +983,6 @@ public function edit_user($target_user_id = 0)
                 $update_data_user['role_id'] = (int)$this->input->post('role_id');
                 $update_data_user['is_active'] = (int)$this->input->post('is_active');
             } else {
-                // Jika admin utama, pastikan role dan status tidak berubah dari form ini
                 $update_data_user['role_id'] = (int)$data['target_user_data']['role_id']; 
                 $update_data_user['is_active'] = (int)$data['target_user_data']['is_active']; 
             }
@@ -1047,13 +995,12 @@ public function edit_user($target_user_id = 0)
             // Jika role baru atau role saat ini adalah Petugas (ID 3)
             // dan pastikan tabel 'petugas' memiliki kolom 'id_user' sebagai foreign key ke 'user.id'
             if ($new_role_id == 3) { 
-                // Cek apakah kolom 'id_user' ada di tabel 'petugas'
                 if ($this->db->field_exists('id_user', 'petugas')) {
                     $petugas_detail = $this->db->get_where('petugas', ['id_user' => $target_user_id])->row_array();
                     $data_petugas_update = [
                         'Nama' => $update_data_user['name'],
                         'NIP' => $update_data_user['email'], // NIP diambil dari user.email (yang berisi NIP)
-                        'Jabatan' => $this->input->post('jabatan_petugas_edit') // Pastikan field ini ada di form edit
+                        'Jabatan' => $this->input->post('jabatan_petugas_edit')
                     ];
 
                     if ($petugas_detail) { 
@@ -1069,9 +1016,6 @@ public function edit_user($target_user_id = 0)
                     // $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Data user berhasil diupdate, tetapi detail petugas tidak dapat diproses karena struktur tabel petugas tidak sesuai (missing id_user).</div>');
                 }
             }
-            // Tambahkan logika jika role diubah DARI Petugas (misal, menghapus entri di tabel petugas)
-            // atau jika role adalah Monitoring dan perlu update tabel terpisah (jika ada)
-
             $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Data user '.htmlspecialchars($update_data_user['name']).' berhasil diupdate.</div>');
             redirect('admin/manajemen_user');
         }
@@ -1134,11 +1078,11 @@ public function histori_kuota_perusahaan($id_pers = 0)
     $this->load->view('templates/header', $data);
     $this->load->view('templates/sidebar', $data);
     $this->load->view('templates/topbar', $data);
-    $this->load->view('admin/histori_kuota_perusahaan_view', $data); // View ini perlu dirombak total
+    $this->load->view('admin/histori_kuota_perusahaan_view', $data);
     $this->load->view('templates/footer');
 }
 
-public function detail_permohonan_admin($id_permohonan = 0) // PASTIKAN METHOD INI ADA
+public function detail_permohonan_admin($id_permohonan = 0)
     {
         // Aktifkan logging di awal method untuk memastikan method ini terpanggil
         log_message('debug', 'DETAIL PERMOHONAN ADMIN - Method dipanggil dengan id_permohonan: ' . $id_permohonan);
@@ -1146,7 +1090,7 @@ public function detail_permohonan_admin($id_permohonan = 0) // PASTIKAN METHOD I
         if ($id_permohonan == 0 || !is_numeric($id_permohonan)) {
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">ID Permohonan tidak valid.</div>');
             log_message('error', 'DETAIL PERMOHONAN ADMIN - ID Permohonan tidak valid: ' . $id_permohonan);
-            redirect('admin/permohonanMasuk'); // atau ke halaman yang sesuai
+            redirect('admin/permohonanMasuk');
             return;
         }
 
@@ -1172,7 +1116,7 @@ public function detail_permohonan_admin($id_permohonan = 0) // PASTIKAN METHOD I
         if (!$data['permohonan_detail']) {
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Data permohonan dengan ID ' . htmlspecialchars($id_permohonan) . ' tidak ditemukan.</div>');
             log_message('error', 'DETAIL PERMOHONAN ADMIN - Data permohonan tidak ditemukan untuk ID: ' . $id_permohonan);
-            redirect('admin/permohonanMasuk'); // atau ke halaman yang sesuai
+            redirect('admin/permohonanMasuk');
             return;
         }
 
@@ -1180,40 +1124,14 @@ public function detail_permohonan_admin($id_permohonan = 0) // PASTIKAN METHOD I
         $data['lhp_detail'] = $this->db->get_where('lhp', ['id_permohonan' => $id_permohonan])->row_array();
         log_message('debug', 'DETAIL PERMOHONAN ADMIN - Data LHP: ' . print_r($data['lhp_detail'], true));
 
-        // 3. Anda bisa tambahkan pengambilan data lain jika perlu (misal file lampiran, detail surat tugas, dll)
+        // 3. Ambil data barang yang diajukan
 
         // Load view
         $this->load->view('templates/header', $data);
         $this->load->view('templates/sidebar', $data);
         $this->load->view('templates/topbar', $data);
-        // BUAT VIEW BARU INI: application/views/admin/detail_permohonan_admin_view.php
         $this->load->view('admin/detail_permohonan_admin_view', $data);
         $this->load->view('templates/footer');
     }
-
-//     // Di Admin.php
-// public function test_set_flash() {
-//     $this->session->set_flashdata('message', '<div class="alert alert-info" role="alert">Ini adalah pesan flashdata UNTUK TES!</div>');
-//     log_message('debug', 'TEST_SET_FLASH: Flashdata "message" telah di-set.');
-//     redirect('admin/test_show_flash');
-// }
-
-// public function test_show_flash() {
-//     $data['title'] = "Halaman Tes Flashdata";
-//     $data['subtitle'] = "Menampilkan Flashdata Tes";
-//     // Pastikan variabel $user dikirim ke view jika template membutuhkannya
-//     $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
-
-//     log_message('debug', 'TEST_SHOW_FLASH: Halaman dimuat. Flashdata "message" akan ditampilkan oleh topbar.');
-//     // Flashdata akan ditampilkan oleh templates/topbar.php
-
-//     // Buat file view sederhana di application/views/admin/simple_test_page.php
-//     // Isi: <h1>Ini Halaman Tes Sederhana</h1>
-//     $this->load->view('templates/header', $data);
-//     $this->load->view('templates/sidebar', $data);
-//     $this->load->view('templates/topbar', $data);
-//     $this->load->view('admin/simple_test_page', $data); // Ganti dengan nama view tes Anda
-//     $this->load->view('templates/footer');
-// }
 
 } // End class Admin

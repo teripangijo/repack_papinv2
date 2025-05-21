@@ -24,9 +24,6 @@
             align-items: center; 
             justify-content: center; 
             min-height: 100vh; 
-            /* Anda bisa menambahkan padding atas/bawah jika card terlalu menempel ke tepi viewport */
-            /* padding-top: 2rem; */
-            /* padding-bottom: 2rem; */
         }
         /* Menghapus margin atas/bawah default dari card jika body sudah flex-center */
         .card.o-hidden.border-0.shadow-lg {
@@ -34,7 +31,6 @@
              margin-bottom: 0 !important;
         }
         .register-image-custom {
-            /* Jika Anda ingin gambar di sisi kiri, atur background-image di sini */
             /* background-image: url("<?= base_url('assets/img/your-register-image.jpg'); ?>"); */
             background-size: cover;
             background-position: center;

@@ -156,7 +156,6 @@ $total_terpakai_agregat = $total_initial_agregat - $total_remaining_agregat;
                                         } elseif (in_array($log['tipe_referensi'], ['permohonan_impor', 'permohonan_impor_barang', 'permohonan_impor_selesai'])) {
                                             $link_ref = site_url('admin/detail_permohonan_admin/' . $id_ref);
                                         } elseif ($log['tipe_referensi'] == 'input_kuota_awal_user' && !empty($log['id_kuota_barang_referensi'])) {
-                                            // Bisa link ke detail kuota barang jika ada halaman khususnya
                                             $link_ref = '#!'; // Placeholder
                                         }
                                         ?>

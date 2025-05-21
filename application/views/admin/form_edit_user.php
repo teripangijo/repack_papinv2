@@ -74,10 +74,6 @@
 
                 <?php
                     // Menampilkan field NIP dan Jabatan hanya jika role yang dipilih atau role saat ini adalah Petugas (ID 3)
-                    // Ini memerlukan JavaScript untuk mengubah tampilan secara dinamis jika role diubah di dropdown,
-                    // atau kita bisa menampilkan field ini jika role saat ini adalah Petugas.
-                    // Untuk kesederhanaan, kita tampilkan jika role saat ini adalah Petugas.
-                    // Controller akan menangani penyimpanan NIP ke tabel 'petugas' jika role adalah Petugas.
                     $is_target_petugas = ($target_user_data['role_id'] == 3); // Asumsi Role ID 3 adalah Petugas
                     $petugas_detail_edit = null;
                     if ($is_target_petugas) {
