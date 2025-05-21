@@ -385,10 +385,8 @@ private function _log_perubahan_kuota(
     $tipe_referensi_param = null,
     $dicatat_oleh_user_id_param = null,
     $nama_barang_terkait_param = null,
-    $id_kuota_barang_ref_param = null   
+    $id_kuota_barang_ref_param = null
 ) {
-    // Log perubahan kuota barang ke tabel user_kuota_barang_log
-
     $log_data = [
         'id_pers'                 => $id_pers_param,
         'nama_barang_terkait'     => $nama_barang_terkait_param,
@@ -403,6 +401,19 @@ private function _log_perubahan_kuota(
         'dicatat_oleh_user_id'    => $dicatat_oleh_user_id_param,
         'tanggal_transaksi'       => date('Y-m-d H:i:s')
     ];
+
+    // Tambahkan baris ini untuk menyimpan ke database
+    if (!empty($log_data['id_pers']) && !empty($log_data['nama_barang_terkait'])) { // Pastikan data penting ada
+        $this->db->insert('log_kuota_perusahaan', $log_data);
+        // Anda bisa tambahkan logging tambahan di sini jika insert gagal untuk debugging
+        // if ($this->db->affected_rows() > 0) {
+        //     log_message('debug', 'Log kuota berhasil disimpan: ' . print_r($log_data, true));
+        // } else {
+        //     log_message('error', 'Gagal menyimpan log kuota. Data: ' . print_r($log_data, true) . ' Error: ' . $this->db->error()['message']);
+        // }
+    } else {
+        log_message('warning', 'Data log kuota tidak lengkap, tidak disimpan: ' . print_r($log_data, true));
+    }
 }
 
     public function penunjukanPetugas($id_permohonan)
