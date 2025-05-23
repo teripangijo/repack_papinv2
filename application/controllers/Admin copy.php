@@ -303,203 +303,189 @@ class Admin extends CI_Controller
         $this->load->view('templates/footer');
     }
 
-    private function _get_upload_config($upload_path, $allowed_types, $max_size_kb, $max_width = null, $max_height = null) 
-    {
-        log_message('debug', "ADMIN Controller: _get_upload_config() called. Path: {$upload_path}, Types: {$allowed_types}, Size: {$max_size_kb}KB");
-        if (!is_dir($upload_path)) {
-            log_message('debug', 'ADMIN Controller: _get_upload_config() - Upload path does not exist: ' . $upload_path);
-            if (!@mkdir($upload_path, 0777, true)) {
-                log_message('error', 'ADMIN Controller: _get_upload_config() - Gagal membuat direktori upload: ' . $upload_path . ' - Periksa izin parent direktori.');
-                return false;
-            }
-            log_message('debug', 'ADMIN Controller: _get_upload_config() - Direktori upload berhasil dibuat: ' . $upload_path);
-        }
-        if (!is_writable($upload_path)) {
-            log_message('error', 'ADMIN Controller: _get_upload_config() - Direktori upload tidak writable: ' . $upload_path . ' - Periksa izin (chown www-data:www-data dan chmod 775).');
-            return false;
-        }
-
-        $config['upload_path']   = $upload_path;
-        $config['allowed_types'] = $allowed_types;
-        $config['max_size']      = $max_size_kb;
-        if ($max_width) $config['max_width'] = $max_width;
-        if ($max_height) $config['max_height'] = $max_height;
-        $config['encrypt_name']  = TRUE;
-        log_message('debug', 'ADMIN Controller: _get_upload_config() - Config created: ' . print_r($config, true));
-        return $config;
-    }
-
     public function prosesSurat($id_permohonan = 0)
     {
-        // ... (bagian awal method: ambil data admin, permohonan, lhp, validasi awal tetap sama) ...
+        // echo "ADMIN PROSES SURAT - Method prosesSurat() DIPANGGIL dengan ID: " . $id_permohonan . "<br>";
+        // die("Eksekusi dihentikan di awal prosesSurat.");
+
         $admin_user = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
-        $data['user'] = $admin_user;
+        $data['user'] = $admin_user; // Untuk header, sidebar, topbar
         $data['title'] = 'Returnable Package';
-        $data['subtitle'] = 'Proses Finalisasi Permohonan Impor';
+        $data['subtitle'] = 'Proses Finalisasi Permohonan Impor'; // Atur subtitle
 
-        if ($id_permohonan == 0 || !is_numeric($id_permohonan)) { /* ... redirect ... */ return; }
+        // Validasi ID Permohonan
+        if ($id_permohonan == 0 || !is_numeric($id_permohonan)) {
+            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">ID Permohonan tidak valid.</div>');
+            redirect('admin/permohonanMasuk');
+            return;
+        }
 
-        $this->db->select('up.*, upr.NamaPers, upr.npwp, upr.alamat, upr.NoSkep'); // Ambil juga file_surat_keputusan yang sudah ada
+        // Ambil data permohonan
+        $this->db->select('up.*, upr.NamaPers, upr.npwp, upr.alamat, upr.NoSkep');
         $this->db->from('user_permohonan up');
         $this->db->join('user_perusahaan upr', 'up.id_pers = upr.id_pers', 'left');
         $this->db->where('up.id', $id_permohonan);
         $data['permohonan'] = $this->db->get()->row_array();
 
-        if (!$data['permohonan']) { /* ... redirect ... */ return; }
-        
-        $data['user_perusahaan'] = $this->db->get_where('user_perusahaan', ['id_pers' => $data['permohonan']['id_pers']])->row_array();
-        if (!$data['user_perusahaan']) {
-            $data['user_perusahaan'] = ['NamaPers' => 'N/A', 'alamat' => 'N/A', 'NoSkep' => 'N/A', 'npwp' => 'N/A'];
+        if (!$data['permohonan']) {
+            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Data permohonan dengan ID '.htmlspecialchars($id_permohonan).' tidak ditemukan.</div>');
+            log_message('error', 'ADMIN PROSES SURAT - Data permohonan tidak ditemukan untuk ID: ' . $id_permohonan);
+            redirect('admin/permohonanMasuk');
+            return;
+        }
+
+        // Variabel $user_perusahaan untuk view, diambil dari join di atas
+        // Namun, lebih eksplisit jika kita definisikan seperti ini atau pastikan semua field ada
+        $data['user_perusahaan'] = [
+            'NamaPers' => $data['permohonan']['NamaPers'],
+            'alamat' => $data['permohonan']['alamat'],
+            'NoSkep' => $data['permohonan']['NoSkep'] 
+        ];
+    
+        $perusahaan_terkait = $this->db->get_where('user_perusahaan', ['id_pers' => $data['permohonan']['id_pers']])->row_array();
+        if ($perusahaan_terkait) {
+            $data['user_perusahaan'] = $perusahaan_terkait;
+        } else {
+            // Handle jika data perusahaan tidak ditemukan, meskipun seharusnya ada jika permohonan valid
+            $data['user_perusahaan'] = ['NamaPers' => 'N/A', 'alamat' => 'N/A', 'NoSkep' => 'N/A']; // Default
+            log_message('warning', 'ADMIN PROSES SURAT - Data user_perusahaan tidak ditemukan untuk id_pers: ' . $data['permohonan']['id_pers']);
         }
 
 
+        // Ambil data LHP
         $data['lhp'] = $this->db->get_where('lhp', ['id_permohonan' => $id_permohonan])->row_array();
+
+        // Validasi LHP dan status permohonan
+        // Status '2' artinya LHP sudah direkam dan siap diproses final
         if (!$data['lhp'] || $data['permohonan']['status'] != '2' || empty($data['lhp']['NoLHP']) || empty($data['lhp']['TglLHP'])) {
-            // ... (redirect jika LHP belum lengkap) ...
-            $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">LHP belum lengkap atau status permohonan (ID '.htmlspecialchars($id_permohonan).') tidak valid untuk finalisasi.</div>');
-            redirect('admin/detail_permohonan_admin/' . $id_permohonan);
+            $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">LHP belum lengkap atau status permohonan (ID '.htmlspecialchars($id_permohonan).') tidak valid untuk finalisasi. Status saat ini: '.htmlspecialchars($data['permohonan']['status'] ?? 'Tidak Diketahui').'. Mohon periksa kembali data LHP.</div>');
+            log_message('warning', 'ADMIN PROSES SURAT - Validasi LHP/Status gagal. ID: '.$id_permohonan.'. Status Permohonan: '.($data['permohonan']['status'] ?? 'N/A').'. Data LHP: '.print_r($data['lhp'], true));
+            redirect('admin/detail_permohonan_admin/' . $id_permohonan); // Redirect ke detail atau permohonan masuk
             return;
         }
         
+        log_message('debug', 'ADMIN PROSES SURAT - Data Permohonan: ' . print_r($data['permohonan'], true));
+        log_message('debug', 'ADMIN PROSES SURAT - Data LHP: ' . print_r($data['lhp'], true));
+        log_message('debug', 'ADMIN PROSES SURAT - Data User Perusahaan: ' . print_r($data['user_perusahaan'], true));
+
+
         // Validasi form
-        $this->form_validation->set_rules('status_final', 'Status Final Permohonan', 'required|in_list[3,4]');
-        $this->form_validation->set_rules('nomorSetuju', 'Nomor Surat Persetujuan/Penolakan', 'trim|required|max_length[100]');
-        $this->form_validation->set_rules('tgl_S', 'Tanggal Surat Persetujuan/Penolakan', 'trim|required');
-        $this->form_validation->set_rules('link', 'Link Surat Keputusan (Opsional)', 'trim|callback__valid_url_format_check'); // Pastikan callback _valid_url_format_check ada
-
-        // Validasi kondisional
-        if ($this->input->post('status_final') == '4') { // Jika ditolak
-            $this->form_validation->set_rules('catatan_penolakan', 'Catatan Penolakan', 'trim|required');
-        } elseif ($this->input->post('status_final') == '3') { // Jika disetujui
-            // Jika belum ada file SK lama DAN tidak ada file baru yang diupload
-            if (empty($data['permohonan']['file_surat_keputusan']) && (!isset($_FILES['file_surat_keputusan']) || $_FILES['file_surat_keputusan']['error'] == UPLOAD_ERR_NO_FILE)) {
-                $this->form_validation->set_rules('file_surat_keputusan', 'File Surat Persetujuan Pengeluaran', 'required');
-            }
-            // Jika ada file baru yang diupload, validasi
-            if (isset($_FILES['file_surat_keputusan']) && $_FILES['file_surat_keputusan']['error'] != UPLOAD_ERR_NO_FILE) {
-                $this->form_validation->set_rules('file_surat_keputusan', 'File Surat Persetujuan Pengeluaran', 'callback_admin_check_file_sk_upload'); // Buat callback ini
-            }
-        }
-
+        $this->form_validation->set_rules('status_final', 'Status Final Permohonan', 'required|in_list[3,4]'); // 3 = Disetujui, 4 = Ditolak
+        $this->form_validation->set_rules('nomorSetuju', 'Nomor Surat Persetujuan/Penolakan', 'trim|max_length[100]'); // Digunakan sebagai nomor surat keputusan
+        $this->form_validation->set_rules('tgl_S', 'Tanggal Surat Persetujuan/Penolakan', 'trim'); // Digunakan sebagai tanggal surat keputusan
+        $this->form_validation->set_rules('nomorND', 'Nomor Nota Dinas (Opsional)', 'trim|max_length[100]');
+        $this->form_validation->set_rules('tgl_ND', 'Tanggal Nota Dinas (Opsional)', 'trim');
+        $this->form_validation->set_rules('link', 'Link Surat Keputusan (Opsional)', 'trim|callback__valid_url_format_check');
+        $this->form_validation->set_rules('linkND', 'Link Nota Dinas (Opsional)', 'trim|callback__valid_url_format_check');
 
         if ($this->form_validation->run() == false) {
-            log_message('debug', 'ADMIN PROSES SURAT - Form validation failed. Errors: ' . validation_errors());
+            log_message('debug', 'ADMIN PROSES SURAT - Form validation failed or initial load. Loading view prosesSurat.');
             $this->load->view('templates/header', $data);
             $this->load->view('templates/sidebar', $data);
             $this->load->view('templates/topbar', $data);
-            $this->load->view('admin/prosesSurat', $data);
+            $this->load->view('admin/prosesSurat', $data); // Load view di sini
             $this->load->view('templates/footer');
         } else {
-            log_message('debug', 'ADMIN PROSES SURAT - Form validation success. Processing data...');
+            // Proses jika validasi form sukses (setelah POST)
             $status_final_permohonan = $this->input->post('status_final');
+            
+            // Jika disetujui, nomor dan tanggal LHP dari petugas bisa jadi dasar nomor surat persetujuan
+            // Jika ditolak, nomor surat persetujuan diisi manual (atau bisa juga menggunakan nomor LHP jika kebijakannya begitu)
             $nomor_surat_keputusan = $this->input->post('nomorSetuju');
             $tanggal_surat_keputusan = $this->input->post('tgl_S');
-            $catatan_penolakan_input = $this->input->post('catatan_penolakan');
+
+            // Validasi nomor surat keputusan dan tanggal surat keputusan
+            if (empty($nomor_surat_keputusan) && ($status_final_permohonan == '3' || $status_final_permohonan == '4')) {
+                $this->form_validation->set_rules('nomorSetuju', 'Nomor Surat Keputusan', 'required');
+            }
+            if (empty($tanggal_surat_keputusan) && ($status_final_permohonan == '3' || $status_final_permohonan == '4')) {
+                $this->form_validation->set_rules('tgl_S', 'Tanggal Surat Keputusan', 'required');
+            }
+            // Re-run validation
+            if (!$this->form_validation->run()) {
+                log_message('debug', 'ADMIN PROSES SURAT - Re-validation failed for nomorSetuju/tgl_S. Loading view prosesSurat.');
+                $this->load->view('templates/header', $data);
+                $this->load->view('templates/sidebar', $data);
+                $this->load->view('templates/topbar', $data);
+                $this->load->view('admin/prosesSurat', $data);
+                $this->load->view('templates/footer');
+                return;
+            }
+
 
             $data_update_permohonan = [
                 'nomorSetuju'   => $nomor_surat_keputusan,
                 'tgl_S'         => !empty($tanggal_surat_keputusan) ? $tanggal_surat_keputusan : null,
+                'nomorND'       => $this->input->post('nomorND'),
+                'tgl_ND'        => $this->input->post('tgl_ND') ?: null,
                 'link'          => $this->input->post('link'),
-                // 'nomorND'       => null, // Hapus atau set null
-                // 'tgl_ND'        => null, // Hapus atau set null
-                // 'linkND'        => null, // Hapus atau set null
-                'catatan_penolakan' => ($status_final_permohonan == '4') ? $catatan_penolakan_input : null, // Hanya simpan jika ditolak
+                'linkND'        => $this->input->post('linkND'),
                 'time_selesai'  => date("Y-m-d H:i:s"),
                 'status'        => $status_final_permohonan,
-                // 'diproses_oleh_id_admin' => $admin_user['id'] 
+                // 'diproses_oleh_id_admin' => $admin_user['id'] // Catat siapa admin yang memproses
             ];
-
-            // Handle Upload File Surat Keputusan (jika status disetujui dan ada file diupload)
-            $nama_file_sk_baru = $data['permohonan']['file_surat_keputusan']; // Default ke file lama (jika ada)
-
-            if ($status_final_permohonan == '3' && isset($_FILES['file_surat_keputusan']) && $_FILES['file_surat_keputusan']['error'] != UPLOAD_ERR_NO_FILE) {
-                $upload_dir_sk = './uploads/sk_penyelesaian/'; // Pastikan direktori ini ada dan writable
-                // Gunakan method _get_upload_config Anda
-                $config_sk = $this->_get_upload_config($upload_dir_sk, 'pdf|jpg|png|jpeg', 2048); 
-
-                if (!$config_sk) {
-                    $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Konfigurasi direktori upload SK gagal.</div>');
-                    redirect('admin/prosesSurat/' . $id_permohonan); return;
-                }
-
-                $this->load->library('upload', $config_sk, 'sk_penyelesaian_upload');
-                $this->sk_penyelesaian_upload->initialize($config_sk);
-
-                if ($this->sk_penyelesaian_upload->do_upload('file_surat_keputusan')) {
-                    // Hapus file SK lama jika ada dan upload baru berhasil
-                    if (!empty($data['permohonan']['file_surat_keputusan']) && file_exists($upload_dir_sk . $data['permohonan']['file_surat_keputusan'])) {
-                        @unlink($upload_dir_sk . $data['permohonan']['file_surat_keputusan']);
-                    }
-                    $nama_file_sk_baru = $this->sk_penyelesaian_upload->data('file_name');
-                } else {
-                    $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Upload File Surat Keputusan Gagal: ' . $this->sk_penyelesaian_upload->display_errors('', '') . '</div>');
-                    // Reload view dengan data yang sudah ada
-                    $this->load->view('templates/header', $data);
-                    $this->load->view('templates/sidebar', $data);
-                    $this->load->view('templates/topbar', $data);
-                    $this->load->view('admin/prosesSurat', $data);
-                    $this->load->view('templates/footer');
-                    return;
-                }
-            }
-            // Hanya update nama file jika statusnya disetujui, jika ditolak mungkin tidak perlu file SK
-            if ($status_final_permohonan == '3') {
-                $data_update_permohonan['file_surat_keputusan'] = $nama_file_sk_baru;
-            } else {
-                // Jika ditolak, dan ada file SK lama, mungkin Anda ingin menghapusnya atau mengosongkan field
-                if (!empty($data['permohonan']['file_surat_keputusan']) && file_exists('./uploads/sk_penyelesaian/' . $data['permohonan']['file_surat_keputusan'])) {
-                    @unlink('./uploads/sk_penyelesaian/' . $data['permohonan']['file_surat_keputusan']);
-                }
-                $data_update_permohonan['file_surat_keputusan'] = null;
-            }
-
-
             $this->db->where('id', $id_permohonan);
             $this->db->update('user_permohonan', $data_update_permohonan);
-            // ... (Logika pemotongan kuota jika disetujui, tetap sama) ...
+            log_message('info', 'ADMIN PROSES SURAT - Permohonan ID ' . $id_permohonan . ' diupdate. Status: ' . $status_final_permohonan . '. Data: ' . print_r($data_update_permohonan, true));
+
+
+            // --- LOGIKA PEMOTONGAN KUOTA BARANG ---
+            // Jika status final adalah '3' (Disetujui) dan ada data LHP yang valid
             if ($status_final_permohonan == '3' && isset($data['lhp']['JumlahBenar']) && $data['lhp']['JumlahBenar'] > 0) {
-                // ... (kode pemotongan kuota barang Anda) ...
+                // ... (kode pemotongan kuota Anda) ...
+                $id_pers_terkait = $data['permohonan']['id_pers'];
+                $jumlah_barang_digunakan_lhp = (int)$data['lhp']['JumlahBenar'];
+                $nama_barang_dimohonkan = $data['permohonan']['NamaBarang']; 
+                $id_kuota_barang_yang_digunakan = $data['permohonan']['id_kuota_barang_digunakan'] ?? null;
+
+                log_message('debug', 'ADMIN PROSES SURAT - Memulai Pemotongan Kuota Barang. ID Pers: ' . $id_pers_terkait . ', Jml LHP: ' . $jumlah_barang_digunakan_lhp . ', Barang: ' . $nama_barang_dimohonkan . ', ID Kuota Brg Digunakan: ' . $id_kuota_barang_yang_digunakan);
+
+                if ($id_kuota_barang_yang_digunakan) {
+                    $kuota_barang_db = $this->db->get_where('user_kuota_barang', ['id_kuota_barang' => $id_kuota_barang_yang_digunakan, 'id_pers' => $id_pers_terkait])->row_array();
+
+                    if ($kuota_barang_db && $kuota_barang_db['nama_barang'] == $nama_barang_dimohonkan) {
+                        $sisa_kuota_barang_sebelum = (float)$kuota_barang_db['remaining_quota_barang'];
+                        $sisa_kuota_barang_baru = $sisa_kuota_barang_sebelum - $jumlah_barang_digunakan_lhp;
+                        $status_kuota_brg_update = $kuota_barang_db['status_kuota_barang'];
+
+                        if ($sisa_kuota_barang_baru < 0) {
+                            log_message('warning', 'ADMIN PROSES SURAT - Pemotongan kuota barang (ID: '.$id_kuota_barang_yang_digunakan.') melebihi sisa. Sisa sebelumnya: '.$sisa_kuota_barang_sebelum.', Dipakai: '.$jumlah_barang_digunakan_lhp.'. Sisa direset ke 0.');
+                            $sisa_kuota_barang_baru = 0;
+                        }
+                        if ($sisa_kuota_barang_baru <= 0) {
+                            $status_kuota_brg_update = 'habis';
+                        }
+
+                        $this->db->where('id_kuota_barang', $id_kuota_barang_yang_digunakan);
+                        $this->db->update('user_kuota_barang', [
+                            'remaining_quota_barang' => $sisa_kuota_barang_baru,
+                            'status_kuota_barang' => $status_kuota_brg_update
+                        ]);
+                        log_message('info', 'ADMIN PROSES SURAT - Kuota barang di user_kuota_barang diupdate. ID: ' . $id_kuota_barang_yang_digunakan . '. Sisa baru: ' . $sisa_kuota_barang_baru . '. Status baru: ' . $status_kuota_brg_update);
+
+                        $this->_log_perubahan_kuota(
+                            $id_pers_terkait, 'pengurangan', $jumlah_barang_digunakan_lhp,
+                            $sisa_kuota_barang_sebelum, $sisa_kuota_barang_baru,
+                            'Penggunaan Kuota. Aju: ' . ($data['permohonan']['nomorSurat'] ?? $id_permohonan) . '. Barang: ' . $nama_barang_dimohonkan,
+                            $id_permohonan, 'permohonan_impor_selesai', $admin_user['id'],
+                            $nama_barang_dimohonkan, $id_kuota_barang_yang_digunakan
+                        );
+                    } else {
+                        log_message('error', 'ADMIN PROSES SURAT - Gagal potong kuota barang: Data user_kuota_barang (ID: '.$id_kuota_barang_yang_digunakan.') tidak ditemukan untuk perusahaan atau nama barang tidak cocok (' . $nama_barang_dimohonkan . ' vs ' . ($kuota_barang_db['nama_barang'] ?? 'Tidak ada') . ').');
+                        $this->session->set_flashdata('message_error_quota', '<div class="alert alert-danger" role="alert">Peringatan: Permohonan disetujui tetapi pemotongan kuota otomatis gagal. Harap periksa log dan data kuota perusahaan secara manual.</div>');
+                    }
+                } else {
+                    log_message('error', 'ADMIN PROSES SURAT - Gagal potong kuota barang: id_kuota_barang_digunakan tidak ada di data permohonan (ID: '.$id_permohonan.'). Pastikan User menyimpan ID kuota barang saat membuat permohonan.');
+                    $this->session->set_flashdata('message_error_quota', '<div class="alert alert-danger" role="alert">Peringatan: Permohonan disetujui tetapi pemotongan kuota otomatis gagal karena ID kuota barang tidak ditemukan pada permohonan. Harap periksa log dan data kuota perusahaan secara manual.</div>');
+                }
             }
+
 
             $pesan_status_akhir = ($status_final_permohonan == '3') ? 'Disetujui' : 'Ditolak';
             $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Status permohonan ID '.htmlspecialchars($id_permohonan).' telah berhasil diproses menjadi "'. $pesan_status_akhir .'"!</div>');
             redirect('admin/permohonanMasuk');
         }
     }
-
-    public function admin_check_file_sk_upload($str) 
-    {
-        $field_name = 'file_surat_keputusan';
-
-        // Jika tidak ada file baru yang diupload SAAT EDIT, ini valid jika file lama sudah ada.
-        // Namun, untuk prosesSurat, jika status 'approved' dan BELUM ADA file lama, maka file baru WAJIB.
-        // Kondisi ini sudah dihandle di set_rules kondisional.
-        // Callback ini hanya akan dipanggil jika file di-submit.
-        if (!isset($_FILES[$field_name]) || $_FILES[$field_name]['error'] == UPLOAD_ERR_NO_FILE) {
-            // Ini seharusnya sudah ditangani oleh 'required' kondisional di set_rules
-            // Tapi jika dipanggil dan tidak ada file, anggap error
-            $this->form_validation->set_message('admin_check_file_sk_upload', 'Kolom {field} wajib diisi.');
-            return FALSE;
-        }
-
-        $config_rules = $this->_get_upload_config('./uploads/dummy/', 'pdf|jpg|png|jpeg', 2048);
-        if (!$config_rules) { /* error config */ return FALSE; }
-
-        $file = $_FILES[$field_name];
-        $allowed_types_arr = explode('|', $config_rules['allowed_types']);
-        $file_ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-
-        if (!in_array($file_ext, $allowed_types_arr)) {
-            $this->form_validation->set_message('admin_check_file_sk_upload', "Tipe file {field} tidak valid (Hanya ".str_replace('|',', ',$config_rules['allowed_types']).").");
-            return FALSE;
-        }
-        if ($file['size'] > ($config_rules['max_size'] * 1024)) {
-            $this->form_validation->set_message('admin_check_file_sk_upload', "Ukuran file {field} melebihi ".$config_rules['max_size']."KB.");
-            return FALSE;
-        }
-        return TRUE;
-    }
-
 
     public function _valid_url_format_check($str)
     {
@@ -931,89 +917,56 @@ class Admin extends CI_Controller
     }
 
     
-    public function tambah_user($role_id_to_add = 0)
+    public function tambah_user_petugas()
     {
         $data['title'] = 'Returnable Package';
+        $data['subtitle'] = 'Tambah User Petugas Baru'; // Judul bisa dinamis jika untuk role lain juga
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
 
-        if ($role_id_to_add == 0 || !is_numeric($role_id_to_add)) {
-            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Role ID untuk user baru tidak valid.</div>');
-            redirect('admin/manajemen_user');
-            return;
-        }
-        
-        // Ambil informasi role yang akan ditambahkan
-        $data['target_role_info'] = $this->db->get_where('user_role', ['id' => $role_id_to_add])->row_array();
+        // Default role yang akan ditambahkan adalah Petugas (ID 3)
+        $target_role_id = 3; // Untuk Petugas
+        // $target_role_id = $this->input->get('role_type'); // Contoh jika role dipilih dari link/parameter
+
+        $data['target_role_info'] = $this->db->get_where('user_role', ['id' => $target_role_id])->row_array();
 
         if (!$data['target_role_info']) {
-            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Role target tidak ditemukan.</div>');
+            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Role target tidak valid.</div>');
             redirect('admin/manajemen_user');
             return;
         }
-        
-        // Jangan izinkan admin menambahkan admin lain dari form ini untuk kesederhanaan,
-        // kecuali Anda punya logika khusus untuk itu.
-        if ($role_id_to_add == 1) { // Role ID 1 adalah Admin
-             $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Penambahan user dengan role Admin tidak diizinkan melalui form ini.</div>');
-             redirect('admin/manajemen_user');
-             return;
-        }
+        $data['subtitle'] = 'Tambah User ' . htmlspecialchars($data['target_role_info']['role']);
 
-        $data['subtitle'] = 'Tambah User Baru: ' . htmlspecialchars($data['target_role_info']['role']);
-        $data['role_id_to_add'] = $role_id_to_add; // Kirim ke view untuk logika kondisional field
 
-        // Aturan validasi dasar
         $this->form_validation->set_rules('name', 'Nama Lengkap', 'required|trim');
-        $this->form_validation->set_rules('password', 'Password Awal', 'required|trim|min_length[6]');
-        $this->form_validation->set_rules('confirm_password', 'Konfirmasi Password Awal', 'required|trim|matches[password]');
-
-        // Aturan validasi kondisional untuk login identifier (email atau NIP)
-        $login_identifier_label = '';
-        $login_identifier_rules = 'required|trim';
-
-        if ($role_id_to_add == 2) { // Pengguna Jasa (biasanya email)
-            $login_identifier_label = 'Email';
-            $login_identifier_rules .= '|valid_email|is_unique[user.email]';
-        } elseif ($role_id_to_add == 3 || $role_id_to_add == 4) { // Petugas atau Monitoring (biasanya NIP)
-            $login_identifier_label = ($role_id_to_add == 3) ? 'NIP Petugas' : 'NIP Monitoring';
-            $login_identifier_rules .= '|numeric|is_unique[user.email]'; // NIP disimpan di kolom 'email'
-        } else {
-            // Untuk role lain yang mungkin Anda tambahkan, default ke email atau buat aturan spesifik
-            $login_identifier_label = 'Login Identifier (Email/Username)';
-            $login_identifier_rules .= '|is_unique[user.email]';
-        }
-        $this->form_validation->set_rules('login_identifier', $login_identifier_label, $login_identifier_rules, [
-            'is_unique' => $login_identifier_label . ' ini sudah terdaftar.',
-            'numeric'   => $login_identifier_label . ' harus berupa angka.',
-            'valid_email'=> $login_identifier_label . ' tidak valid.'
+        // NIP akan disimpan di kolom 'email' dan harus unik
+        $this->form_validation->set_rules('nip', 'NIP (Nomor Induk Pegawai)', 'required|trim|numeric|is_unique[user.email]', [
+            'is_unique' => 'NIP ini sudah terdaftar sebagai login identifier.',
+            'numeric'   => 'NIP harus berupa angka.'
         ]);
+        $this->form_validation->set_rules('password', 'Password Awal', 'required|trim|min_length[6]');
+        $this->form_validation->set_rules('confirm_password', 'Konfirmasi Password', 'required|trim|matches[password]');
         
-        // Aturan validasi kondisional untuk field spesifik role
-        if ($role_id_to_add == 3) { // Petugas
+        if ($target_role_id == 3) { // Asumsi Role ID 3 adalah Petugas
+            // $this->form_validation->set_rules('nip_detail_petugas', 'NIP (Detail Petugas)', 'trim|required|numeric'); // NIP di tabel petugas harus sama dengan NIP login
             $this->form_validation->set_rules('jabatan_petugas', 'Jabatan Petugas', 'trim|required');
         }
-        // Tambahkan validasi untuk role Monitoring jika ada field spesifik
-        // elseif ($role_id_to_add == 4) { // Monitoring
-        //    $this->form_validation->set_rules('field_monitoring', 'Field Monitoring', 'trim|required');
-        // }
-
 
         if ($this->form_validation->run() == false) {
             $this->load->view('templates/header', $data);
             $this->load->view('templates/sidebar', $data);
             $this->load->view('templates/topbar', $data);
-            $this->load->view('admin/form_tambah_user_view', $data); // Ganti nama view menjadi lebih generik
+            $this->load->view('admin/form_tambah_user_petugas', $data);
             $this->load->view('templates/footer');
         } else {
-            $login_identifier_input = $this->input->post('login_identifier');
+            $nip_input = $this->input->post('nip');
 
             $user_data_to_insert = [
                 'name' => htmlspecialchars($this->input->post('name', true)),
-                'email' => htmlspecialchars($login_identifier_input, true), // Email atau NIP disimpan di sini
+                'email' => htmlspecialchars($nip_input, true), // NIP disimpan di kolom email
                 'image' => 'default.jpg',
                 'password' => password_hash($this->input->post('password'), PASSWORD_DEFAULT),
-                'role_id' => $role_id_to_add,
-                'is_active' => 1, // Default aktif, admin bisa non-aktifkan nanti
+                'role_id' => $target_role_id,
+                'is_active' => 1, // Langsung aktif
                 'force_change_password' => 1, // Wajib ganti password saat login pertama
                 'date_created' => time()
             ];
@@ -1022,17 +975,15 @@ class Admin extends CI_Controller
 
             if ($new_user_id) {
                 // Jika role adalah Petugas, simpan juga ke tabel 'petugas'
-                if ($role_id_to_add == 3) {
+                if ($target_role_id == 3) { // Asumsi Role ID 3 adalah Petugas
                     $petugas_data_to_insert = [
-                        'id_user' => $new_user_id, // Foreign key ke tabel user
-                        'Nama' => $user_data_to_insert['name'],
-                        'NIP' => $login_identifier_input, // NIP dari input form
+                        'id_user' => $new_user_id,
+                        'Nama' => $user_data_to_insert['name'], // Ambil dari nama user
+                        'NIP' => $nip_input, // NIP dari input form
                         'Jabatan' => htmlspecialchars($this->input->post('jabatan_petugas', true))
-                        // tambahkan field lain jika ada di tabel petugas
                     ];
                     $this->db->insert('petugas', $petugas_data_to_insert);
                 }
-                // Tambahkan logika serupa untuk tabel detail role Monitoring jika ada
 
                 $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">User ' . htmlspecialchars($data['target_role_info']['role']) . ' baru, ' . htmlspecialchars($user_data_to_insert['name']) . ', berhasil ditambahkan. User wajib mengganti password saat login pertama.</div>');
             } else {

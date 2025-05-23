@@ -3,10 +3,7 @@
 
     <?php
     $role_id = $this->session->userdata('role_id');
-    // Ambil $user dari data yang di-pass ke view oleh controller, jika ada.
-    // Ini berguna jika nama user ingin ditampilkan di suatu tempat di sidebar.
-    // Jika tidak, $this->session->userdata('name') bisa jadi alternatif.
-    $user_name = $user['name'] ?? ($this->session->userdata('name') ?? 'Guest');
+    $user_name = $user['name'] ?? ($this->session->userdata('name') ?? 'Guest'); // Ambil dari $data['user'] jika dikirim, atau dari session
     ?>
 
     <?php if ($role_id == 1) : // ADMIN ?>
@@ -58,11 +55,11 @@
         <li class="nav-item <?= ($this->uri->segment(1) == 'user' && $this->uri->segment(2) == 'permohonan_impor_kembali') ? 'active' : ''; ?>">
             <a class="nav-link" href="<?= site_url('user/permohonan_impor_kembali'); ?>"><i class="fas fa-fw fa-pallet"></i><span>Buat Permohonan Impor</span></a>
         </li>
-        <li class="nav-item <?= ($this->uri->segment(1) == 'user' && ($this->uri->segment(2) == 'daftarPermohonan' || $this->uri->segment(2) == 'editpermohonan' || $this->uri->segment(2) == 'printPdf' || $this->uri->segment(2) == 'detailPermohonan')) ? 'active' : ''; ?>">
+        <li class="nav-item <?= ($this->uri->segment(1) == 'user' && ($this->uri->segment(2) == 'daftarPermohonan' || $this->uri->segment(2) == 'editpermohonan' || $this->uri->segment(2) == 'printPdf')) ? 'active' : ''; ?>">
             <a class="nav-link" href="<?= site_url('user/daftarPermohonan'); ?>"><i class="fas fa-fw fa-history"></i><span>Daftar Permohonan</span></a>
         </li>
 
-    <?php elseif ($role_id == 3) : // PETUGAS (ROLE ID 3) ?>
+    <?php elseif ($role_id == 3) : // PETUGAS (ROLE ID 3) - BLOK YANG DIPERBARUI ?>
         <a class="sidebar-brand d-flex align-items-center justify-content-center" href="<?= site_url('petugas'); ?>">
             <div class="sidebar-brand-icon rotate-n-15">
                 <i class="fas fa-user-secret"></i> </div>
@@ -91,21 +88,15 @@
 
         <hr class="sidebar-divider mt-2 mb-2">
         <div class="sidebar-heading">
-            Monitoring (Petugas) </div>
-        <li class="nav-item <?= ($this->uri->segment(1) == 'petugas' && ($this->uri->segment(2) == 'monitoring_permohonan' || $this->uri->segment(2) == 'detail_monitoring_permohonan')) ? 'active' : ''; ?>">
+            Monitoring
+        </div>
+        <li class="nav-item <?= ($this->uri->segment(2) == 'monitoring_permohonan' || $this->uri->segment(2) == 'detail_monitoring_permohonan') ? 'active' : ''; ?>">
             <a class="nav-link" href="<?= site_url('petugas/monitoring_permohonan'); ?>">
                 <i class="fas fa-fw fa-search-location"></i>
                 <span>Monitoring Permohonan</span></a>
         </li>
 
     <?php elseif ($this->session->userdata('role_id') == 4) : // MENU UNTUK MONITORING ?>
-        <a class="sidebar-brand d-flex align-items-center justify-content-center" href="<?= site_url('monitoring'); ?>">
-            <div class="sidebar-brand-icon rotate-n-15">
-                <i class="fas fa-binoculars"></i> <?php // Ikon untuk Monitoring ?>
-            </div>
-            <div class="sidebar-brand-text mx-3">REPACK <sup>Monitoring</sup></div>
-        </a>
-        <hr class="sidebar-divider my-0">
         <li class="nav-item <?= ($this->uri->segment(1) == 'monitoring' && ($this->uri->segment(2) == '' || $this->uri->segment(2) == 'index')) ? 'active' : ''; ?>">
             <a class="nav-link" href="<?= site_url('monitoring/index'); ?>">
                 <i class="fas fa-fw fa-tachometer-alt"></i>
@@ -129,12 +120,15 @@
                 <span>Permohonan Impor</span></a>
         </li>
 
-        <li class="nav-item <?= ($this->uri->segment(1) == 'monitoring' && ($this->uri->segment(2) == 'pantau_kuota_perusahaan' || $this->uri->segment(2) == 'detail_kuota_perusahaan')) ? 'active' : ''; ?>">
+        <li class="nav-item <?= ($this->uri->segment(1) == 'monitoring' && $this->uri->segment(2) == 'pantau_kuota_perusahaan') ? 'active' : ''; ?>">
             <a class="nav-link" href="<?= site_url('monitoring/pantau_kuota_perusahaan'); ?>">
                 <i class="fas fa-fw fa-chart-pie"></i>
                 <span>Kuota Perusahaan</span></a>
         </li>
-        <?php // Menu Akun Saya untuk Monitoring dipindah ke blok umum di bawah ?>
+        <hr class="sidebar-divider mt-3"> <?php // Tambah margin jika perlu ?>
+        <div class="sidebar-heading">
+            Akun Saya
+        </div>
 
     <?php else : // GUEST atau role tidak dikenal ?>
         <a class="sidebar-brand d-flex align-items-center justify-content-center" href="<?= site_url(); ?>">
@@ -147,47 +141,28 @@
         </li>
     <?php endif; ?>
 
-    <?php // Menu Umum untuk semua role yang login (Edit Profil, Logout) ?>
+    <?php if ($this->session->userdata('role_id')):
+        $current_controller_for_edit_profil = $this->uri->segment(1);
+        // Pastikan controller valid sebelum membuat link (misalnya, tidak untuk 'auth')
+        if (in_array($current_controller_for_edit_profil, ['admin', 'user', 'petugas', 'monitoring'])):
+            $edit_profil_method_name = ($current_controller_for_edit_profil == 'user') ? 'edit' : 'edit_profil'; // User menggunakan 'edit', lainnya 'edit_profil'
+    ?>
+    <hr class="sidebar-divider">
+    <li class="nav-item <?= ($this->uri->segment(1) == $current_controller_for_edit_profil && $this->uri->segment(2) == $edit_profil_method_name) ? 'active' : ''; ?>">
+        <a class="nav-link" href="<?= site_url($current_controller_for_edit_profil . '/' . $edit_profil_method_name); ?>">
+            <i class="fas fa-fw fa-user-edit"></i>
+            <span>Edit Profil Saya</span>
+        </a>
+    </li>
+    <?php endif; endif; ?>
+
     <?php if ($this->session->userdata('role_id')): ?>
-        <hr class="sidebar-divider">
-        <div class="sidebar-heading">
-            Akun Saya
-        </div>
-        <?php
-            $edit_profil_url = '';
-            $current_controller_for_edit_profil_link = $this->uri->segment(1); // Default ke controller saat ini
-
-            // Tentukan controller yang benar untuk link Edit Profil berdasarkan role
-            // Ini membuat link lebih eksplisit dan tidak bergantung pada $this->uri->segment(1)
-            // jika user berada di controller lain tapi ingin edit profilnya.
-            switch($this->session->userdata('role_id')) {
-                case 1: $edit_profil_controller = 'admin'; break;
-                case 2: $edit_profil_controller = 'user'; break;
-                case 3: $edit_profil_controller = 'petugas'; break;
-                case 4: $edit_profil_controller = 'monitoring'; break;
-                default: $edit_profil_controller = ''; // Atau controller default
-            }
-            
-            if (!empty($edit_profil_controller)) {
-                 $edit_profil_method_name = ($edit_profil_controller == 'user') ? 'edit' : 'edit_profil';
-                 $edit_profil_url = site_url($edit_profil_controller . '/' . $edit_profil_method_name);
-            }
-        ?>
-        <?php if (!empty($edit_profil_url)): ?>
-        <li class="nav-item <?= ($this->uri->segment(1) == $edit_profil_controller && $this->uri->segment(2) == $edit_profil_method_name) ? 'active' : ''; ?>">
-            <a class="nav-link" href="<?= $edit_profil_url; ?>">
-                <i class="fas fa-fw fa-user-edit"></i>
-                <span>Edit Profil Saya</span>
-            </a>
-        </li>
-        <?php endif; ?>
-
-        <li class="nav-item">
-            <a class="nav-link" href="#" data-toggle="modal" data-target="#logoutModal">
-                <i class="fas fa-fw fa-sign-out-alt"></i>
-                <span>Logout</span>
-            </a>
-        </li>
+    <li class="nav-item">
+        <a class="nav-link" href="#" data-toggle="modal" data-target="#logoutModal">
+            <i class="fas fa-fw fa-sign-out-alt"></i>
+            <span>Logout</span>
+        </a>
+    </li>
     <?php endif; ?>
 
     <hr class="sidebar-divider d-none d-md-block">

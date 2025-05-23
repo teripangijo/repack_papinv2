@@ -127,4 +127,63 @@ if (!function_exists('dateConvert')) {
     }
 }
 
+if (!function_exists('status_permohonan_text_badge')) {
+    function status_permohonan_text_badge($status_code) {
+        $status_text = 'Tidak Diketahui';
+        $status_badge = 'light';
+        switch ($status_code) {
+            case '0': $status_text = 'Baru Masuk'; $status_badge = 'dark'; break;
+            case '5': $status_text = 'Diproses Admin'; $status_badge = 'info'; break;
+            case '1': $status_text = 'Penunjukan Pemeriksa'; $status_badge = 'primary'; break;
+            case '2': $status_text = 'LHP Direkam'; $status_badge = 'warning'; break;
+            case '3': $status_text = 'Selesai (Disetujui)'; $status_badge = 'success'; break;
+            case '4': $status_text = 'Selesai (Ditolak)'; $status_badge = 'danger'; break;
+            default: $status_text = 'Status Tidak Dikenal (' . htmlspecialchars($status_code) . ')';
+        }
+        return ['text' => $status_text, 'badge' => $status_badge];
+    }
+}
+
+if (!function_exists('status_pengajuan_kuota_text_badge')) {
+    function status_pengajuan_kuota_text_badge($status_code) {
+        $status_text = ucfirst($status_code ?? 'N/A');
+        $status_badge = 'secondary';
+        switch (strtolower($status_code ?? '')) {
+            case 'pending': $status_badge = 'warning'; $status_text = 'Pending'; break;
+            case 'approved': $status_badge = 'success'; $status_text = 'Disetujui'; break;
+            case 'rejected': $status_badge = 'danger'; $status_text = 'Ditolak'; break;
+            case 'diproses': $status_badge = 'info'; $status_text = 'Diproses'; break;
+        }
+        return ['text' => $status_text, 'badge' => $status_badge];
+    }
+}
+
+// application/helpers/repack_helper.php
+if (!function_exists('status_kuota_barang_text_badge')) {
+    function status_kuota_barang_text_badge($status_code) {
+        $status_text = ucfirst($status_code ?? 'N/A');
+        $status_badge = 'secondary'; // Default badge
+        switch (strtolower($status_code ?? '')) {
+            case 'active':
+                $status_text = 'Aktif';
+                $status_badge = 'success';
+                break;
+            case 'inactive':
+                $status_text = 'Non-Aktif';
+                $status_badge = 'warning';
+                break;
+            case 'habis':
+                $status_text = 'Habis';
+                $status_badge = 'danger';
+                break;
+            case 'pending_approval': // Contoh status lain jika ada
+                $status_text = 'Menunggu Persetujuan';
+                $status_badge = 'info';
+                break;
+            // Tambahkan case lain jika perlu
+        }
+        return ['text' => $status_text, 'badge' => $status_badge];
+    }
+}
+
 ?>

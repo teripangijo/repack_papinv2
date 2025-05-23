@@ -600,16 +600,6 @@ class User extends CI_Controller
     public function check_file_bc_manifest_upload($str)
     {
         $field_name = 'file_bc_manifest'; // Nama field input file di form tambah
-        // --- TAMBAHKAN DEBUGGING DI SINI ---
-        log_message('debug', 'CALLBACK check_file_bc_manifest_upload - _FILES content: ' . print_r($_FILES, true));
-        if (isset($_FILES[$field_name])) {
-            log_message('debug', 'CALLBACK check_file_bc_manifest_upload - _FILES['.$field_name.'] error code: ' . $_FILES[$field_name]['error']);
-            // Anda bisa juga var_dump di sini jika ingin output langsung ke browser (hentikan dengan exit setelahnya jika perlu)
-            // var_dump($_FILES); exit; 
-        } else {
-            log_message('debug', 'CALLBACK check_file_bc_manifest_upload - _FILES['.$field_name.'] IS NOT SET.');
-        }
-        // --- AKHIR DEBUGGING ---
         // Path dummy di sini hanya untuk mengambil rules, tidak benar-benar membuat direktori
         $config_upload_rules = $this->_get_upload_config('./uploads/dummy_path_for_rules/', 'pdf', 2048); 
 

@@ -44,18 +44,12 @@ class Auth extends CI_Controller
     {
         $role_id = $this->session->userdata('role_id');
         $user_id = $this->session->userdata('id'); 
-
-        
-        
-        
-
         
         if ($role_id == 2 && $is_active == 0) {
             $this->session->set_flashdata('message', '<div class="alert alert-info" role="alert">Akun Anda belum aktif. Silakan lengkapi profil perusahaan Anda untuk aktivasi.</div>');
             redirect('user/edit'); 
             return;
         }
-        
         
         if ($role_id == 1) { 
             redirect('admin');
@@ -145,7 +139,7 @@ class Auth extends CI_Controller
                         } elseif ($user['role_id'] == 3) { 
                             redirect('petugas/force_change_password_page'); 
                         } elseif ($user['role_id'] == 4) { 
-                            redirect('monitoring/force_change_password_page'); 
+                            redirect('monitoring'); 
                         } else {
                             
                             
