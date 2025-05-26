@@ -16,7 +16,6 @@ defined('BASEPATH') OR exit('No direct script access allowed');
             } elseif ($this->session->userdata('role_id') == 2) { 
                  $url_kembali = site_url('user/daftarPermohonan');
             }
-            // Tambahkan kondisi lain jika view ini dipakai oleh role lain dengan link kembali yang berbeda
             ?>
 
             <?php // Tombol aksi Admin (hanya tampil jika BUKAN view monitoring DAN jika role adalah Admin) ?>

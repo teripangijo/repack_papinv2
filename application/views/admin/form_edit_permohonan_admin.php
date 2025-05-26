@@ -1,14 +1,6 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-// Variabel dari Controller User::editpermohonan():
-// $user (array): Data user login
-// $user_perusahaan (array): Data perusahaan terkait
-// $permohonan_edit (array): Data permohonan yang akan diedit
-// $list_barang_berkuota (array): Daftar barang yang memiliki kuota aktif (termasuk yg sedang dipilih)
-// $title (string)
-// $subtitle (string)
-
 // Inisialisasi untuk pre-fill dan JavaScript berdasarkan data permohonan yang diedit
 $id_kuota_barang_saat_ini = $permohonan_edit['id_kuota_barang_digunakan'] ?? set_value('id_kuota_barang_selected', '');
 $nama_barang_saat_ini = $permohonan_edit['NamaBarang'] ?? set_value('NamaBarang', '');
