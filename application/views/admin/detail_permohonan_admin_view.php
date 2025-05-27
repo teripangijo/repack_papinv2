@@ -232,7 +232,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                                 <?php elseif($permohonan_detail['status'] == '3'): ?>
                                     <tr><td>File Surat Persetujuan</td><td>: <span class="text-muted"><em>Tidak ada file diupload oleh Admin.</em></span></td></tr>
                                 <?php endif; ?>
-                                <tr><td>Link Dokumen (Jika Ada)</td><td>: <?= isset($permohonan_detail['link']) && !empty($permohonan_detail['link']) ? '<a href="'.htmlspecialchars($permohonan_detail['link']).'" target="_blank" title="Lihat Dokumen SK">Lihat Dokumen <i class="fas fa-external-link-alt fa-xs"></i></a>' : '<span class="text-muted"><em>Tidak ada link</em></span>'; ?></td></tr>
+                                <!-- <tr><td>Link Dokumen (Jika Ada)</td><td>: <?= isset($permohonan_detail['link']) && !empty($permohonan_detail['link']) ? '<a href="'.htmlspecialchars($permohonan_detail['link']).'" target="_blank" title="Lihat Dokumen SK">Lihat Dokumen <i class="fas fa-external-link-alt fa-xs"></i></a>' : '<span class="text-muted"><em>Tidak ada link</em></span>'; ?></td></tr> -->
                             </table>
                         </div>
                         <?php if ($permohonan_detail['status'] == '4' && isset($permohonan_detail['catatan_penolakan']) && !empty($permohonan_detail['catatan_penolakan'])): ?>
