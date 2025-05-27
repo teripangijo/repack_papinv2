@@ -5,7 +5,7 @@
         <div class="col-lg-8">
             <!-- <?= $this->session->flashdata('message'); ?> -->
 
-            <?= form_open_multipart('admin/edit_profil'); ?>
+            <?= form_open_multipart('petugas_administrasi/edit_profil'); ?>
             <div class="form-group row">
                 <label for="login_identifier" class="col-sm-3 col-form-label">Email (Login)</label>
                 <div class="col-sm-9">
