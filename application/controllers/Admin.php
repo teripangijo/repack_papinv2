@@ -942,7 +942,6 @@ class Admin extends CI_Controller
             return;
         }
         
-        // Ambil informasi role yang akan ditambahkan
         $data['target_role_info'] = $this->db->get_where('user_role', ['id' => $role_id_to_add])->row_array();
 
         if (!$data['target_role_info']) {
@@ -951,70 +950,89 @@ class Admin extends CI_Controller
             return;
         }
         
-        // Jangan izinkan admin menambahkan admin lain dari form ini untuk kesederhanaan,
-        // kecuali Anda punya logika khusus untuk itu.
-        if ($role_id_to_add == 1) { // Role ID 1 adalah Admin
+        // Jangan izinkan admin menambahkan admin lain (role_id 1) dari form ini
+        if ($role_id_to_add == 1) {
              $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Penambahan user dengan role Admin tidak diizinkan melalui form ini.</div>');
              redirect('admin/manajemen_user');
              return;
         }
 
         $data['subtitle'] = 'Tambah User Baru: ' . htmlspecialchars($data['target_role_info']['role']);
-        $data['role_id_to_add'] = $role_id_to_add; // Kirim ke view untuk logika kondisional field
+        $data['role_id_to_add'] = $role_id_to_add; 
 
         // Aturan validasi dasar
         $this->form_validation->set_rules('name', 'Nama Lengkap', 'required|trim');
         $this->form_validation->set_rules('password', 'Password Awal', 'required|trim|min_length[6]');
         $this->form_validation->set_rules('confirm_password', 'Konfirmasi Password Awal', 'required|trim|matches[password]');
 
-        // Aturan validasi kondisional untuk login identifier (email atau NIP)
+        // Aturan validasi kondisional untuk login identifier
         $login_identifier_label = '';
         $login_identifier_rules = 'required|trim';
+        $data['login_identifier_type_is_email'] = false; // Flag untuk view
 
-        if ($role_id_to_add == 2) { // Pengguna Jasa (biasanya email)
+        if ($role_id_to_add == 2) { // Pengguna Jasa
             $login_identifier_label = 'Email';
             $login_identifier_rules .= '|valid_email|is_unique[user.email]';
-        } elseif ($role_id_to_add == 3 || $role_id_to_add == 4) { // Petugas atau Monitoring (biasanya NIP)
-            $login_identifier_label = ($role_id_to_add == 3) ? 'NIP Petugas' : 'NIP Monitoring';
-            $login_identifier_rules .= '|numeric|is_unique[user.email]'; // NIP disimpan di kolom 'email'
+            $data['login_identifier_type_is_email'] = true;
+        } elseif (in_array($role_id_to_add, [3, 4, 5])) { // Petugas (3), Monitoring (4), Petugas Administrasi (5)
+            if ($role_id_to_add == 3) {
+                $login_identifier_label = 'NIP Petugas';
+                $login_identifier_rules .= '|numeric'; // Assuming NIP is numeric for Petugas
+            } elseif ($role_id_to_add == 4) {
+                $login_identifier_label = 'NIP Monitoring';
+                $login_identifier_rules .= '|numeric'; // Assuming NIP is numeric for Monitoring
+            } else { // role_id == 5 (Petugas Administrasi)
+                $login_identifier_label = 'NIP Petugas Administrasi'; // MODIFIED for clarity
+                // Add numeric validation if NIPs for Petugas Administrasi are always numbers
+                // For example: $login_identifier_rules .= '|numeric';
+            }
+            $login_identifier_rules .= '|is_unique[user.email]'; // NIP will be stored in the 'email' column
         } else {
-            // Untuk role lain yang mungkin Anda tambahkan, default ke email atau buat aturan spesifik
+            // For role custom lain jika ada
             $login_identifier_label = 'Login Identifier (Email/Username)';
             $login_identifier_rules .= '|is_unique[user.email]';
+            $data['login_identifier_type_is_email'] = true; // Asumsi defaultnya email
         }
         $this->form_validation->set_rules('login_identifier', $login_identifier_label, $login_identifier_rules, [
             'is_unique' => $login_identifier_label . ' ini sudah terdaftar.',
             'numeric'   => $login_identifier_label . ' harus berupa angka.',
             'valid_email'=> $login_identifier_label . ' tidak valid.'
         ]);
+        $data['login_identifier_label_view'] = $login_identifier_label; // Kirim label ke view
         
         // Aturan validasi kondisional untuk field spesifik role
         if ($role_id_to_add == 3) { // Petugas
             $this->form_validation->set_rules('jabatan_petugas', 'Jabatan Petugas', 'trim|required');
         }
-        // Tambahkan validasi untuk role Monitoring jika ada field spesifik
-        // elseif ($role_id_to_add == 4) { // Monitoring
-        //    $this->form_validation->set_rules('field_monitoring', 'Field Monitoring', 'trim|required');
+        // Untuk role Monitoring (4) dan Petugas Administrasi (5), kita asumsikan tidak ada field tambahan di form ini.
+        // Jika ada, tambahkan rules di sini:
+        // elseif ($role_id_to_add == 5) { // Petugas Administrasi
+        //    $this->form_validation->set_rules('field_petugas_admin', 'Field Khusus Petugas Admin', 'trim|required');
         // }
-
 
         if ($this->form_validation->run() == false) {
             $this->load->view('templates/header', $data);
             $this->load->view('templates/sidebar', $data);
             $this->load->view('templates/topbar', $data);
-            $this->load->view('admin/form_tambah_user_view', $data); // Ganti nama view menjadi lebih generik
+            $this->load->view('admin/form_tambah_user_view', $data); // Menggunakan view generik
             $this->load->view('templates/footer');
         } else {
             $login_identifier_input = $this->input->post('login_identifier');
+            $force_change_pass = 1; // Default wajib ganti password
+
+            // Untuk role Monitoring dan Petugas Administrasi, password tidak dipaksa ganti
+            if (in_array($role_id_to_add, [4, 5])) {
+                $force_change_pass = 0;
+            }
 
             $user_data_to_insert = [
                 'name' => htmlspecialchars($this->input->post('name', true)),
-                'email' => htmlspecialchars($login_identifier_input, true), // Email atau NIP disimpan di sini
+                'email' => htmlspecialchars($login_identifier_input, true),
                 'image' => 'default.jpg',
                 'password' => password_hash($this->input->post('password'), PASSWORD_DEFAULT),
                 'role_id' => $role_id_to_add,
-                'is_active' => 1, // Default aktif, admin bisa non-aktifkan nanti
-                'force_change_password' => 1, // Wajib ganti password saat login pertama
+                'is_active' => 1,
+                'force_change_password' => $force_change_pass,
                 'date_created' => time()
             ];
             $this->db->insert('user', $user_data_to_insert);
@@ -1024,17 +1042,20 @@ class Admin extends CI_Controller
                 // Jika role adalah Petugas, simpan juga ke tabel 'petugas'
                 if ($role_id_to_add == 3) {
                     $petugas_data_to_insert = [
-                        'id_user' => $new_user_id, // Foreign key ke tabel user
+                        'id_user' => $new_user_id,
                         'Nama' => $user_data_to_insert['name'],
-                        'NIP' => $login_identifier_input, // NIP dari input form
+                        'NIP' => $login_identifier_input,
                         'Jabatan' => htmlspecialchars($this->input->post('jabatan_petugas', true))
-                        // tambahkan field lain jika ada di tabel petugas
                     ];
                     $this->db->insert('petugas', $petugas_data_to_insert);
                 }
-                // Tambahkan logika serupa untuk tabel detail role Monitoring jika ada
+                // Tidak ada tabel detail untuk Monitoring atau Petugas Administrasi dari form ini
 
-                $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">User ' . htmlspecialchars($data['target_role_info']['role']) . ' baru, ' . htmlspecialchars($user_data_to_insert['name']) . ', berhasil ditambahkan. User wajib mengganti password saat login pertama.</div>');
+                $pesan_sukses = 'User ' . htmlspecialchars($data['target_role_info']['role']) . ' baru, ' . htmlspecialchars($user_data_to_insert['name']) . ', berhasil ditambahkan.';
+                if ($force_change_pass == 1) {
+                    $pesan_sukses .= ' User wajib mengganti password saat login pertama.';
+                }
+                $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">' . $pesan_sukses . '</div>');
             } else {
                 $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Gagal menambahkan user baru. Silakan coba lagi.</div>');
             }

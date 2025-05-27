@@ -32,6 +32,17 @@
              margin-top: 0 !important;
              margin-bottom: 0 !important;
         }
+        .auth-footer-copyright {
+            position: fixed; /* Tetap di posisi viewport */
+            left: 0;
+            bottom: 10px; /* Jarak dari bawah viewport */
+            width: 100%;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7); /* Warna putih dengan sedikit transparansi, sesuaikan dengan background Anda */
+            font-size: 0.875em; /* Ukuran font sedikit lebih kecil */
+            padding: 10px 0; /* Sedikit padding atas-bawah */
+            z-index: 1000; /* Pastikan di atas elemen lain jika ada yang tumpang tindih */
+        }
     </style>
 </head>
 
@@ -50,7 +61,9 @@
                             <div class="col-lg-12">
                                 <div class="p-5">
                                     <div class="text-center">
-                                        <h1 class="h4 text-gray-900 mb-4">Selamat Datang Kembali!</h1>
+                                        <h1 class="h4 text-gray-900 mb-4">Selamat Datang di Aplikasi Repack</h1>
+                                        <img src="<?= base_url('/assets/img/lambang_bc.png');?>" alt="Logo Instansi" style="max-width: 150px; margin-bottom: 20px;">
+                                        <!-- <h3 class="h4 text-gray-900 mb-4">KPPBC TMP C Pangkalpinang</h3> -->
                                         <p class="text-muted mb-4">Silakan login ke akun REPACK Anda.</p>
                                     </div>
 
@@ -88,18 +101,17 @@
                         </div>
                     </div>
                 </div>
-
             </div>
-
         </div>
-
     </div>
 
+    <div class="auth-footer-copyright">
+        Copyright © Bea Cukai Pangkalpinang 2025
+    </div>
+    
     <script src="<?= base_url('assets/vendor/jquery/jquery.min.js'); ?>"></script>
     <script src="<?= base_url('assets/vendor/bootstrap/js/bootstrap.bundle.min.js'); ?>"></script>
-
     <script src="<?= base_url('assets/vendor/jquery-easing/jquery.easing.min.js'); ?>"></script>
-
     <script src="<?= base_url('assets/js/sb-admin-2.min.js'); ?>"></script>
 
 </body>

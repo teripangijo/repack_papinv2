@@ -59,6 +59,10 @@ class Auth extends CI_Controller
             redirect('petugas');
         } elseif ($role_id == 4) { 
             redirect('monitoring');
+        } elseif ($role_id == 5) {
+            log_message('debug', 'Auth: Role 5 (Petugas Administrasi) login, redirecting to petugas_administrasi/index.');
+            redirect('petugas_administrasi/index'); // Pastikan ini benar
+            exit;
         } else {
             
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Role tidak dikenal. Silakan login kembali.</div>');

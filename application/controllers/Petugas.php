@@ -534,15 +534,15 @@ class Petugas extends CI_Controller {
             'up.*, ' .
             'upr.NamaPers, upr.npwp AS npwp_perusahaan, upr.alamat AS alamat_perusahaan, upr.NoSkep AS NoSkep_perusahaan, ' . // Data Perusahaan Pengaju
             'u_pemohon.name as nama_pengaju_permohonan, u_pemohon.email as email_pengaju_permohonan, '. // Data User Pengaju
-            'p_pemeriksa.NIP as nip_petugas_pemeriksa, u_petugas.name as nama_petugas_pemeriksa, '. // Data Petugas Pemeriksa
-            'admin_pemroses.name as nama_admin_pemroses' // Nama Admin yang memproses SK (jika ada)
+            'p_pemeriksa.NIP as nip_petugas_pemeriksa, u_petugas.name as nama_petugas_pemeriksa, ' // Data Petugas Pemeriksa
+            // 'admin_pemroses.name as nama_admin_pemroses' // Nama Admin yang memproses SK (jika ada)
         );
         $this->db->from('user_permohonan up');
         $this->db->join('user_perusahaan upr', 'up.id_pers = upr.id_pers', 'left');
         $this->db->join('user u_pemohon', 'upr.id_pers = u_pemohon.id', 'left');
         $this->db->join('petugas p_pemeriksa', 'up.petugas = p_pemeriksa.id', 'left');
         $this->db->join('user u_petugas', 'p_pemeriksa.id_user = u_petugas.id', 'left');
-        $this->db->join('user admin_pemroses', 'up.diproses_oleh_id_admin = admin_pemroses.id', 'left'); // Join untuk nama admin
+        // $this->db->join('user admin_pemroses'); // Join untuk nama admin
         $this->db->where('up.id', $id_permohonan);
         $data['permohonan_detail'] = $this->db->get()->row_array();
 
