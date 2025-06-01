@@ -20,7 +20,7 @@
                     </a>
                 <?php endif; ?>
             <?php endif; ?>
-            <a href="<?= site_url('admin/permohonanMasuk'); ?>" class="btn btn-sm btn-secondary shadow-sm">
+            <a href="<?= site_url('monitoring/permohonanMasuk'); ?>" class="btn btn-sm btn-secondary shadow-sm">
                 <i class="fas fa-arrow-left fa-sm text-white-50"></i> Kembali ke Daftar Permohonan
             </a>
         </div>

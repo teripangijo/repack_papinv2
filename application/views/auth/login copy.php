@@ -52,7 +52,7 @@
 
         <div class="row justify-content-center">
 
-            <?php ?>
+            <?php // Sesuaikan lebar kolom jika perlu, misal col-xl-5 atau col-xl-6 ?>
             <div class="col-xl-5 col-lg-6 col-md-8">
 
                 <div class="card o-hidden border-0 shadow-lg my-5">
@@ -83,11 +83,11 @@
                                             <?= form_error('password', '<small class="text-danger pl-3">', '</small>'); ?>
                                         </div>
                                         
-                                        <?php ?>
+                                        <?php // Anda bisa menambahkan "Ingat Saya" jika mau ?>
                                         <button type="submit" class="btn btn-primary btn-user btn-block">
                                             Login
                                         </button>
-                                        <?php ?>
+                                        <?php // Contoh jika ingin login dengan Google atau Facebook ?>
                                         </form>
                                     <hr>
                                     <div class="text-center">
