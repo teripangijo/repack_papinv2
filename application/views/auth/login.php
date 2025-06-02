@@ -14,99 +14,69 @@
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
 
     <link href="<?= base_url('assets/css/sb-admin-2.min.css'); ?>" rel="stylesheet">
-    <style>
-        /* Memastikan body dan html mengambil tinggi penuh untuk min-height: 100vh bekerja dengan baik */
-        html, body {
-            height: 100%;
-        }
-        body.bg-gradient-primary {
-            display: flex; /* Menggunakan flexbox untuk centering */
-            align-items: center; /* Memusatkan secara vertikal */
-            justify-content: center; /* Memusatkan secara horizontal */
-            min-height: 100vh; /* Minimal tinggi body adalah tinggi viewport */
-            padding-top: 40px; /* Tambahkan padding atas jika diperlukan */
-            padding-bottom: 40px; /* Tambahkan padding bawah jika diperlukan */
-        }
-        /* Hapus margin atas/bawah default dari card jika body sudah flex-center */
-        .card.o-hidden.border-0.shadow-lg {
-             margin-top: 0 !important;
-             margin-bottom: 0 !important;
-        }
-        .auth-footer-copyright {
-            position: fixed; /* Tetap di posisi viewport */
-            left: 0;
-            bottom: 10px; /* Jarak dari bawah viewport */
-            width: 100%;
-            text-align: center;
-            color: rgba(255, 255, 255, 0.7); /* Warna putih dengan sedikit transparansi, sesuaikan dengan background Anda */
-            font-size: 0.875em; /* Ukuran font sedikit lebih kecil */
-            padding: 10px 0; /* Sedikit padding atas-bawah */
-            z-index: 1000; /* Pastikan di atas elemen lain jika ada yang tumpang tindih */
-        }
-    </style>
+    <link href="<?= base_url('assets/css/custom-modern.css'); ?>" rel="stylesheet">
+
+    <link rel="icon" href="<?= base_url('favicon.ico'); ?>" type="image/x-icon">
+    <link rel="shortcut icon" href="<?= base_url('favicon.png'); ?>" type="image/x-icon">
 </head>
 
-<body class="bg-gradient-primary">
+<body class="modern-login-bg">
 
     <div class="container">
-
-        <div class="row justify-content-center">
-
-            <?php ?>
+        <div class="row justify-content-center align-items-center min-vh-100">
             <div class="col-xl-5 col-lg-6 col-md-8">
-
-                <div class="card o-hidden border-0 shadow-lg my-5">
+                <div class="card o-hidden border-0 shadow-lg my-4 modern-login-card">
                     <div class="card-body p-0">
                         <div class="row">
                             <div class="col-lg-12">
-                                <div class="p-5">
+                                <div class="p-4 p-sm-5">
                                     <div class="text-center">
-                                        <h1 class="h4 text-gray-900 mb-4">Selamat Datang di Aplikasi Repack</h1>
-                                        <img src="<?= base_url('/assets/img/logo_papin.png');?>" alt="Logo Instansi" style="max-width: 150px; margin-bottom: 20px;">
-                                        <!-- <h3 class="h4 text-gray-900 mb-4">KPPBC TMP C Pangkalpinang</h3> -->
-                                        <p class="text-muted mb-4">Silakan login ke akun REPACK Anda.</p>
+                                        <img src="<?= base_url('/assets/img/logo_papin.png');?>" alt="Logo Instansi" class="login-logo mb-3">
+                                        <h1 class="h4 text-gray-900 mb-2">Selamat Datang</h1>
+                                        <p class="text-muted mb-4">Login ke akun REPACK Anda.</p>
                                     </div>
 
-                                    <?= $this->session->flashdata('message'); // Untuk menampilkan pesan sukses logout, error login, dll. ?>
+                                    <?= $this->session->flashdata('message'); ?>
 
-                                    <form class="user" method="post" action="<?= base_url('auth'); // Form action ke Auth controller (method index) ?>">
+                                    <form class="user" method="post" action="<?= base_url('auth'); ?>">
                                         <div class="form-group">
-                                            <input type="text" class="form-control form-control-user <?= (form_error('login_identifier')) ? 'is-invalid' : ''; ?>"
+                                            <input type="text" class="form-control form-control-user modern-form-control <?= (form_error('login_identifier')) ? 'is-invalid' : ''; ?>"
                                                 id="login_identifier" name="login_identifier" 
-                                                placeholder="Masukkan Email atau NIP Anda..."
+                                                placeholder="Email atau NIP Anda"
                                                 value="<?= set_value('login_identifier'); ?>" required>
                                             <?= form_error('login_identifier', '<small class="text-danger pl-3">', '</small>'); ?>
                                         </div>
                                         <div class="form-group">
-                                            <input type="password" class="form-control form-control-user <?= (form_error('password')) ? 'is-invalid' : ''; ?>"
+                                            <input type="password" class="form-control form-control-user modern-form-control <?= (form_error('password')) ? 'is-invalid' : ''; ?>"
                                                 id="password" name="password" placeholder="Password" required>
                                             <?= form_error('password', '<small class="text-danger pl-3">', '</small>'); ?>
                                         </div>
                                         
-                                        <?php ?>
-                                        <button type="submit" class="btn btn-primary btn-user btn-block">
+                                        <button type="submit" class="btn btn-primary btn-user btn-block modern-btn-login">
                                             Login
                                         </button>
-                                        <?php ?>
-                                        </form>
-                                    <hr>
+                                    </form>
+                                    <hr class="my-4">
                                     <div class="text-center">
-                                        <a class="small" href="<?= base_url('auth/forgot_password'); // Pastikan method ini ada jika linknya aktif ?>">Lupa Password?</a>
+                                        <a class="small modern-login-link" href="<?= base_url('auth/forgot_password'); ?>">Lupa Password?</a>
                                     </div>
                                     <div class="text-center">
-                                        <a class="small" href="<?= base_url('auth/registration'); ?>">Buat Akun Baru! (Pengguna Jasa)</a>
+                                        <a class="small modern-login-link" href="<?= base_url('auth/registration'); ?>">Buat Akun Baru (Pengguna Jasa)</a>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+                <div class="modern-auth-footer">
+                    Copyright © Bea Cukai Pangkalpinang 2025
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="auth-footer-copyright">
-        Copyright © Bea Cukai Pangkalpinang 2025
+    <div class="image-attribution">
+        Gambar oleh <a href="https://pixabay.com/id/users/ellisedelacruz-2310550/?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=1315672" target="_blank" rel="noopener noreferrer">Claire Dela Cruz</a> dari <a href="https://pixabay.com/id//?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=1315672" target="_blank" rel="noopener noreferrer">Pixabay</a>
     </div>
     
     <script src="<?= base_url('assets/vendor/jquery/jquery.min.js'); ?>"></script>
@@ -115,5 +85,4 @@
     <script src="<?= base_url('assets/js/sb-admin-2.min.js'); ?>"></script>
 
 </body>
-
 </html>

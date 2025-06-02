@@ -4,23 +4,11 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 // Variabel dari Controller Admin::histori_kuota_perusahaan():
 // $user (array): Data admin yang login
 // $perusahaan (array): Data perusahaan yang dilihat historinya
-// $daftar_kuota_barang_perusahaan (array): List kuota per barang dari user_kuota_barang
-// $histori_kuota_transaksi (array): Log transaksi dari log_kuota_perusahaan
 // $title (string)
 // $subtitle (string)
 // $id_pers_untuk_histori (int)
 
-// Hitung total agregat dari daftar kuota barang untuk ditampilkan di summary (jika perlu)
-$total_initial_agregat = 0;
-$total_remaining_agregat = 0;
-if (isset($daftar_kuota_barang_perusahaan) && !empty($daftar_kuota_barang_perusahaan)) {
-    foreach ($daftar_kuota_barang_perusahaan as $kuota_brg) {
-        $total_initial_agregat += (float)($kuota_brg['initial_quota_barang'] ?? 0);
-        $total_remaining_agregat += (float)($kuota_brg['remaining_quota_barang'] ?? 0);
-    }
-}
-$total_terpakai_agregat = $total_initial_agregat - $total_remaining_agregat;
-
+// Perhitungan agregat akan dilakukan oleh JavaScript setelah data AJAX diterima
 ?>
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
@@ -45,68 +33,38 @@ $total_terpakai_agregat = $total_initial_agregat - $total_remaining_agregat;
             <h5 class="text-gray-800">Ringkasan Total Kuota (Agregat dari Semua Jenis Barang)</h5>
             <div class="row mb-3">
                 <div class="col-md-4">
-                    <strong>Total Kuota Awal Diberikan:</strong> <?= htmlspecialchars(number_format($total_initial_agregat, 0, ',', '.')); ?> Unit
+                    <strong>Total Kuota Awal Diberikan:</strong> <span id="totalInitialAgregat">Memuat...</span> Unit
                 </div>
                 <div class="col-md-4">
                     <strong>Total Sisa Kuota Saat Ini:</strong>
-                    <span class="font-weight-bold <?= ($total_remaining_agregat <=0 && $total_initial_agregat > 0) ? 'text-danger' : 'text-success'; ?>">
-                        <?= htmlspecialchars(number_format($total_remaining_agregat, 0, ',', '.')); ?> Unit
-                    </span>
+                    <span id="totalRemainingAgregat" class="font-weight-bold">Memuat...</span> Unit
                 </div>
                 <div class="col-md-4">
-                    <strong>Total Kuota Terpakai:</strong> <?= htmlspecialchars(number_format($total_terpakai_agregat, 0, ',', '.')); ?> Unit
+                    <strong>Total Kuota Terpakai:</strong> <span id="totalTerpakaiAgregat">Memuat...</span> Unit
                 </div>
             </div>
             <hr>
 
             <h5 class="text-gray-800 mt-4">Rincian Kuota per Jenis Barang</h5>
-            <?php if (isset($daftar_kuota_barang_perusahaan) && !empty($daftar_kuota_barang_perusahaan)): ?>
-                <div class="table-responsive mb-4">
-                    <table class="table table-sm table-bordered table-hover" id="dataTableRincianKuotaBarang" width="100%" cellspacing="0">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Nama Barang</th>
-                                <th class="text-right">Kuota Awal Barang</th>
-                                <th class="text-right">Sisa Kuota Barang</th>
-                                <th>No. SKEP Asal</th>
-                                <th>Tgl. SKEP Asal</th>
-                                <th>Status Kuota Barang</th>
-                                <th>Waktu Pencatatan</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php $no_rincian = 1; foreach ($daftar_kuota_barang_perusahaan as $kuota_brg): ?>
-                            <tr>
-                                <td><?= $no_rincian++; ?></td>
-                                <td><?= htmlspecialchars($kuota_brg['nama_barang']); ?></td>
-                                <td class="text-right"><?= htmlspecialchars(number_format($kuota_brg['initial_quota_barang'] ?? 0, 0, ',', '.')); ?></td>
-                                <td class="text-right font-weight-bold <?= (($kuota_brg['remaining_quota_barang'] ?? 0) <= 0) ? 'text-danger' : 'text-success'; ?>">
-                                    <?= htmlspecialchars(number_format($kuota_brg['remaining_quota_barang'] ?? 0, 0, ',', '.')); ?>
-                                </td>
-                                <td><?= htmlspecialchars($kuota_brg['nomor_skep_asal'] ?? '-'); ?></td>
-                                <td><?= (isset($kuota_brg['tanggal_skep_asal']) && $kuota_brg['tanggal_skep_asal'] != '0000-00-00') ? date('d M Y', strtotime($kuota_brg['tanggal_skep_asal'])) : '-'; ?></td>
-                                <td>
-                                    <?php
-                                    $status_kb_badge = 'secondary'; $status_kb_text = ucfirst(htmlspecialchars($kuota_brg['status_kuota_barang'] ?? 'N/A'));
-                                    if (isset($kuota_brg['status_kuota_barang'])) {
-                                        if ($kuota_brg['status_kuota_barang'] == 'active') $status_kb_badge = 'success';
-                                        else if ($kuota_brg['status_kuota_barang'] == 'habis') $status_kb_badge = 'danger';
-                                        else if ($kuota_brg['status_kuota_barang'] == 'expired') $status_kb_badge = 'warning';
-                                        else if ($kuota_brg['status_kuota_barang'] == 'canceled') $status_kb_badge = 'dark';
-                                    }
-                                    ?>
-                                    <span class="badge badge-<?= $status_kb_badge; ?>"><?= $status_kb_text; ?></span>
-                                </td>
-                                <td><?= isset($kuota_brg['waktu_pencatatan']) ? date('d/m/Y H:i', strtotime($kuota_brg['waktu_pencatatan'])) : '-'; ?></td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php else: ?>
-                <div class="alert alert-light small">Belum ada rincian kuota per jenis barang yang tercatat untuk perusahaan ini.</div>
-            <?php endif; ?>
+            <div class="table-responsive mb-4">
+                <table class="table table-sm table-bordered table-hover" id="dataTableRincianKuotaBarang" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Nama Barang</th>
+                            <th class="text-right">Kuota Awal Barang</th>
+                            <th class="text-right">Sisa Kuota Barang</th>
+                            <th>No. SKEP Asal</th>
+                            <th>Tgl. SKEP Asal</th>
+                            <th>Status Kuota Barang</th>
+                            <th>Waktu Pencatatan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="8" class="text-center">Memuat data rincian kuota... <i class="fas fa-spinner fa-spin"></i></td></tr>
+                    </tbody>
+                </table>
+            </div>
             <hr>
 
             <h5 class="text-gray-800 mt-4">Log Transaksi Kuota</h5>
@@ -117,56 +75,17 @@ $total_terpakai_agregat = $total_initial_agregat - $total_remaining_agregat;
                             <th>#</th>
                             <th>Tgl Transaksi</th>
                             <th>Jenis Transaksi</th>
-                            <th>Nama Barang Terkait</th> <th class="text-right">Jumlah Perubahan</th>
-                            <th class="text-right">Sisa Kuota Barang Sblm.</th> <th class="text-right">Sisa Kuota Barang Stlh.</th> <th>Keterangan</th>
+                            <th>Nama Barang Terkait</th>
+                            <th class="text-right">Jumlah Perubahan</th>
+                            <th class="text-right">Sisa Kuota Barang Sblm.</th>
+                            <th class="text-right">Sisa Kuota Barang Stlh.</th>
+                            <th>Keterangan</th>
                             <th>Ref. Tipe & ID</th>
                             <th>Dicatat Oleh</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if (!empty($histori_kuota_transaksi)): $no_log = 1; ?>
-                            <?php foreach ($histori_kuota_transaksi as $log): ?>
-                            <tr>
-                                <td><?= $no_log++; ?></td>
-                                <td><?= isset($log['tanggal_transaksi']) ? date('d/m/Y H:i', strtotime($log['tanggal_transaksi'])) : '-'; ?></td>
-                                <td>
-                                    <?php /* ... (logika badge jenis transaksi seperti sebelumnya) ... */
-                                    $jenis_badge = 'secondary';
-                                    if (isset($log['jenis_transaksi'])) {
-                                        if ($log['jenis_transaksi'] == 'penambahan') $jenis_badge = 'success';
-                                        elseif ($log['jenis_transaksi'] == 'pengurangan') $jenis_badge = 'danger';
-                                        elseif ($log['jenis_transaksi'] == 'koreksi') $jenis_badge = 'warning';
-                                    }
-                                    echo '<span class="badge badge-'.$jenis_badge.'">'.ucfirst(htmlspecialchars($log['jenis_transaksi'] ?? 'N/A')).'</span>';
-                                    ?>
-                                </td>
-                                <td><?= htmlspecialchars($log['nama_barang_terkait'] ?? '<span class="text-muted"><em>Umum</em></span>'); ?></td> <td class="text-right <?= (isset($log['jenis_transaksi']) && $log['jenis_transaksi'] == 'penambahan') ? 'text-success' : ((isset($log['jenis_transaksi']) && $log['jenis_transaksi'] == 'pengurangan') ? 'text-danger' : ''); ?>">
-                                    <?= (isset($log['jenis_transaksi']) && $log['jenis_transaksi'] == 'penambahan') ? '+' : ((isset($log['jenis_transaksi']) && $log['jenis_transaksi'] == 'pengurangan') ? '-' : ''); ?>
-                                    <?= htmlspecialchars(number_format(abs($log['jumlah_perubahan'] ?? 0), 0, ',', '.')); ?> Unit
-                                </td>
-                                <td class="text-right"><?= htmlspecialchars(number_format($log['sisa_kuota_sebelum'] ?? 0, 0, ',', '.')); ?></td>
-                                <td class="text-right"><?= htmlspecialchars(number_format($log['sisa_kuota_setelah'] ?? 0, 0, ',', '.')); ?></td>
-                                <td style="max-width: 300px; word-wrap: break-word;">
-                                    <?= htmlspecialchars($log['keterangan'] ?? '-'); ?>
-                                    <?php if (!empty($log['id_referensi_transaksi']) && !empty($log['tipe_referensi'])): ?>
-                                        <?php
-                                        $link_ref = '#'; $id_ref = $log['id_referensi_transaksi'];
-                                        if (in_array($log['tipe_referensi'], ['pengajuan_kuota', 'pengajuan_kuota_disetujui'])) {
-                                            $link_ref = site_url('admin/detailPengajuanKuotaAdmin/' . $id_ref);
-                                        } elseif (in_array($log['tipe_referensi'], ['permohonan_impor', 'permohonan_impor_barang', 'permohonan_impor_selesai'])) {
-                                            $link_ref = site_url('admin/detail_permohonan_admin/' . $id_ref);
-                                        } elseif ($log['tipe_referensi'] == 'input_kuota_awal_user' && !empty($log['id_kuota_barang_referensi'])) {
-                                            $link_ref = '#!'; // Placeholder
-                                        }
-                                        ?>
-                                        <br><small><a href="<?= $link_ref; ?>" <?= $link_ref != '#!' ? 'target="_blank"' : ''; ?> title="Lihat detail referensi">(Ref: <?= htmlspecialchars(ucfirst(str_replace('_', ' ', $log['tipe_referensi']))) . ' ID ' . $id_ref; ?><?= !empty($log['id_kuota_barang_referensi']) ? ' / KuotaBrg ID '.$log['id_kuota_barang_referensi'] : '' ?>)</a></small>
-                                    <?php endif; ?>
-                                </td>
-                                <td><?= htmlspecialchars($log['id_referensi_transaksi'] ?? '-'); ?><?= !empty($log['id_kuota_barang_referensi']) ? ' <small class="text-muted">(KB:'.$log['id_kuota_barang_referensi'].')</small>' : ''; ?></td>
-                                <td><?= htmlspecialchars($log['nama_pencatat'] ?? 'Sistem'); ?></td>
-                            </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
+                        <tr><td colspan="10" class="text-center">Memuat data log transaksi... <i class="fas fa-spinner fa-spin"></i></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -179,18 +98,204 @@ $total_terpakai_agregat = $total_initial_agregat - $total_remaining_agregat;
 
 <script>
 $(document).ready(function() {
-    if(typeof $.fn.DataTable !== 'undefined'){
-        $('#dataTableRincianKuotaBarang').DataTable({ // Inisialisasi untuk tabel rincian kuota barang
-            "order": [[ 1, "asc" ]], // Urutkan berdasarkan Nama Barang
-            "language": { "emptyTable": "Belum ada rincian kuota per jenis barang untuk perusahaan ini." /* ... bahasa lain ... */ }
-        });
+    var idPers = <?= isset($id_pers_untuk_histori) ? intval($id_pers_untuk_histori) : 0; ?>;
+    var rincianKuotaTable;
+    var historiTransaksiTable;
 
-        $('#dataTableHistoriTransaksiKuota').DataTable({ // Inisialisasi untuk tabel log transaksi
-            "order": [[ 1, "desc" ]], // Urutkan berdasarkan Tanggal Transaksi terbaru
-            "language": { "emptyTable": "Belum ada histori transaksi kuota untuk perusahaan ini." /* ... bahasa lain ... */ }
+    function formatTanggal(tanggalString) {
+        if (!tanggalString || tanggalString === '0000-00-00') return '-';
+        var date = new Date(tanggalString);
+        var day = date.getDate();
+        var monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+        var month = monthNames[date.getMonth()];
+        var year = date.getFullYear();
+        return day + ' ' + month + ' ' + year;
+    }
+
+    function formatTanggalWaktu(tanggalWaktuString) {
+        if (!tanggalWaktuString) return '-';
+        var date = new Date(tanggalWaktuString);
+        var day = ('0' + date.getDate()).slice(-2);
+        var month = ('0' + (date.getMonth() + 1)).slice(-2);
+        var year = date.getFullYear();
+        var hours = ('0' + date.getHours()).slice(-2);
+        var minutes = ('0' + date.getMinutes()).slice(-2);
+        return day + '/' + month + '/' + year + ' ' + hours + ':' + minutes;
+    }
+
+    function numberFormat(number, decimals, decPoint, thousandsSep) {
+        number = (number + '').replace(/[^0-9+\-Ee.]/g, '');
+        var n = !isFinite(+number) ? 0 : +number;
+        var prec = !isFinite(+decimals) ? 0 : Math.abs(decimals);
+        var sep = (typeof thousandsSep === 'undefined') ? ',' : thousandsSep;
+        var dec = (typeof decPoint === 'undefined') ? '.' : decPoint;
+        var s = '';
+        var toFixedFix = function (n, prec) {
+            var k = Math.pow(10, prec);
+            return '' + (Math.round(n * k) / k)
+                .toFixed(prec);
+        };
+        s = (prec ? toFixedFix(n, prec) : '' + Math.round(n)).split('.');
+        if (s[0].length > 3) {
+            s[0] = s[0].replace(/\B(?=(?:\d{3})+(?!\d))/g, sep);
+        }
+        if ((s[1] || '').length < prec) {
+            s[1] = s[1] || '';
+            s[1] += new Array(prec - s[1].length + 1).join('0');
+        }
+        return s.join(dec);
+    }
+
+
+    // Fungsi untuk memuat dan menampilkan Rincian Kuota Barang
+    function loadRincianKuota() {
+        if (typeof $.fn.DataTable !== 'undefined' && $.fn.DataTable.isDataTable('#dataTableRincianKuotaBarang')) {
+            rincianKuotaTable.clear().draw();
+            rincianKuotaTable.destroy();
+        }
+        $('#dataTableRincianKuotaBarang tbody').html('<tr><td colspan="8" class="text-center">Memuat data rincian kuota... <i class="fas fa-spinner fa-spin"></i></td></tr>');
+
+        $.ajax({
+            url: "<?= site_url('admin/ajax_get_rincian_kuota_barang/'); ?>" + idPers,
+            type: "GET",
+            dataType: "json",
+            success: function(response) {
+                var html = '';
+                var no = 1;
+                var totalInitialAgregat = 0;
+                var totalRemainingAgregat = 0;
+
+                if (response.data && response.data.length > 0) {
+                    response.data.forEach(function(item) {
+                        totalInitialAgregat += parseFloat(item.initial_quota_barang || 0);
+                        totalRemainingAgregat += parseFloat(item.remaining_quota_barang || 0);
+
+                        var statusBadge = 'secondary';
+                        var statusText = item.status_kuota_barang ? item.status_kuota_barang.charAt(0).toUpperCase() + item.status_kuota_barang.slice(1) : 'N/A';
+                        if (item.status_kuota_barang === 'active') statusBadge = 'success';
+                        else if (item.status_kuota_barang === 'habis') statusBadge = 'danger';
+                        else if (item.status_kuota_barang === 'expired') statusBadge = 'warning';
+                        else if (item.status_kuota_barang === 'canceled') statusBadge = 'dark';
+
+                        html += '<tr>';
+                        html += '<td>' + no++ + '</td>';
+                        html += '<td>' + (item.nama_barang ? item.nama_barang : '-') + '</td>';
+                        html += '<td class="text-right">' + numberFormat(item.initial_quota_barang || 0, 0, ',', '.') + '</td>';
+                        html += '<td class="text-right font-weight-bold ' + ((parseFloat(item.remaining_quota_barang || 0) <= 0) ? 'text-danger' : 'text-success') + '">' + numberFormat(item.remaining_quota_barang || 0, 0, ',', '.') + '</td>';
+                        html += '<td>' + (item.nomor_skep_asal ? item.nomor_skep_asal : '-') + '</td>';
+                        html += '<td>' + formatTanggal(item.tanggal_skep_asal) + '</td>';
+                        html += '<td><span class="badge badge-' + statusBadge + '">' + statusText + '</span></td>';
+                        html += '<td>' + formatTanggalWaktu(item.waktu_pencatatan) + '</td>';
+                        html += '</tr>';
+                    });
+                } else {
+                    html = '<tr><td colspan="8" class="text-center">Belum ada rincian kuota per jenis barang yang tercatat.</td></tr>';
+                }
+                $('#dataTableRincianKuotaBarang tbody').html(html);
+
+                // Update Ringkasan Total Kuota
+                var totalTerpakaiAgregat = totalInitialAgregat - totalRemainingAgregat;
+                $('#totalInitialAgregat').text(numberFormat(totalInitialAgregat, 0, ',', '.'));
+                $('#totalRemainingAgregat').text(numberFormat(totalRemainingAgregat, 0, ',', '.')).removeClass('text-success text-danger').addClass((totalRemainingAgregat <= 0 && totalInitialAgregat > 0) ? 'text-danger' : 'text-success');
+                $('#totalTerpakaiAgregat').text(numberFormat(totalTerpakaiAgregat, 0, ',', '.'));
+
+
+                if (typeof $.fn.DataTable !== 'undefined') {
+                     rincianKuotaTable = $('#dataTableRincianKuotaBarang').DataTable({ // Inisialisasi untuk tabel rincian kuota barang
+                        "order": [[ 1, "asc" ]], // Urutkan berdasarkan Nama Barang
+                        "language": { "emptyTable": "Belum ada rincian kuota per jenis barang untuk perusahaan ini.", /* ... bahasa lain ... */ } //
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("AJAX Error (Rincian Kuota): ", status, error);
+                $('#dataTableRincianKuotaBarang tbody').html('<tr><td colspan="8" class="text-center text-danger">Gagal memuat data rincian kuota.</td></tr>');
+                $('#totalInitialAgregat, #totalRemainingAgregat, #totalTerpakaiAgregat').text('Error');
+            }
         });
+    }
+
+    // Fungsi untuk memuat dan menampilkan Log Transaksi Kuota
+    function loadLogTransaksi() {
+         if (typeof $.fn.DataTable !== 'undefined' && $.fn.DataTable.isDataTable('#dataTableHistoriTransaksiKuota')) {
+            historiTransaksiTable.clear().draw();
+            historiTransaksiTable.destroy();
+        }
+        $('#dataTableHistoriTransaksiKuota tbody').html('<tr><td colspan="10" class="text-center">Memuat data log transaksi... <i class="fas fa-spinner fa-spin"></i></td></tr>');
+
+        $.ajax({
+            url: "<?= site_url('admin/ajax_get_log_transaksi_kuota/'); ?>" + idPers,
+            type: "GET",
+            dataType: "json",
+            success: function(response) {
+                var html = '';
+                var no = 1;
+                if (response.data && response.data.length > 0) {
+                    response.data.forEach(function(log) {
+                        var jenisBadge = 'secondary';
+                        if (log.jenis_transaksi === 'penambahan') jenisBadge = 'success';
+                        else if (log.jenis_transaksi === 'pengurangan') jenisBadge = 'danger';
+                        else if (log.jenis_transaksi === 'koreksi') jenisBadge = 'warning';
+                        var jenisText = log.jenis_transaksi ? log.jenis_transaksi.charAt(0).toUpperCase() + log.jenis_transaksi.slice(1) : 'N/A';
+
+                        var jumlahPerubahanText = (log.jenis_transaksi === 'penambahan' ? '+' : (log.jenis_transaksi === 'pengurangan' ? '-' : '')) + numberFormat(Math.abs(log.jumlah_perubahan || 0), 0, ',', '.');
+                        var jumlahPerubahanClass = (log.jenis_transaksi === 'penambahan') ? 'text-success' : ((log.jenis_transaksi === 'pengurangan') ? 'text-danger' : '');
+
+                        var linkRef = '#';
+                        var idRef = log.id_referensi_transaksi;
+                        var refText = '';
+                        if (idRef && log.tipe_referensi) {
+                            var tipeRefDisplay = log.tipe_referensi.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                             if (['Pengajuan Kuota', 'Pengajuan Kuota Disetujui'].includes(tipeRefDisplay)) {
+                                linkRef = "<?= site_url('admin/detailPengajuanKuotaAdmin/'); ?>" + idRef;
+                            } else if (['Permohonan Impor', 'Permohonan Impor Barang', 'Permohonan Impor Selesai'].includes(tipeRefDisplay)) {
+                                linkRef = "<?= site_url('admin/detail_permohonan_admin/'); ?>" + idRef;
+                            }
+                            refText = '<br><small><a href="' + linkRef + '" ' + (linkRef !== '#' ? 'target="_blank"' : '') + ' title="Lihat detail referensi">(Ref: ' + tipeRefDisplay + ' ID ' + idRef + (log.id_kuota_barang_referensi ? ' / KuotaBrg ID ' + log.id_kuota_barang_referensi : '') + ')</a></small>';
+                        }
+                        var idReferensiDisplay = (log.id_referensi_transaksi ? log.id_referensi_transaksi : '-') + (log.id_kuota_barang_referensi ? ' <small class="text-muted">(KB:'+log.id_kuota_barang_referensi+')</small>' : '');
+
+
+                        html += '<tr>';
+                        html += '<td>' + no++ + '</td>';
+                        html += '<td>' + formatTanggalWaktu(log.tanggal_transaksi) + '</td>';
+                        html += '<td><span class="badge badge-' + jenisBadge + '">' + jenisText + '</span></td>';
+                        html += '<td>' + (log.nama_barang_terkait ? log.nama_barang_terkait : '<span class="text-muted"><em>Umum</em></span>') + '</td>';
+                        html += '<td class="text-right ' + jumlahPerubahanClass + '">' + jumlahPerubahanText + ' Unit</td>';
+                        html += '<td class="text-right">' + numberFormat(log.sisa_kuota_sebelum || 0, 0, ',', '.') + '</td>';
+                        html += '<td class="text-right">' + numberFormat(log.sisa_kuota_setelah || 0, 0, ',', '.') + '</td>';
+                        html += '<td style="max-width: 300px; word-wrap: break-word;">' + (log.keterangan ? log.keterangan : '-') + refText + '</td>';
+                        html += '<td>' + idReferensiDisplay + '</td>';
+                        html += '<td>' + (log.nama_pencatat ? log.nama_pencatat : 'Sistem') + '</td>';
+                        html += '</tr>';
+                    });
+                } else {
+                    html = '<tr><td colspan="10" class="text-center">Belum ada histori transaksi kuota.</td></tr>';
+                }
+                $('#dataTableHistoriTransaksiKuota tbody').html(html);
+
+                if (typeof $.fn.DataTable !== 'undefined') {
+                    historiTransaksiTable = $('#dataTableHistoriTransaksiKuota').DataTable({ // Inisialisasi untuk tabel log transaksi
+                        "order": [[ 1, "desc" ]], // Urutkan berdasarkan Tanggal Transaksi terbaru
+                        "language": { "emptyTable": "Belum ada histori transaksi kuota untuk perusahaan ini." /* ... bahasa lain ... */ } //
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("AJAX Error (Log Transaksi): ", status, error);
+                $('#dataTableHistoriTransaksiKuota tbody').html('<tr><td colspan="10" class="text-center text-danger">Gagal memuat data log transaksi.</td></tr>');
+            }
+        });
+    }
+
+
+    if (idPers > 0) {
+        loadRincianKuota();
+        loadLogTransaksi();
     } else {
-        console.error("DataTables plugin is not loaded.");
+         $('#dataTableRincianKuotaBarang tbody').html('<tr><td colspan="8" class="text-center text-warning">ID Perusahaan tidak valid untuk memuat data.</td></tr>');
+         $('#dataTableHistoriTransaksiKuota tbody').html('<tr><td colspan="10" class="text-center text-warning">ID Perusahaan tidak valid untuk memuat data.</td></tr>');
+         $('#totalInitialAgregat, #totalRemainingAgregat, #totalTerpakaiAgregat').text('N/A');
     }
 });
 </script>

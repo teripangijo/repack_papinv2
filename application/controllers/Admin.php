@@ -12,12 +12,12 @@ class Admin extends CI_Controller
             redirect('auth/blocked');
             exit; 
         }
-        $this->load->helper(array('form', 'url', 'repack_helper', 'download'));
-        $this->load->library('form_validation');
-        $this->load->library('upload');
-        $this->load->library('session');
+        $this->load->helper(array('form', 'url', 'repack_helper', 'download')); //
+        $this->load->library('form_validation'); //
+        $this->load->library('upload'); //
+        $this->load->library('session'); //
         if (!isset($this->db)) {
-            $this->load->database();
+            $this->load->database(); //
         }
     }
 
@@ -1229,63 +1229,86 @@ class Admin extends CI_Controller
 
     public function histori_kuota_perusahaan($id_pers = 0)
     {
-        log_message('debug', 'ADMIN HISTORI KUOTA - Method dipanggil dengan id_pers: ' . $id_pers);
+        log_message('debug', 'ADMIN HISTORI KUOTA - Method dipanggil dengan id_pers: ' . $id_pers); //
 
         if ($id_pers == 0 || !is_numeric($id_pers)) {
-            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">ID Perusahaan tidak valid.</div>');
+            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">ID Perusahaan tidak valid.</div>'); //
             redirect('admin/monitoring_kuota');
             return;
         }
 
-        $data['title'] = 'Returnable Package';
-        $data['subtitle'] = 'Histori & Detail Kuota Perusahaan';
-        $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+        $data['title'] = 'Returnable Package'; //
+        $data['subtitle'] = 'Histori & Detail Kuota Perusahaan'; //
+        $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array(); //
 
-        // Ambil data perusahaan umum
-        $this->db->select('up.id_pers, up.NamaPers, up.npwp, u.email as email_kontak, u.name as nama_kontak_user');
-        $this->db->from('user_perusahaan up');
-        $this->db->join('user u', 'up.id_pers = u.id', 'left');
-        $this->db->where('up.id_pers', $id_pers);
-        $data['perusahaan'] = $this->db->get()->row_array();
-        log_message('debug', 'ADMIN HISTORI KUOTA - Data Perusahaan: ' . print_r($data['perusahaan'], true));
+        // Ambil data perusahaan umum (tetap dimuat di awal)
+        $this->db->select('up.id_pers, up.NamaPers, up.npwp, u.email as email_kontak, u.name as nama_kontak_user'); //
+        $this->db->from('user_perusahaan up'); //
+        $this->db->join('user u', 'up.id_pers = u.id', 'left'); //
+        $this->db->where('up.id_pers', $id_pers); //
+        $data['perusahaan'] = $this->db->get()->row_array(); //
+        log_message('debug', 'ADMIN HISTORI KUOTA - Data Perusahaan: ' . print_r($data['perusahaan'], true)); //
 
         if (!$data['perusahaan']) {
-            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Data perusahaan tidak ditemukan untuk ID: ' . $id_pers . '</div>');
+            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Data perusahaan tidak ditemukan untuk ID: ' . $id_pers . '</div>'); //
             redirect('admin/monitoring_kuota');
             return;
         }
-        $data['id_pers_untuk_histori'] = $id_pers;
-
-        // Ambil daftar kuota per jenis barang untuk perusahaan ini
-        $this->db->select('ukb.*'); // Ambil semua kolom dari user_kuota_barang
-        $this->db->from('user_kuota_barang ukb');
-        $this->db->where('ukb.id_pers', $id_pers);
-        $this->db->order_by('ukb.nama_barang ASC, ukb.waktu_pencatatan DESC');
-        $data['daftar_kuota_barang_perusahaan'] = $this->db->get()->result_array();
-        log_message('debug', 'ADMIN HISTORI KUOTA - Query Daftar Kuota Barang: ' . $this->db->last_query());
-        log_message('debug', 'ADMIN HISTORI KUOTA - Data Daftar Kuota Barang: ' . print_r($data['daftar_kuota_barang_perusahaan'], true));
-
-
-        // Ambil data log transaksi kuota untuk perusahaan ini (yang sudah ada nama barangnya)
-        $this->db->select('lk.*, u_admin.name as nama_pencatat');
-        $this->db->from('log_kuota_perusahaan lk');
-        $this->db->join('user u_admin', 'lk.dicatat_oleh_user_id = u_admin.id', 'left');
-        $this->db->where('lk.id_pers', $id_pers);
-        $this->db->order_by('lk.tanggal_transaksi', 'DESC');
-        $this->db->order_by('lk.id_log', 'DESC');
-        $data['histori_kuota_transaksi'] = $this->db->get()->result_array(); // Ganti nama variabel agar tidak konflik
-        log_message('debug', 'ADMIN HISTORI KUOTA - Query Log Transaksi: ' . $this->db->last_query());
-        log_message('debug', 'ADMIN HISTORI KUOTA - Data Log Transaksi: ' . print_r($data['histori_kuota_transaksi'], true));
-
-
-        $this->load->view('templates/header', $data);
-        $this->load->view('templates/sidebar', $data);
-        $this->load->view('templates/topbar', $data);
-        $this->load->view('admin/histori_kuota_perusahaan_view', $data);
-        $this->load->view('templates/footer');
+        $data['id_pers_untuk_histori'] = $id_pers; //
+        // Data untuk rincian kuota barang dan log transaksi akan dimuat via AJAX
+        $this->load->view('templates/header', $data); //
+        $this->load->view('templates/sidebar', $data); //
+        $this->load->view('templates/topbar', $data); //
+        $this->load->view('admin/histori_kuota_perusahaan_view', $data); //
+        $this->load->view('templates/footer'); //
     }
 
-public function detail_permohonan_admin($id_permohonan = 0)
+    // Method untuk mengambil data rincian kuota barang via AJAX
+    public function ajax_get_rincian_kuota_barang($id_pers = 0)
+    {
+        // Pastikan ini adalah AJAX request jika perlu
+        // if (!$this->input->is_ajax_request()) {
+        //    exit('No direct script access allowed');
+        // }
+
+        if ($id_pers == 0 || !is_numeric($id_pers)) {
+            $this->output->set_status_header(400)->set_content_type('application/json')->set_output(json_encode(['error' => 'ID Perusahaan tidak valid.']));
+            return;
+        }
+
+        $this->db->select('ukb.*'); // Ambil semua kolom dari user_kuota_barang
+        $this->db->from('user_kuota_barang ukb'); //
+        $this->db->where('ukb.id_pers', $id_pers); //
+        $this->db->order_by('ukb.nama_barang ASC, ukb.waktu_pencatatan DESC'); //
+        $rincian_kuota = $this->db->get()->result_array(); //
+
+        $this->output
+             ->set_content_type('application/json')
+             ->set_output(json_encode(['data' => $rincian_kuota]));
+    }
+
+    // Method untuk mengambil log transaksi kuota barang via AJAX
+    public function ajax_get_log_transaksi_kuota($id_pers = 0)
+    {
+        if ($id_pers == 0 || !is_numeric($id_pers)) {
+             $this->output->set_status_header(400)->set_content_type('application/json')->set_output(json_encode(['error' => 'ID Perusahaan tidak valid.']));
+            return;
+        }
+
+        $this->db->select('lk.*, u_admin.name as nama_pencatat'); //
+        $this->db->from('log_kuota_perusahaan lk'); //
+        $this->db->join('user u_admin', 'lk.dicatat_oleh_user_id = u_admin.id', 'left'); //
+        $this->db->where('lk.id_pers', $id_pers); //
+        $this->db->order_by('lk.tanggal_transaksi', 'DESC'); //
+        $this->db->order_by('lk.id_log', 'DESC'); //
+        $log_transaksi = $this->db->get()->result_array(); //
+        
+        $this->output
+             ->set_content_type('application/json')
+             ->set_output(json_encode(['data' => $log_transaksi]));
+    }
+
+    public function detail_permohonan_admin($id_permohonan = 0)
     {
         // Aktifkan logging di awal method untuk memastikan method ini terpanggil
         log_message('debug', 'DETAIL PERMOHONAN ADMIN - Method dipanggil dengan id_permohonan: ' . $id_permohonan);

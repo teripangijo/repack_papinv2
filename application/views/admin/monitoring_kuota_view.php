@@ -1,66 +1,98 @@
 <div class="container-fluid">
 
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800"><?= htmlspecialchars($subtitle ?? 'Monitoring Kuota Perusahaan'); ?></h1>
-        </div>
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-chart-pie mr-2"></i><?= htmlspecialchars($subtitle ?? 'Monitoring Kuota Perusahaan'); ?></h1>
+    </div>
 
-    <!-- <?php
+    <?php
+    // Menampilkan flash message jika ada
     if ($this->session->flashdata('message')) {
         echo $this->session->flashdata('message');
     }
-    ?> -->
+    ?>
 
     <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Data Agregat Kuota Returnable Package per Perusahaan (Berdasarkan Jenis Barang)</h6>
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-database mr-2"></i>Data Agregat Kuota per Perusahaan</h6>
         </div>
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-bordered table-hover" id="dataTableMonitoringKuota" width="100%" cellspacing="0">
-                    <thead>
+                    <thead class="thead-light">
                         <tr>
-                            <th>#</th>
+                            <th class="text-center">#</th>
                             <th>Nama Perusahaan</th>
-                            <th>Email Kontak</th>
-                            <th class="text-right">Total Kuota Awal Diberikan (Per Barang)</th>
-                            <th class="text-right">Total Sisa Kuota (Per Barang)</th>
-                            <th class="text-right">Total Kuota Terpakai (Per Barang)</th>
-                            <th>List No. SKEP Aktif Terkait Kuota Barang</th>
-                            </tr>
+                            <th><i class="fas fa-envelope mr-1"></i>Email Kontak</th>
+                            <th class="text-right">Total Kuota Awal</th>
+                            <th class="text-center" style="width: 20%;">Penggunaan Kuota</th>
+                            <th class="text-right">Total Sisa Kuota</th>
+                            <th>List No. SKEP Aktif</th>
+                        </tr>
                     </thead>
                     <tbody>
                         <?php if (!empty($monitoring_data) && is_array($monitoring_data)): $no = 1; ?>
                             <?php foreach ($monitoring_data as $item): ?>
+                            <?php
+                                $total_initial = floatval($item['total_initial_kuota_barang'] ?? 0);
+                                $total_remaining = floatval($item['total_remaining_kuota_barang'] ?? 0);
+                                $total_used = $total_initial - $total_remaining;
+                                $percentage_used = ($total_initial > 0) ? (($total_used / $total_initial) * 100) : 0;
+                                
+                                $progress_bar_class = 'bg-success'; // Default hijau
+                                if ($total_initial == 0) {
+                                    $progress_bar_class = 'bg-secondary'; // Abu-abu jika kuota awal 0
+                                    $percentage_used = 0; // Pastikan persentase 0 jika tidak ada kuota awal
+                                } elseif ($total_remaining <= 0) {
+                                    $progress_bar_class = 'bg-danger'; // Merah jika sisa kuota habis
+                                    $percentage_used = 100; // Pastikan persentase 100 jika habis
+                                } elseif ($percentage_used > 75) {
+                                    $progress_bar_class = 'bg-warning'; // Kuning jika penggunaan > 75%
+                                }
+                            ?>
                             <tr>
-                                <td><?= $no++; ?></td>
-                                <td>
+                                <td class="text-center align-middle"><?= $no++; ?></td>
+                                <td class="align-middle">
                                     <?php
                                     if (isset($item['id_pers']) && !empty($item['id_pers'])) {
                                         $link_histori = site_url('admin/histori_kuota_perusahaan/' . $item['id_pers']);
-                                        echo '<a href="' . $link_histori . '" title="Lihat Histori & Detail Kuota Barang ' . htmlspecialchars($item['NamaPers'] ?? '') . '">' . htmlspecialchars($item['NamaPers'] ?? 'Nama Perusahaan Tidak Ada') . '</a>';
+                                        echo '<a href="' . $link_histori . '" title="Lihat Histori Kuota ' . htmlspecialchars($item['NamaPers'] ?? '') . '"><i class="fas fa-eye fa-fw mr-1"></i>' . htmlspecialchars($item['NamaPers'] ?? 'N/A') . '</a>';
                                     } else {
-                                        echo htmlspecialchars($item['NamaPers'] ?? 'Nama Perusahaan Tidak Ada');
+                                        echo htmlspecialchars($item['NamaPers'] ?? 'N/A');
                                     }
                                     ?>
                                 </td>
-                                <td><?= htmlspecialchars($item['user_email'] ?? '-'); ?></td>
-                                <td class="text-right">
-                                    <?= htmlspecialchars(number_format($item['total_initial_kuota_barang'] ?? 0, 0, ',', '.')); ?> Unit
+                                <td class="align-middle"><?= htmlspecialchars($item['user_email'] ?? '-'); ?></td>
+                                <td class="text-right align-middle">
+                                    <?= htmlspecialchars(number_format($total_initial, 0, ',', '.')); ?> Unit
                                 </td>
-                                <td class="text-right font-weight-bold <?= (($item['total_remaining_kuota_barang'] ?? 0) <=0 && ($item['total_initial_kuota_barang'] ?? 0) > 0) ? 'text-danger' : 'text-success'; ?>">
-                                    <?= htmlspecialchars(number_format($item['total_remaining_kuota_barang'] ?? 0, 0, ',', '.')); ?> Unit
+                                <td class="align-middle">
+                                    <div class="progress" style="height: 22px;" title="Terpakai: <?= htmlspecialchars(number_format($total_used, 0, ',', '.')); ?> Unit (<?= number_format($percentage_used, 1) ?>%)">
+                                        <div class="progress-bar progress-bar-striped <?= $progress_bar_class ?>" role="progressbar" style="width: <?= $percentage_used ?>%;" aria-valuenow="<?= $percentage_used ?>" aria-valuemin="0" aria-valuemax="100">
+                                            <small><?= number_format($percentage_used, 0) ?>%</small>
+                                        </div>
+                                    </div>
+                                    <?php if ($total_initial == 0): ?>
+                                        <small class="text-muted d-block text-center">(Kuota awal 0)</small>
+                                    <?php endif; ?>
                                 </td>
-                                <td class="text-right">
-                                    <?php
-                                        $total_initial = $item['total_initial_kuota_barang'] ?? 0;
-                                        $total_remaining = $item['total_remaining_kuota_barang'] ?? 0;
-                                        echo htmlspecialchars(number_format($total_initial - $total_remaining, 0, ',', '.'));
-                                    ?> Unit
+                                <td class="text-right align-middle font-weight-bold <?= (($total_remaining <= 0) && ($total_initial > 0)) ? 'text-danger' : (($total_initial > 0) ? 'text-success' : 'text-muted'); ?>">
+                                    <?= htmlspecialchars(number_format($total_remaining, 0, ',', '.')); ?> Unit
                                 </td>
-                                <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?= htmlspecialchars($item['list_skep_aktif'] ?? 'Tidak ada SKEP aktif terkait kuota barang'); ?>">
-                                    <?= !empty($item['list_skep_aktif']) ? htmlspecialchars($item['list_skep_aktif']) : '<span class="text-muted"><em>N/A</em></span>'; ?>
+                                <td class="align-middle" style="min-width: 150px;">
+                                    <?php 
+                                        if (!empty($item['list_skep_aktif'])) {
+                                            $skep_list = explode(",", $item['list_skep_aktif']);
+                                            foreach($skep_list as $skep_item) {
+                                                if(!empty(trim($skep_item))){
+                                                    echo '<span class="badge badge-info mr-1 mb-1">' . htmlspecialchars(trim($skep_item)) . '</span>';
+                                                }
+                                            }
+                                        } else {
+                                            echo '<span class="text-muted"><em>N/A</em></span>';
+                                        }
+                                    ?>
                                 </td>
-                                </tr>
+                            </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
@@ -71,7 +103,7 @@
                 </table>
             </div>
             <small class="form-text text-muted mt-2">
-                <strong>Catatan:</strong> "Total Kuota Awal Diberikan" dan "Total Sisa Kuota" adalah penjumlahan dari semua kuota per jenis barang yang dimiliki perusahaan. Klik nama perusahaan untuk melihat rincian kuota per jenis barang dan histori transaksinya.
+                <strong><i class="fas fa-info-circle"></i> Catatan:</strong> Klik ikon <i class="fas fa-eye fa-fw"></i> pada nama perusahaan untuk rincian histori. Persentase penggunaan dihitung dari total kuota awal.
             </small>
         </div>
     </div>
@@ -87,22 +119,23 @@ $(document).ready(function() {
                 "zeroRecords": "Tidak ada data yang cocok ditemukan",
                 "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ entri",
                 "infoEmpty": "Menampilkan 0 sampai 0 dari 0 entri",
-                "infoFiltered": "(disaring dari _MAX_ entri keseluruhan)",
+                "infoFiltered": "(disaring dari _MAX_ total entri)",
                 "lengthMenu": "Tampilkan _MENU_ entri",
                 "search": "Cari:",
                 "paginate": {
-                    "first":    "Pertama",
-                    "last":     "Terakhir",
-                    "next":     "Selanjutnya",
-                    "previous": "Sebelumnya"
+                    "first":    "Awal",
+                    "last":     "Akhir",
+                    "next":     "Lanjut",
+                    "previous": "Kembali"
                 }
             },
             "columnDefs": [
-                { "orderable": false, "targets": [0] } // Kolom # tidak bisa di-sort
+                { "orderable": false, "targets": [0] }, // Kolom # tidak bisa di-sort
+                { "className": "align-middle", "targets": "_all" }
             ]
         });
     } else {
-        console.warn("DataTables plugin is not loaded for 'dataTableMonitoringKuota'.");
+        console.warn("Plugin DataTables belum dimuat untuk 'dataTableMonitoringKuota'.");
     }
 });
 </script>
