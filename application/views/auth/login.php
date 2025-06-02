@@ -60,7 +60,7 @@
                                         </form>
                                         <hr class="my-4">
                                         <div class="text-center">
-                                            <a class="small modern-login-link" href="<?= base_url('auth/forgot_password'); ?>">Lupa Password?</a>
+                                            <!-- <a class="small modern-login-link" href="<?= base_url('auth/forgot_password'); ?>">Lupa Password?</a> -->
                                         </div>
                                         <div class="text-center">
                                             <a class="small modern-login-link" href="<?= base_url('auth/registration'); ?>">Buat Akun Baru (Pengguna Jasa)</a>
