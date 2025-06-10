@@ -67,13 +67,9 @@ $fallbackImagePath = base_url('assets/img/default-avatar.png'); // Fallback umum
                         aria-labelledby="userDropdown">
 
                         <?php if ($role_id_for_topbar == 1) : // ADMIN ?>
-                            <a class="dropdown-item" href="<?= site_url('admin/profile'); // Buat halaman profil admin jika perlu ?>">
+                            <a class="dropdown-item" href="<?= site_url('admin/edit_profil'); ?>">
                                 <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
                                 My Profile (Admin)
-                            </a>
-                            <a class="dropdown-item" href="<?= site_url('admin/settings'); // Contoh link settings admin ?>">
-                                <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
-                                Settings
                             </a>
                         <?php elseif ($role_id_for_topbar == 2) : // PENGGUNA JASA ?>
                             <a class="dropdown-item" href="<?= site_url('user/index'); // Dashboard Pengguna Jasa bisa jadi profilnya juga ?>">
