@@ -1,7 +1,7 @@
 <?php
 // Ambil data user dari variabel $user yang dikirim oleh controller
 $userName = isset($user['name']) ? htmlspecialchars($user['name']) : 'Guest';
-$userImageName = isset($user['image']) && !empty($user['image']) ? $user['image'] : 'default.jpg';
+$userImageName = isset($user['image']) && !empty($user['image']) ? $user['image'] : 'default.webp';
 
 // Tentukan base path untuk gambar profil berdasarkan role atau path umum
 $role_id_for_topbar = $this->session->userdata('role_id'); // Ambil role_id dari session
@@ -18,7 +18,7 @@ $profile_image_folder = 'uploads/kop/'; // Default untuk Pengguna Jasa (logo per
 $profile_image_folder = 'uploads/profile_images/'; 
 
 $profileImagePath = base_url($profile_image_folder . htmlspecialchars($userImageName));
-$fallbackImagePath = base_url('assets/img/default-avatar.png'); // Fallback umum
+$fallbackImagePath = base_url('assets/img/default.webp'); // Fallback umum
 ?>
 <div id="content-wrapper" class="d-flex flex-column">
     <div id="content">
