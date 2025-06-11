@@ -4,15 +4,7 @@
 
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800"><?= isset($subtitle) ? htmlspecialchars($subtitle) : 'Daftar Permohonan Impor'; ?></h1>
-        <?php // Tambahkan tombol lain jika perlu, misal "Buat Permohonan Baru" jika admin bisa ?>
     </div>
-
-    <!-- <?php
-    // Menampilkan pesan flashdata dari controller
-    if ($this->session->flashdata('message')) {
-        echo $this->session->flashdata('message');
-    }
-    ?> -->
 
     <div class="card shadow mb-4">
         <div class="card-header py-3">
@@ -32,7 +24,7 @@
                             <th>Waktu Submit</th>
                             <th>Petugas Ditugaskan</th>
                             <th>Status</th>
-                            <th style="min-width: 160px;">Action</th> <?php // Sedikit lebih lebar untuk mengakomodasi tombol ?>
+                            <th style="min-width: 160px;">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -52,7 +44,6 @@
                                         <?php
                                         $status_text = '-'; $status_badge = 'secondary';
                                         if (isset($p['status'])) {
-                                            // Anda bisa membuat helper function untuk ini jika digunakan di banyak tempat
                                             switch ($p['status']) {
                                                 case '0': $status_text = 'Baru Masuk'; $status_badge = 'dark'; break;
                                                 case '5': $status_text = 'Diproses Admin'; $status_badge = 'info'; break;
@@ -60,6 +51,9 @@
                                                 case '2': $status_text = 'LHP Direkam'; $status_badge = 'warning'; break;
                                                 case '3': $status_text = 'Selesai (Disetujui)'; $status_badge = 'success'; break;
                                                 case '4': $status_text = 'Selesai (Ditolak)'; $status_badge = 'danger'; break;
+                                                // --- PERBAIKAN DITAMBAHKAN DI SINI ---
+                                                case '6': $status_text = 'Ditolak oleh Admin'; $status_badge = 'danger'; break;
+                                                // --- AKHIR PERBAIKAN ---
                                                 default: $status_text = 'Status Tidak Dikenal (' . htmlspecialchars($p['status']) . ')';
                                             }
                                         }
@@ -67,49 +61,48 @@
                                         ?>
                                     </td>
                                     <td class="text-center">
-                                        <?php if(isset($p['id'])): // Pastikan ID ada untuk membuat link ?>
+                                        <?php if(isset($p['id'])): ?>
                                             <a href="<?= site_url('admin/detail_permohonan_admin/' . $p['id']); ?>" class="btn btn-info btn-circle btn-sm my-1" title="Lihat Detail Permohonan Lengkap">
                                                 <i class="fas fa-eye"></i>
                                             </a>
 
                                             <?php
-                                            // Tombol Aksi Proses berdasarkan Status
                                             if (isset($p['status'])) {
                                                 switch ($p['status']) {
                                                     case '0': // Baru Masuk
-                                                    case '5': // Diproses Admin (misalnya, sebelum menunjuk petugas atau setelah admin melakukan aksi awal)
+                                                    case '5': // Diproses Admin
+                                                        // Tombol Proses
                                                         echo '<a href="' . site_url('admin/penunjukanPetugas/' . $p['id']) . '" class="btn btn-success btn-circle btn-sm my-1" title="Proses & Tunjuk Petugas Pemeriksa">
                                                                 <i class="fas fa-user-plus"></i>
                                                               </a>';
+                                                        
+                                                        // --- PERBAIKAN DITAMBAHKAN DI SINI ---
+                                                        // Tombol Tolak Langsung
+                                                        echo '<a href="' . site_url('admin/tolak_permohonan_awal/' . $p['id']) . '" class="btn btn-warning btn-circle btn-sm my-1" title="Tolak Langsung Permohonan">
+                                                                <i class="fas fa-ban"></i>
+                                                              </a>';
+                                                        // --- AKHIR PERBAIKAN ---
                                                         break;
-                                                    case '1': // Penunjukan Pemeriksa (petugas sudah ditunjuk, LHP belum direkam)
+                                                    case '1':
                                                         echo '<a href="' . site_url('admin/penunjukanPetugas/' . $p['id']) . '" class="btn btn-warning btn-circle btn-sm my-1" title="Lihat/Edit Penunjukan Petugas">
                                                                 <i class="fas fa-user-edit"></i>
                                                               </a>';
                                                         break;
-                                                    case '2': // LHP Direkam, siap diselesaikan oleh Admin
+                                                    case '2':
                                                         echo '<a href="' . site_url('admin/prosesSurat/' . $p['id']) . '" class="btn btn-primary btn-circle btn-sm my-1" title="Proses Penyelesaian Akhir Permohonan">
                                                                 <i class="fas fa-flag-checkered"></i>
                                                               </a>';
                                                         break;
-                                                    // Untuk status '3' (Selesai Disetujui) dan '4' (Selesai Ditolak),
-                                                    // biasanya tidak ada tombol aksi proses utama lagi.
                                                 }
                                             }
 
-                                            // Tombol Edit Data Pengajuan (Admin)
-                                            // Tampilkan jika status memungkinkan untuk diedit oleh admin
-                                            // Sesuaikan kondisi status ini sesuai kebutuhan bisnis Anda
-                                            if (isset($p['status']) && in_array($p['status'], ['0', '5', '1'])) { // Contoh: Boleh edit jika status 0, 5, atau 1
+                                            if (isset($p['status']) && in_array($p['status'], ['0', '5', '1'])) {
                                                 echo '<a href="' . site_url('admin/edit_permohonan/' . $p['id']) . '" class="btn btn-secondary btn-circle btn-sm my-1" title="Edit Data Pengajuan Permohonan">
                                                         <i class="fas fa-pencil-alt"></i>
                                                       </a>';
                                             }
 
-                                            // Tombol Hapus Permohonan (Admin)
-                                            // Sebaiknya hanya izinkan hapus untuk status tertentu, misal 'Baru Masuk' atau jika ada kesalahan input parah
-                                            // dan BELUM diproses lebih lanjut (misal belum ada LHP atau SK).
-                                            if (isset($p['status']) && in_array($p['status'], ['0', '5'])) { // Contoh: Hanya boleh hapus jika status masih sangat awal
+                                            if (isset($p['status']) && in_array($p['status'], ['0', '5', '6'])) { // Ditambah status 6 agar bisa dihapus jika salah tolak
                                                 echo '<a href="' . site_url('admin/hapus_permohonan/' . $p['id']) . '" class="btn btn-danger btn-circle btn-sm my-1" title="Hapus Permohonan" onclick="return confirm(\'APAKAH ANDA YAKIN ingin menghapus permohonan dengan ID Aju: ' . htmlspecialchars($p['id']) . ' atas nama ' . htmlspecialchars($p['NamaPers'] ?? 'N/A') . '?\nTindakan ini tidak dapat diurungkan!\');">
                                                         <i class="fas fa-trash"></i>
                                                       </a>';
@@ -133,8 +126,7 @@
 $(document).ready(function() {
     if (typeof $ !== 'undefined' && typeof $.fn.DataTable !== 'undefined') {
         $('#dataTablePermohonanAdmin').DataTable({
-            // Menggunakan urutan dari server (PHP) seperti yang Anda atur di controller Admin::permohonanMasuk()
-            "order": [], // Biarkan kosong jika urutan sudah dari server
+            "order": [], 
             "language": {
                 "emptyTable": "Belum ada data permohonan masuk.",
                 "zeroRecords": "Tidak ada data yang cocok ditemukan",
@@ -149,16 +141,10 @@ $(document).ready(function() {
                     "next":     "Berikutnya",
                     "previous": "Sebelumnya"
                 },
-                "aria": {
-                    "sortAscending":  ": aktifkan untuk mengurutkan kolom secara menaik",
-                    "sortDescending": ": aktifkan untuk mengurutkan kolom secara menurun"
-                }
             },
             "columnDefs": [
-                // Kolom '#' (indeks 0) dan Action (indeks 9, atau sesuaikan jika jumlah kolom berubah) tidak bisa di-sort dan tidak bisa dicari
                 { "orderable": false, "searchable": false, "targets": [0, 9] }
-            ],
-            // "responsive": true // Aktifkan jika perlu untuk tabel yang lebar
+            ]
         });
     } else {
         console.error("jQuery atau plugin DataTables tidak termuat dengan benar untuk tabel 'dataTablePermohonanAdmin'.");

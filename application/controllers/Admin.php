@@ -1694,4 +1694,65 @@ class Admin extends CI_Controller
         return TRUE;
     }
 
+    public function tolak_permohonan_awal($id_permohonan = 0)
+    {
+        // Pastikan ID valid
+        if ($id_permohonan == 0 || !is_numeric($id_permohonan)) {
+            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">ID Permohonan tidak valid.</div>');
+            redirect('admin/permohonanMasuk');
+            return;
+        }
+
+        $data['title'] = 'Returnable Package';
+        $data['subtitle'] = 'Formulir Penolakan Permohonan';
+        $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+
+        // Ambil data permohonan untuk ditampilkan di form
+        $this->db->select('up.id, up.nomorSurat, upr.NamaPers, up.status');
+        $this->db->from('user_permohonan up');
+        $this->db->join('user_perusahaan upr', 'up.id_pers = upr.id_pers', 'left');
+        $this->db->where('up.id', $id_permohonan);
+        $data['permohonan'] = $this->db->get()->row_array();
+
+        // // --Debug--
+        // echo "Nilai status dari database adalah: ";
+        // var_dump($data['permohonan']['status']);
+        // die; // Hentikan eksekusi untuk melihat hasilnya
+        // // --Akhir Debug--
+
+        if (!$data['permohonan'] || $data['permohonan']['status'] != '0') {
+            $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Permohonan ini tidak ditemukan atau statusnya bukan "Baru Masuk" sehingga tidak bisa ditolak langsung.</div>');
+            redirect('admin/permohonanMasuk');
+            return;
+        }
+
+        // Atur validasi untuk form
+        $this->form_validation->set_rules('alasan_penolakan', 'Alasan Penolakan', 'trim|required');
+
+        if ($this->form_validation->run() == false) {
+            // Jika validasi gagal atau halaman baru diakses (GET request)
+            $this->load->view('templates/header', $data);
+            $this->load->view('templates/sidebar', $data);
+            $this->load->view('templates/topbar', $data);
+            // Kita akan membuat view baru untuk form ini
+            $this->load->view('admin/form_tolak_permohonan_view', $data); 
+            $this->load->view('templates/footer');
+        } else {
+            // Jika form disubmit dan validasi berhasil (POST request)
+            $alasan_penolakan = $this->input->post('alasan_penolakan', true);
+
+            $update_data = [
+                'status' => '6', // Status baru: Ditolak oleh Admin
+                'catatan_penolakan' => $alasan_penolakan,
+                'time_selesai' => date('Y-m-d H:i:s') // Tandai waktu selesai
+            ];
+
+            $this->db->where('id', $id_permohonan);
+            $this->db->update('user_permohonan', $update_data);
+
+            $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Permohonan ID ' . htmlspecialchars($id_permohonan) . ' berhasil ditolak.</div>');
+            redirect('admin/permohonanMasuk');
+        }
+    }
+
 } // End class Admin

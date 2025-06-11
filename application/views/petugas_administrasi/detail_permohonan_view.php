@@ -19,7 +19,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
             ?>
 
             <?php // Tombol aksi Admin (hanya tampil jika BUKAN view monitoring DAN jika role adalah Admin) ?>
-            <?php if ((!isset($is_monitoring_view) || $is_monitoring_view !== TRUE) && $this->session->userdata('role_id') == 1): ?>
+            <?php if ((!isset($is_monitoring_view) || $is_monitoring_view !== TRUE) && in_array($this->session->userdata('role_id'), [1, 5])): ?>
                 <?php if (isset($permohonan_detail['status'])): ?>
                     <?php if ($permohonan_detail['status'] == '0' || $permohonan_detail['status'] == '5'): ?>
                         <a href="<?= site_url('petugas_administrasi/penunjukanPetugas/' . $permohonan_detail['id']); ?>" class="btn btn-sm btn-success shadow-sm mr-2">
@@ -67,6 +67,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                             case '2': $status_text = 'LHP Direkam'; $status_badge = 'warning'; break;
                             case '3': $status_text = 'Selesai (Disetujui)'; $status_badge = 'success'; break;
                             case '4': $status_text = 'Selesai (Ditolak)'; $status_badge = 'danger'; break;
+                            case '6': $status_text = 'Ditolak oleh Admin'; $status_badge = 'danger'; break;
                             default: $status_text = 'Status Tidak Dikenal (' . htmlspecialchars($permohonan_detail['status']) . ')';
                         }
                     }
