@@ -525,7 +525,7 @@ class Petugas_administrasi extends CI_Controller
         if (!empty($log_data['id_pers']) && !empty($log_data['nama_barang_terkait'])) { 
             $this->db->insert('log_kuota_perusahaan', $log_data);
         } else {
-            log_message('warning', 'Data log kuota tidak lengkap, tidak disimpan: ' . print_r($log_data, true));
+            log_message('error', 'Data log kuota tidak lengkap, tidak disimpan: ' . print_r($log_data, true));
         }
     }
 
