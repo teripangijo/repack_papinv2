@@ -116,7 +116,7 @@ $nama_barang_diajukan = isset($pengajuan['nama_barang_kuota']) ? htmlspecialchar
                 </div>
 
                 <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Simpan Proses Pengajuan</button>
-                <a href="<?= site_url('petugas_administasi/daftar_pengajuan_kuota'); ?>" class="btn btn-secondary ml-2">Batal</a>
+                <a href="<?= site_url('petugas_administrasi/daftar_pengajuan_kuota'); ?>" class="btn btn-secondary ml-2">Batal</a>
             </form>
         </div>
     </div>
