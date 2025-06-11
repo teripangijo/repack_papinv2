@@ -29,7 +29,7 @@
             </div>
             <div class="card-body">
 
-                <form action="<?= base_url() ?>admin/editLHP/<?= $permohonan['id']; ?>" method="POST">
+                <form action="<?= base_url() ?>petugas_administrasi/editLHP/<?= $permohonan['id']; ?>" method="POST">
                     <div class="row">
                         <div class="col">
                             <label>Nama Perusahaan</label>
@@ -186,7 +186,7 @@
                     </div>
                     </br>
                     <button type="submit" class="btn btn-success">Simpan</button>
-                    <button type="button" href="<?= base_url("admin/permohonanMasuk") ?>" class="btn btn-success">Kembali</button>
+                    <button type="button" href="<?= base_url("petugas_administrasi/permohonanMasuk") ?>" class="btn btn-success">Kembali</button>
             </div>
         </div>
 

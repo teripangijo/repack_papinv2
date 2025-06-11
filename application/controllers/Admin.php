@@ -458,7 +458,49 @@ class Admin extends CI_Controller
             $this->db->update('user_permohonan', $data_update_permohonan);
             // ... (Logika pemotongan kuota jika disetujui, tetap sama) ...
             if ($status_final_permohonan == '3' && isset($data['lhp']['JumlahBenar']) && $data['lhp']['JumlahBenar'] > 0) {
-                // ... (kode pemotongan kuota barang Anda) ...
+    
+                // Ambil data yang diperlukan untuk pemotongan dan logging
+                $jumlah_dipotong = (float)$data['lhp']['JumlahBenar'];
+                $id_kuota_barang_terpakai = $data['permohonan']['id_kuota_barang_digunakan'];
+                $id_perusahaan = $data['permohonan']['id_pers'];
+
+                // Pastikan ID Kuota Barang ada sebelum melanjutkan
+                if ($id_kuota_barang_terpakai) {
+                    // Mulai transaksi database untuk memastikan integritas data
+                    $this->db->trans_start();
+
+                    // 1. Ambil data kuota saat ini untuk logging
+                    $kuota_barang_saat_ini = $this->db->get_where('user_kuota_barang', ['id_kuota_barang' => $id_kuota_barang_terpakai])->row_array();
+                    
+                    if ($kuota_barang_saat_ini) {
+                        $kuota_sebelum = (float)$kuota_barang_saat_ini['remaining_quota_barang'];
+                        $kuota_sesudah = $kuota_sebelum - $jumlah_dipotong;
+
+                        // 2. Update sisa kuota di tabel user_kuota_barang
+                        $this->db->where('id_kuota_barang', $id_kuota_barang_terpakai);
+                        $this->db->set('remaining_quota_barang', 'remaining_quota_barang - ' . $this->db->escape($jumlah_dipotong), FALSE);
+                        $this->db->update('user_kuota_barang');
+
+                        // 3. Catat transaksi ke dalam log
+                        $keterangan_log = 'Pemotongan kuota dari persetujuan impor. No. Surat: ' . ($data_update_permohonan['nomorSetuju'] ?? '-');
+                        $this->_log_perubahan_kuota(
+                            $id_perusahaan,
+                            'pengurangan',
+                            $jumlah_dipotong,
+                            $kuota_sebelum,
+                            $kuota_sesudah,
+                            $keterangan_log,
+                            $id_permohonan, // id_referensi_transaksi
+                            'permohonan_impor_disetujui', // tipe_referensi
+                            $admin_user['id'], // dicatat_oleh_user_id
+                            $kuota_barang_saat_ini['nama_barang'], // nama_barang_terkait
+                            $id_kuota_barang_terpakai // id_kuota_barang_referensi
+                        );
+                    }
+                    
+                    // Selesaikan transaksi
+                    $this->db->trans_complete();
+                }
             }
 
             $pesan_status_akhir = ($status_final_permohonan == '3') ? 'Disetujui' : 'Ditolak';

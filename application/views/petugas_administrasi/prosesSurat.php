@@ -27,7 +27,7 @@
         </div>
         <div class="card-body">
             <?php // GANTI form action biasa dengan form_open_multipart untuk handle file upload ?>
-            <?php echo form_open_multipart(base_url('admin/prosesSurat/' . $permohonan['id'])); ?>
+            <?php echo form_open_multipart('petugas_administrasi/prosesSurat/' . $permohonan['id']); ?>
             
                 <fieldset class="border p-3 mb-4">
                     <legend class="w-auto px-2 small font-weight-bold">Data Perusahaan</legend>

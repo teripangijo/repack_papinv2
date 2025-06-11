@@ -12,7 +12,7 @@ $nama_barang_diajukan = isset($pengajuan['nama_barang_kuota']) ? htmlspecialchar
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800"><?= isset($subtitle) ? htmlspecialchars($subtitle) : 'Proses Pengajuan Kuota'; ?></h1>
-        <a href="<?= site_url('admin/daftar_pengajuan_kuota'); ?>" class="btn btn-sm btn-secondary shadow-sm">
+        <a href="<?= site_url('petugas_administrasi/daftar_pengajuan_kuota'); ?>" class="btn btn-sm btn-secondary shadow-sm">
             <i class="fas fa-arrow-left fa-sm text-white-50"></i> Kembali ke Daftar Pengajuan
         </a>
     </div>
@@ -63,7 +63,7 @@ $nama_barang_diajukan = isset($pengajuan['nama_barang_kuota']) ? htmlspecialchar
             </div>
             <hr>
             <h5>Form Tindakan Admin</h5>
-            <form action="<?= site_url('admin/proses_pengajuan_kuota/' . $pengajuan['id']); ?>" method="post" enctype="multipart/form-data">
+            <form action="<?= site_url('petugas_administrasi/proses_pengajuan_kuota/' . $pengajuan['id']); ?>" method="post" enctype="multipart/form-data">
                 <div class="form-group">
                     <label for="status_pengajuan">Status Pengajuan <span class="text-danger">*</span></label>
                     <select class="form-control <?= form_error('status_pengajuan') ? 'is-invalid' : ''; ?>" id="status_pengajuan" name="status_pengajuan" required>
@@ -101,7 +101,7 @@ $nama_barang_diajukan = isset($pengajuan['nama_barang_kuota']) ? htmlspecialchar
                         </div>
                         <?php if (!empty($pengajuan['file_sk_petugas'])): ?>
                             <small class="form-text text-info">File SK saat ini:
-                                <a href="<?= base_url('admin/download_sk_kuota_admin/' . $pengajuan['id']); ?>" target="_blank">
+                                <a href="<?= base_url('petugas_administrasi/download_sk_kuota_admin/' . $pengajuan['id']); ?>" target="_blank">
                                     <?= htmlspecialchars($pengajuan['file_sk_petugas']); ?>
                                 </a>. Upload file baru akan menggantikannya.
                             </small>
@@ -116,7 +116,7 @@ $nama_barang_diajukan = isset($pengajuan['nama_barang_kuota']) ? htmlspecialchar
                 </div>
 
                 <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Simpan Proses Pengajuan</button>
-                <a href="<?= site_url('admin/daftar_pengajuan_kuota'); ?>" class="btn btn-secondary ml-2">Batal</a>
+                <a href="<?= site_url('petugas_administasi/daftar_pengajuan_kuota'); ?>" class="btn btn-secondary ml-2">Batal</a>
             </form>
         </div>
     </div>

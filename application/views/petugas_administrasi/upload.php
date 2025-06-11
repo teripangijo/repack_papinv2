@@ -33,7 +33,7 @@
                             <td><?= $p['npwp']; ?></td>
                             <td><?= $p['NoSkep']; ?></td>
                             <td><?= $p['tgl_skep']; ?></td>
-                            <td><a class="btn btn-success btn-sm" href="<?= base_url();?>admin/uploadproses/<?= $p['id'] ?>">Upload Dokumen</a></td>
+                            <td><a class="btn btn-success btn-sm" href="<?= base_url();?>petugas_administrasi/uploadproses/<?= $p['id'] ?>">Upload Dokumen</a></td>
                         </tr>
 
                         <?php $i++; ?>

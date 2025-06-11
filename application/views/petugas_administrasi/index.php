@@ -69,8 +69,8 @@
                     <p>Ini adalah halaman dashboard admin. Anda dapat mengelola pengguna, peran, permohonan, dan pengajuan kuota dari sini.</p>
                     <p>Gunakan menu di sidebar untuk navigasi.</p>
                     
-                    <a href="<?= site_url('admin/permohonanMasuk'); ?>" class="btn btn-info mr-2">Lihat Permohonan Masuk</a>
-                    <a href="<?= site_url('admin/daftar_pengajuan_kuota'); ?>" class="btn btn-success">Lihat Pengajuan Kuota</a>
+                    <a href="<?= site_url('petugas_administrasi/permohonanMasuk'); ?>" class="btn btn-info mr-2">Lihat Permohonan Masuk</a>
+                    <a href="<?= site_url('petugas_administrasi/daftar_pengajuan_kuota'); ?>" class="btn btn-success">Lihat Pengajuan Kuota</a>
                 </div>
             </div>
         </div>

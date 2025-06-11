@@ -1,7 +1,7 @@
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800"><?= htmlspecialchars($subtitle ?? 'Penunjukan Petugas Pemeriksa'); ?></h1>
-        <a href="<?= site_url('admin/permohonanMasuk'); ?>" class="btn btn-sm btn-secondary shadow-sm">
+        <a href="<?= site_url('petugas_administrasi/permohonanMasuk'); ?>" class="btn btn-sm btn-secondary shadow-sm">
             <i class="fas fa-arrow-left fa-sm text-white-50"></i> Kembali ke Daftar Permohonan
         </a>
     </div>
@@ -39,7 +39,8 @@
             </p>
             <hr>
 
-            <form action="<?= site_url('admin/penunjukanPetugas/' . $permohonan['id']); ?>" method="post" enctype="multipart/form-data">
+            <form action="<?= site_url('petugas_administrasi/penunjukanPetugas/' . $permohonan['id']); ?>" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="<?= $this->security->get_csrf_token_name(); ?>" value="<?= $this->security->get_csrf_hash(); ?>">
                 <div class="form-group">
                     <label for="petugas_id">Pilih Petugas/Pemeriksa <span class="text-danger">*</span></label>
                     <select class="form-control <?= form_error('petugas_id') ? 'is-invalid' : ''; ?>" id="petugas_id" name="petugas_id" required>
@@ -107,7 +108,7 @@
                 </script>
 
                 <button type="submit" class="btn btn-primary">Simpan Penunjukan</button>
-                <a href="<?= site_url('admin/permohonanMasuk'); ?>" class="btn btn-secondary ml-2">Batal</a>
+                <a href="<?= site_url('petugas_administrasi/permohonanMasuk'); ?>" class="btn btn-secondary ml-2">Batal</a>
             </form>
         </div>
     </div>

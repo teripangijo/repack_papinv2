@@ -23,7 +23,7 @@
                         <h6 class="m-0 font-weight-bold text-primary">Formulir Penyelesaian Permohonan ID: <?= htmlspecialchars($permohonan['id']); ?></h6>
                     </div>
                     <div class="card-body">
-                        <?php echo form_open(site_url('admin/prosesSurat/' . $permohonan['id'])); ?>
+                        <?php echo form_open(site_url('petugas_administrasi/prosesSurat/' . $permohonan['id'])); ?>
 
                         <p><strong>Nama Perusahaan:</strong> <?= htmlspecialchars($permohonan['NamaPers']); ?></p>
                         <p><strong>No Surat Pengajuan:</strong> <?= htmlspecialchars($permohonan['nomorSurat']); ?></p>
