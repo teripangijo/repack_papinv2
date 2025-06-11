@@ -151,7 +151,7 @@ class Petugas_administrasi extends CI_Controller
         log_message('debug', 'Petugas_administrasi: _check_auth_petugas_administrasi() - Role ID: ' . ($role_id_session ?? 'NULL'));
 
         if ($role_id_session != 5) { // Role ID 5 untuk Petugas Administrasi
-            log_message('warning', 'Petugas_administrasi: _check_auth_petugas_administrasi() - Akses ditolak, role ID tidak sesuai: ' . $role_id_session);
+            log_message('error', 'Petugas_administrasi: _check_auth_petugas_administrasi() - Akses ditolak, role ID tidak sesuai: ' . $role_id_session);
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Akses Ditolak! Anda tidak diotorisasi untuk mengakses halaman ini.</div>');
             
             if ($role_id_session == 1) redirect('admin');

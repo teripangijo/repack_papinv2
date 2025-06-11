@@ -268,6 +268,66 @@ class Admin extends CI_Controller
         $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Access Changed!</div>');
     }
 
+    public function delete_user($user_id = 0)
+    {
+        // 1. Validasi awal dan keamanan
+        if ($user_id == 0 || !is_numeric($user_id)) {
+            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">User ID tidak valid.</div>');
+            redirect('admin/manajemen_user');
+            return;
+        }
+
+        // 2. Keamanan: Jangan biarkan admin menghapus dirinya sendiri
+        if ($user_id == $this->session->userdata('user_id')) {
+            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Anda tidak dapat menghapus akun Anda sendiri.</div>');
+            redirect('admin/manajemen_user');
+            return;
+        }
+
+        // 3. Keamanan: Jangan biarkan admin utama (ID 1) dihapus
+        if ($user_id == 1) {
+            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Akun Super Admin (ID 1) tidak dapat dihapus.</div>');
+            redirect('admin/manajemen_user');
+            return;
+        }
+
+        // Ambil data user yang akan dihapus untuk memeriksa role dan data terkait
+        $user_to_delete = $this->db->get_where('user', ['id' => $user_id])->row_array();
+
+        if (!$user_to_delete) {
+            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">User tidak ditemukan.</div>');
+            redirect('admin/manajemen_user');
+            return;
+        }
+
+        // Mulai transaksi database
+        $this->db->trans_start();
+
+        // 4. Hapus data terkait (jika ada)
+        // Contoh: jika user adalah 'Petugas' (role_id 3), hapus juga dari tabel 'petugas'
+        if ($user_to_delete['role_id'] == 3) {
+            $this->db->delete('petugas', ['id_user' => $user_id]);
+        }
+        // (Anda bisa menambahkan logika serupa untuk role lain jika ada tabel terkait)
+
+        // 5. Hapus user utama dari tabel 'user'
+        $this->db->delete('user', ['id' => $user_id]);
+        
+        // Selesaikan transaksi
+        $this->db->trans_complete();
+
+        if ($this->db->trans_status() === FALSE) {
+            // Jika transaksi gagal
+            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Gagal menghapus user karena terjadi kesalahan database.</div>');
+        } else {
+            // Jika transaksi berhasil
+            $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">User ' . htmlspecialchars($user_to_delete['name']) . ' berhasil dihapus.</div>');
+        }
+
+        // 6. Redirect kembali ke halaman manajemen user
+        redirect('admin/manajemen_user');
+    }
+
     public function permohonanMasuk()
     {
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
