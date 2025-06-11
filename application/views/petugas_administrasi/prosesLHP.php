@@ -29,7 +29,7 @@
             </div>
             <div class="card-body">
 
-                <form action="<?= base_url() ?>admin/prosesLHP/<?= $permohonan['id']; ?>" method="POST">
+                <form action="<?= base_url() ?>petugas_administrasi/prosesLHP/<?= $permohonan['id']; ?>" method="POST">
                     <div class="row">
                         <div class="col">
                             <label>Nama Perusahaan</label>

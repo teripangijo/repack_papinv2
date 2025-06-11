@@ -7,20 +7,20 @@
         <div>
             <?php if (isset($permohonan_detail['status'])): ?>
                 <?php if ($permohonan_detail['status'] == '0' || $permohonan_detail['status'] == '5'): // Baru Masuk atau Diproses Admin ?>
-                    <a href="<?= site_url('admin/penunjukanPetugas/' . $permohonan_detail['id']); ?>" class="btn btn-sm btn-success shadow-sm mr-2">
+                    <a href="<?= site_url('petugas_administrasi/penunjukanPetugas/' . $permohonan_detail['id']); ?>" class="btn btn-sm btn-success shadow-sm mr-2">
                         <i class="fas fa-user-plus fa-sm text-white-50"></i> Proses & Tunjuk Petugas
                     </a>
                 <?php elseif ($permohonan_detail['status'] == '1'): // Penunjukan Pemeriksa ?>
-                    <a href="<?= site_url('admin/penunjukanPetugas/' . $permohonan_detail['id']); ?>" class="btn btn-sm btn-warning shadow-sm mr-2">
+                    <a href="<?= site_url('petugas_administrasi/penunjukanPetugas/' . $permohonan_detail['id']); ?>" class="btn btn-sm btn-warning shadow-sm mr-2">
                         <i class="fas fa-edit fa-sm text-white-50"></i> Lihat/Edit Penunjukan
                     </a>
                 <?php elseif ($permohonan_detail['status'] == '2'): // LHP Direkam ?>
-                     <a href="<?= site_url('admin/prosesSurat/' . $permohonan_detail['id']); ?>" class="btn btn-sm btn-primary shadow-sm mr-2">
+                     <a href="<?= site_url('petugas_administrasi/prosesSurat/' . $permohonan_detail['id']); ?>" class="btn btn-sm btn-primary shadow-sm mr-2">
                         <i class="fas fa-flag-checkered fa-sm text-white-50"></i> Proses Penyelesaian Akhir
                     </a>
                 <?php endif; ?>
             <?php endif; ?>
-            <a href="<?= site_url('admin/permohonanMasuk'); ?>" class="btn btn-sm btn-secondary shadow-sm">
+            <a href="<?= site_url('petugas_administrasi/permohonanMasuk'); ?>" class="btn btn-sm btn-secondary shadow-sm">
                 <i class="fas fa-arrow-left fa-sm text-white-50"></i> Kembali ke Daftar Permohonan
             </a>
         </div>
