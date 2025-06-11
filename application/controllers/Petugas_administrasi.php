@@ -558,7 +558,7 @@ class Petugas_administrasi extends CI_Controller
 
         $data['list_petugas'] = $this->db->order_by('Nama', 'ASC')->get('petugas')->result_array();
         if (empty($data['list_petugas'])) {
-            log_message('warning', 'Tidak ada data petugas ditemukan di tabel petugas.');
+            log_message('error', 'Tidak ada data petugas ditemukan di tabel petugas.');
         }
 
         $this->form_validation->set_rules('petugas_id', 'Petugas Pemeriksa', 'required|numeric');

@@ -595,7 +595,7 @@ class Admin extends CI_Controller
             //     log_message('error', 'Gagal menyimpan log kuota. Data: ' . print_r($log_data, true) . ' Error: ' . $this->db->error()['message']);
             // }
         } else {
-            log_message('warning', 'Data log kuota tidak lengkap, tidak disimpan: ' . print_r($log_data, true));
+            log_message('error', 'Data log kuota tidak lengkap, tidak disimpan: ' . print_r($log_data, true));
         }
     }
 
@@ -630,7 +630,7 @@ class Admin extends CI_Controller
         // Ambil daftar petugas dari tabel 'petugas'
         $data['list_petugas'] = $this->db->order_by('Nama', 'ASC')->get('petugas')->result_array();
         if (empty($data['list_petugas'])) {
-            log_message('warning', 'Tidak ada data petugas ditemukan di tabel petugas.');
+            log_message('error', 'Tidak ada data petugas ditemukan di tabel petugas.');
         }
 
         // Validasi form
