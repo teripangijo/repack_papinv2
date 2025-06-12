@@ -17,3 +17,4 @@ vendor/
 .env
 buat_hash.php
 test_session_write.php
+ttd/*
