@@ -92,9 +92,6 @@
                 if ($date_obj) {
                     $bulan = array(1 => 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember');
                     $hari = array('Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu');
-                    // Untuk tanggal saja, tanpa hari dan jam:
-                    // return (int)$date_obj->format('d') . ' ' . $bulan[(int)$date_obj->format('m')] . ' ' . $date_obj->format('Y');
-                    // Untuk format lengkap dengan hari dan jam (sesuaikan jika hanya perlu tanggal)
                     return (int)$date_obj->format('d') . ' ' . $bulan[(int)$date_obj->format('m')] . ' ' . $date_obj->format('Y');
                 }
                 return htmlspecialchars($date_sql);
@@ -104,11 +101,6 @@
         }
     }
 
-    // Data user yang login (untuk logo) dan data perusahaan (untuk kop dan ttd PIC)
-    // Controller User->print_bukti_pengajuan_kuota() mengirimkan:
-    // $data['user'] (berisi $user_login dari session, termasuk $user['image'] sebagai logo)
-    // $data['user_perusahaan'] (berisi data perusahaan termasuk nama, alamat, pic, jabatanPic, ttd)
-    // $data['pengajuan'] (berisi detail pengajuan kuota itu sendiri)
 
     $logo_perusahaan_file = (isset($user['image']) && $user['image'] != 'default.jpg' && !empty($user['image'])) ? $user['image'] : null;
     $ttd_pic_file = (isset($user_perusahaan['ttd']) && !empty($user_perusahaan['ttd'])) ? $user_perusahaan['ttd'] : null;
@@ -141,7 +133,7 @@
             <td class="label-cell">No</td>
             <td class="colon-cell">:</td>
             <td class="value-cell"><?= isset($pengajuan['nomor_surat_pengajuan']) ? htmlspecialchars($pengajuan['nomor_surat_pengajuan']) : '-'; ?></td>
-            <td class="date-cell">Pangkalpinang, <?= isset($pengajuan['tanggal_surat_pengajuan']) ? dateConvertFull($pengajuan['tanggal_surat_pengajuan']) : dateConvertFull(date('Y-m-d')); // Tanggal surat atau tanggal hari ini ?></td>
+            <td class="date-cell">Pangkalpinang, <?= isset($pengajuan['tanggal_surat_pengajuan']) ? dateConvertFull($pengajuan['tanggal_surat_pengajuan']) : dateConvertFull(date('Y-m-d')); ?></td>
         </tr>
         <tr>
             <td class="label-cell">Hal</td>

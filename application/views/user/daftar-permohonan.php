@@ -1,4 +1,4 @@
-<?php // application/views/user/daftar-permohonan.php ?>
+<?php ?>
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800"><?= isset($subtitle) ? htmlspecialchars($subtitle) : 'Daftar Permohonan Impor Kembali Saya'; ?></h1>
@@ -26,7 +26,7 @@
                             <th>Jumlah</th>
                             <th>Waktu Submit</th>
                             <th>Status</th>
-                            <th style="min-width: 120px;">Action</th> <?php // Lebarkan sedikit untuk tombol ?>
+                            <th style="min-width: 120px;">Action</th> <?php ?>
                         </tr>
                     </thead>
                     <tbody>
@@ -44,7 +44,6 @@
                                         <?php
                                         $status_text = '-'; $status_badge = 'secondary';
                                         if (isset($p['status'])) {
-                                            // Anda bisa membuat helper untuk ini
                                             switch ($p['status']) {
                                                 case '0': $status_text = 'Baru Masuk'; $status_badge = 'dark'; break;
                                                 case '5': $status_text = 'Diproses Admin'; $status_badge = 'info'; break;
@@ -63,7 +62,6 @@
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         <?php
-                                        // Tombol Edit hanya jika status '0' (Baru Masuk) atau '5' (Diproses Admin - asumsi belum dikunci)
                                         $deletable_import_statuses = ['0', '5'];
                                         if (isset($p['status']) && in_array($p['status'], $deletable_import_statuses)):
                                         ?>

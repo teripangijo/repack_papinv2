@@ -1,4 +1,4 @@
-<?php // application/views/admin/prosesSurat.php ?>
+<?php ?>
 
 <div class="container-fluid">
 
@@ -26,7 +26,7 @@
             <h6 class="m-0 font-weight-bold text-primary">Formulir Finalisasi Permohonan - ID: <?= htmlspecialchars($permohonan['id']); ?></h6>
         </div>
         <div class="card-body">
-            <?php // GANTI form action biasa dengan form_open_multipart untuk handle file upload ?>
+            <?php ?>
             <?php echo form_open_multipart('petugas_administrasi/prosesSurat/' . $permohonan['id']); ?>
             
                 <fieldset class="border p-3 mb-4">
@@ -152,7 +152,7 @@
                         </div>
                     </div>
 
-                    <?php // Bagian Upload Surat Persetujuan/Penolakan (Wajib jika Disetujui) ?>
+                    <?php ?>
                     <div class="form-group mb-3" id="upload_surat_persetujuan_box">
                         <label class="small mb-1" for="file_surat_keputusan">Upload File Surat Persetujuan Pengeluaran <span id="surat_keputusan_wajib_text" class="text-danger">*</span> <span class="text-info small">(Max 2MB: PDF, JPG, PNG)</span></label>
                         <?php if(!empty($permohonan['file_surat_keputusan'])): ?>
@@ -181,7 +181,7 @@
                             </div>
                             <?= form_error('link', '<small class="text-danger">', '</small>'); ?>
                         </div> -->
-                         <div class="col-md-6 mb-3" id="catatan_penolakan_box" style="display: none;"> <?php // Awalnya disembunyikan ?>
+                         <div class="col-md-6 mb-3" id="catatan_penolakan_box" style="display: none;"> <?php ?>
                             <label class="small mb-1" for="catatan_penolakan">Catatan Penolakan <span class="text-danger">*</span></label>
                             <textarea class="form-control form-control-sm <?= (form_error('catatan_penolakan')) ? 'is-invalid' : ''; ?>" id="catatan_penolakan" name="catatan_penolakan" rows="3" placeholder="Jelaskan alasan penolakan..."><?= set_value('catatan_penolakan', $permohonan['catatan_penolakan'] ?? ''); ?></textarea>
                             <?= form_error('catatan_penolakan', '<small class="text-danger">', '</small>'); ?>

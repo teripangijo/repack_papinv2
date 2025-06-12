@@ -1,13 +1,6 @@
 <?php
-// File: views/petugas/form_edit_profil_petugas.php
 
-// Ambil data user yang login (sudah dikirim dari controller Petugas::edit_profil())
-// $user['name'] -> Nama Petugas
-// $user['email'] -> NIP Petugas (karena NIP disimpan di kolom email untuk login)
-// $user['image'] -> Nama file gambar profil saat ini
 
-// Ambil data detail petugas (sudah dikirim dari controller Petugas::edit_profil())
-// $petugas_detail['Jabatan'] -> Jabatan Petugas
 ?>
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
@@ -20,7 +13,7 @@
     <!-- <?php if ($this->session->flashdata('message')) : ?>
         <?= $this->session->flashdata('message'); ?>
     <?php endif; ?> -->
-    <?php if (validation_errors()) : // Meskipun validasi utama hanya untuk file, bisa ada error lain ?>
+    <?php if (validation_errors()) : ?>
         <div class="alert alert-danger" role="alert">
             <?= validation_errors(); ?>
         </div>
@@ -36,11 +29,11 @@
                     <form action="<?= site_url('petugas/edit_profil'); ?>" method="post" enctype="multipart/form-data">
                         <div class="row">
                             <div class="col-md-4 text-center">
-                                <img src="<?= base_url('uploads/profile_images/' . ($user['image'] ?? 'default.jpg')); // Sesuaikan path jika berbeda ?>"
+                                <img src="<?= base_url('uploads/profile_images/' . ($user['image'] ?? 'default.jpg')); ?>"
                                      alt="Foto Profil <?= htmlspecialchars($user['name'] ?? ''); ?>"
                                      class="img-thumbnail rounded-circle mb-3"
                                      style="width: 150px; height: 150px; object-fit: cover;"
-                                     onerror="this.onerror=null; this.src='<?= base_url('assets/img/default-avatar.png'); // Fallback avatar default jika gambar utama gagal ?>';">
+                                     onerror="this.onerror=null; this.src='<?= base_url('assets/img/default-avatar.png'); ?>';">
                                 
                                 <div class="form-group">
                                     <label for="profile_image">Ganti Foto Profil</label>
@@ -55,7 +48,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="nip_petugas">NIP (Nomor Induk Pegawai)</label>
-                                    <input type="text" class="form-control" id="nip_petugas" value="<?= htmlspecialchars($user['email'] ?? 'N/A'); // NIP disimpan di kolom email ?>" readonly>
+                                    <input type="text" class="form-control" id="nip_petugas" value="<?= htmlspecialchars($user['email'] ?? 'N/A'); ?>" readonly>
                                 </div>
                                 <div class="form-group">
                                     <label for="jabatan_petugas_display">Jabatan</label>
@@ -77,7 +70,7 @@
                 <div class="card-body">
                     <p>Di halaman ini Anda hanya dapat mengubah foto profil Anda.</p>
                     <p>Untuk perubahan data lain seperti Nama, NIP, atau Jabatan, silakan hubungi Administrator.</p>
-                    <p>Anda juga dapat <a href="<?= site_url('auth/changepass'); // Link ke ganti password umum ?>">mengganti password Anda</a> jika diperlukan.</p>
+                    <p>Anda juga dapat <a href="<?= site_url('auth/changepass'); ?>">mengganti password Anda</a> jika diperlukan.</p>
                 </div>
             </div>
         </div>

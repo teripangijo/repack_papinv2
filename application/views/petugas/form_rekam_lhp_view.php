@@ -19,13 +19,10 @@
         <div class="card-body">
             <?php
             $jumlahDiajukanDariPermohonan = $permohonan['JumlahBarang'] ?? 0;
-            // Logging di view (hanya untuk debug, hapus atau komentari setelah selesai)
-            // log_message('debug', 'VIEW FORM REKAM LHP - Data Permohonan: ' . print_r($permohonan, true));
-            // log_message('debug', 'VIEW FORM REKAM LHP - Jumlah Diajukan Dari Permohonan: ' . $jumlahDiajukanDariPermohonan);
             ?>
             <div class="row mb-3">
                 <div class="col-md-6">
-                    <p><strong>Nama Barang (sesuai permohonan):</strong> <?= htmlspecialchars($permohonan['NamaBarang'] ?? '-'); // Pastikan 'NamaBarang' juga benar ?></p>
+                    <p><strong>Nama Barang (sesuai permohonan):</strong> <?= htmlspecialchars($permohonan['NamaBarang'] ?? '-'); ?></p>
                 </div>
                 <div class="col-md-6">
                     <p><strong>Jumlah Diajukan (oleh pemohon):</strong> <span class="font-weight-bold"><?= htmlspecialchars(number_format($jumlahDiajukanDariPermohonan, 0, ',', '.')); ?></span> Unit</p>

@@ -1,4 +1,4 @@
-<?php // application/views/admin/detail_permohonan_admin_view.php ?>
+<?php ?>
 
 <div class="container-fluid">
 
@@ -6,15 +6,15 @@
         <h1 class="h3 mb-0 text-gray-800"><?= htmlspecialchars($subtitle ?? 'Detail Permohonan Impor'); ?></h1>
         <div>
             <?php if (isset($permohonan_detail['status'])): ?>
-                <?php if ($permohonan_detail['status'] == '0' || $permohonan_detail['status'] == '5'): // Baru Masuk atau Diproses Admin ?>
+                <?php if ($permohonan_detail['status'] == '0' || $permohonan_detail['status'] == '5'): ?>
                     <a href="<?= site_url('petugas_administrasi/penunjukanPetugas/' . $permohonan_detail['id']); ?>" class="btn btn-sm btn-success shadow-sm mr-2">
                         <i class="fas fa-user-plus fa-sm text-white-50"></i> Proses & Tunjuk Petugas
                     </a>
-                <?php elseif ($permohonan_detail['status'] == '1'): // Penunjukan Pemeriksa ?>
+                <?php elseif ($permohonan_detail['status'] == '1'): ?>
                     <a href="<?= site_url('petugas_administrasi/penunjukanPetugas/' . $permohonan_detail['id']); ?>" class="btn btn-sm btn-warning shadow-sm mr-2">
                         <i class="fas fa-edit fa-sm text-white-50"></i> Lihat/Edit Penunjukan
                     </a>
-                <?php elseif ($permohonan_detail['status'] == '2'): // LHP Direkam ?>
+                <?php elseif ($permohonan_detail['status'] == '2'): ?>
                      <a href="<?= site_url('petugas_administrasi/prosesSurat/' . $permohonan_detail['id']); ?>" class="btn btn-sm btn-primary shadow-sm mr-2">
                         <i class="fas fa-flag-checkered fa-sm text-white-50"></i> Proses Penyelesaian Akhir
                     </a>
@@ -181,7 +181,7 @@
             </div>
         </div>
 
-        <?php // Bagian Hasil Akhir disesuaikan ?>
+        <?php ?>
         <?php if ($permohonan_detail['status'] == '3' || $permohonan_detail['status'] == '4'): ?>
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
@@ -189,13 +189,13 @@
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-lg-12 mb-3"> <?php // Ubah menjadi col-lg-12 agar lebih rapi jika hanya ini ?>
+                        <div class="col-lg-12 mb-3"> <?php ?>
                             <strong class="d-block text-primary">Surat Persetujuan / Penolakan:</strong>
                             <table class="table table-sm table-borderless table-hover">
                                 <tr><td width="40%">No. Surat</td><td>: <?= htmlspecialchars($permohonan_detail['nomorSetuju'] ?? '-'); ?></td></tr>
                                 <tr><td>Tanggal Surat</td><td>: <?= isset($permohonan_detail['tgl_S']) && $permohonan_detail['tgl_S'] != '0000-00-00' ? date('d M Y', strtotime($permohonan_detail['tgl_S'])) : '-'; ?></td></tr>
                                 
-                                <?php // Menampilkan File Surat Keputusan (Persetujuan/Penolakan) ?>
+                                <?php ?>
                                 <?php if ($permohonan_detail['status'] == '3' && isset($permohonan_detail['file_surat_keputusan']) && !empty($permohonan_detail['file_surat_keputusan'])): ?>
                                     <tr>
                                         <td>File Surat Persetujuan</td>
@@ -213,7 +213,7 @@
                             </table>
                         </div>
 
-                        <?php // Menampilkan Catatan Penolakan jika statusnya ditolak ?>
+                        <?php ?>
                         <?php if ($permohonan_detail['status'] == '4' && isset($permohonan_detail['catatan_penolakan']) && !empty($permohonan_detail['catatan_penolakan'])): ?>
                         <div class="col-lg-12 mb-3">
                             <strong class="d-block text-danger">Catatan Penolakan:</strong>

@@ -1,5 +1,4 @@
 <?php
-// Definisikan nilai default atau pesan jika data perusahaan tidak ada
 $display_nama_pers = '<span class="text-muted"><em>Data belum dilengkapi</em></span>';
 $display_npwp = '<span class="text-muted"><em>Data belum dilengkapi</em></span>';
 $display_alamat = '<span class="text-muted"><em>Data belum dilengkapi</em></span>';
@@ -10,7 +9,6 @@ $display_no_skep = '<span class="text-muted"><em>Data belum dilengkapi</em></spa
 $display_quota = '<span class="text-muted"><em>Data belum dilengkapi</em></span>';
 $perusahaan_data_exists = false;
 
-// Jika $user_perusahaan ada dan merupakan array, isi variabel display dengan data aktual
 if (isset($user_perusahaan) && is_array($user_perusahaan) && !empty($user_perusahaan)) {
     $perusahaan_data_exists = true;
     $display_nama_pers = isset($user_perusahaan['NamaPers']) ? htmlspecialchars($user_perusahaan['NamaPers']) : '<span class="text-danger"><em>Data tidak ditemukan</em></span>';
@@ -23,11 +21,8 @@ if (isset($user_perusahaan) && is_array($user_perusahaan) && !empty($user_perusa
     $display_quota = isset($user_perusahaan['quota']) ? htmlspecialchars($user_perusahaan['quota']) : '<span class="text-danger"><em>Data tidak ditemukan</em></span>';
 }
 
-// Persiapkan path gambar profil pengguna (logo)
 $profile_image_name = isset($user['image']) && !empty($user['image']) ? $user['image'] : 'default.jpg';
-// === UBAH PATH DI SINI ===
 $profile_image_path = base_url('uploads/kop/' . htmlspecialchars($profile_image_name));
-// ==========================
 
 ?>
 
@@ -36,7 +31,6 @@ $profile_image_path = base_url('uploads/kop/' . htmlspecialchars($profile_image_
     <h1 class="h3 mb-4 text-gray-800"><?= isset($subtitle) ? htmlspecialchars($subtitle) : 'My Profile'; ?></h1>
 
     <!-- <?php
-    // Menampilkan flashdata message jika ada.
     if ($this->session->flashdata('message')) {
         echo $this->session->flashdata('message');
     }
@@ -79,7 +73,7 @@ $profile_image_path = base_url('uploads/kop/' . htmlspecialchars($profile_image_
         </div>
     </div>
 
-    <?php if (isset($user['is_active']) && $user['is_active'] == 1) : // Hanya tampilkan detail perusahaan jika user aktif ?>
+    <?php if (isset($user['is_active']) && $user['is_active'] == 1) : ?>
         <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Informasi Perusahaan</h6>

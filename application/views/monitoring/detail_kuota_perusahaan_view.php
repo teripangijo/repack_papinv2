@@ -1,6 +1,5 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
-// Variabel dari controller: $user, $title, $subtitle, $perusahaan_info, $detail_kuota_items, $histori_transaksi_kuota
 ?>
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
@@ -83,8 +82,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
             </div>
         </div>
         
-        <?php // --- BAGIAN BARU UNTUK HISTORI TRANSAKSI KUOTA --- ?>
-        <?php if (isset($histori_transaksi_kuota)): // Cek apakah variabelnya ada (bisa jadi kosong jika tidak ada histori) ?>
+        <?php ?>
+        <?php if (isset($histori_transaksi_kuota)): ?>
         <div class="card shadow mb-4">
             <div class="card-header py-3">
                 <h6 class="m-0 font-weight-bold text-primary">Histori Perubahan Kuota</h6>
@@ -129,12 +128,10 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                                 <td>
                                     <?php if(!empty($log['id_referensi_transaksi']) && !empty($log['tipe_referensi'])): ?>
                                         <?php 
-                                        $link_ref = '#'; // Default
+                                        $link_ref = '#'; 
                                         if ($log['tipe_referensi'] == 'permohonan_impor_selesai' && !empty($log['id_referensi_transaksi'])) {
                                             $link_ref = site_url('monitoring/detail_permohonan_impor/' . $log['id_referensi_transaksi']);
                                         } elseif (($log['tipe_referensi'] == 'pengajuan_kuota_disetujui' || $log['tipe_referensi'] == 'penambahan_kuota_manual') && !empty($log['id_referensi_transaksi'])) {
-                                            // Jika penambahan manual merujuk ke id_user_kuota_barang, link mungkin tidak relevan,
-                                            // atau jika merujuk ke id_pengajuan_kuota:
                                             $link_ref = site_url('monitoring/detail_pengajuan_kuota/' . $log['id_referensi_transaksi']);
                                         }
                                         ?>
@@ -158,7 +155,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
             </div>
         </div>
         <?php endif; ?>
-        <?php // --- AKHIR BAGIAN HISTORI TRANSAKSI KUOTA --- ?>
+        <?php ?>
 
     <?php else: ?>
         <div class="alert alert-warning" role="alert">

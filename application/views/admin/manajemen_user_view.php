@@ -1,17 +1,17 @@
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800"><?= htmlspecialchars($subtitle ?? 'Manajemen User'); ?></h1>
-        <div> <?php // Wrapper untuk tombol-tombol tambah ?>
+        <div> <?php ?>
             <div class="btn-group">
                 <button type="button" class="btn btn-sm btn-primary shadow-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <i class="fas fa-user-plus fa-sm text-white-50"></i> Tambah User Baru
                 </button>
                 <div class="dropdown-menu">
-                    <?php // Ambil daftar role dari controller atau query langsung di sini jika perlu ?>
-                    <?php // Misalnya, $roles sudah di-pass dari controller Admin::manajemen_user() ?>
+                    <?php ?>
+                    <?php ?>
                     <?php if (!empty($roles)): ?>
                         <?php foreach($roles as $role): ?>
-                            <?php if ($role['id'] != 1): // Jangan tampilkan opsi tambah Admin ?>
+                            <?php if ($role['id'] != 1): ?>
                                 <a class="dropdown-item" href="<?= site_url('admin/tambah_user/' . $role['id']); ?>">Tambah <?= htmlspecialchars($role['role']); ?></a>
                             <?php endif; ?>
                         <?php endforeach; ?>
@@ -48,7 +48,7 @@
                         <tr>
                             <td><?= $no++; ?></td>
                             <td><?= htmlspecialchars($usr['name']); ?></td>
-                            <td><?= htmlspecialchars($usr['email']); // Ini bisa email atau NIP ?></td>
+                            <td><?= htmlspecialchars($usr['email']); ?></td>
                             <td><span class="badge badge-info"><?= htmlspecialchars($usr['role_name'] ?? 'N/A'); ?></span></td>
                             <td>
                                 <?php if ($usr['is_active'] == 1): ?>
@@ -62,14 +62,14 @@
                                 <a href="<?= site_url('admin/edit_user/' . $usr['id']); ?>" class="btn btn-warning btn-circle btn-sm my-1" title="Edit User">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <?php // Ganti password bisa untuk semua role kecuali admin lain (jika user id 1 adalah superadmin)
-                                if ($usr['id'] != 1 && $usr['id'] != $user['id']) : // Tidak bisa ganti password superadmin & diri sendiri dari sini ?>
+                                <?php 
+                                if ($usr['id'] != 1 && $usr['id'] != $user['id']) : ?>
                                 <a href="<?= site_url('admin/ganti_password_user/' . $usr['id']); ?>" class="btn btn-info btn-circle btn-sm my-1" title="Ganti Password User Ini">
                                     <i class="fas fa-key"></i>
                                 </a>
                                 <?php endif; ?>
 
-                                <?php if ($usr['id'] != 1) : // Admin utama (misal ID 1) tidak bisa dihapus ?>
+                                <?php if ($usr['id'] != 1) : ?>
                                 <a href="<?= site_url('admin/delete_user/' . $usr['id']); ?>" class="btn btn-danger btn-circle btn-sm my-1" title="Hapus User" onclick="return confirm('Apakah Anda yakin ingin menghapus user <?= htmlspecialchars($usr['name']); ?>? Tindakan ini juga akan menghapus data terkait jika ada (misal data detail petugas).');">
                                     <i class="fas fa-trash"></i>
                                 </a>

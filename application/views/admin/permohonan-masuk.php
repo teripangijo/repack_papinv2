@@ -1,4 +1,4 @@
-<?php // application/views/admin/permohonan-masuk.php ?>
+<?php ?>
 
 <div class="container-fluid">
 
@@ -51,9 +51,7 @@
                                                 case '2': $status_text = 'LHP Direkam'; $status_badge = 'warning'; break;
                                                 case '3': $status_text = 'Selesai (Disetujui)'; $status_badge = 'success'; break;
                                                 case '4': $status_text = 'Selesai (Ditolak)'; $status_badge = 'danger'; break;
-                                                // --- PERBAIKAN DITAMBAHKAN DI SINI ---
                                                 case '6': $status_text = 'Ditolak oleh Admin'; $status_badge = 'danger'; break;
-                                                // --- AKHIR PERBAIKAN ---
                                                 default: $status_text = 'Status Tidak Dikenal (' . htmlspecialchars($p['status']) . ')';
                                             }
                                         }
@@ -69,19 +67,15 @@
                                             <?php
                                             if (isset($p['status'])) {
                                                 switch ($p['status']) {
-                                                    case '0': // Baru Masuk
-                                                    case '5': // Diproses Admin
-                                                        // Tombol Proses
+                                                    case '0': 
+                                                    case '5': 
                                                         echo '<a href="' . site_url('admin/penunjukanPetugas/' . $p['id']) . '" class="btn btn-success btn-circle btn-sm my-1" title="Proses & Tunjuk Petugas Pemeriksa">
                                                                 <i class="fas fa-user-plus"></i>
                                                               </a>';
                                                         
-                                                        // --- PERBAIKAN DITAMBAHKAN DI SINI ---
-                                                        // Tombol Tolak Langsung
                                                         echo '<a href="' . site_url('admin/tolak_permohonan_awal/' . $p['id']) . '" class="btn btn-warning btn-circle btn-sm my-1" title="Tolak Langsung Permohonan">
                                                                 <i class="fas fa-ban"></i>
                                                               </a>';
-                                                        // --- AKHIR PERBAIKAN ---
                                                         break;
                                                     case '1':
                                                         echo '<a href="' . site_url('admin/penunjukanPetugas/' . $p['id']) . '" class="btn btn-warning btn-circle btn-sm my-1" title="Lihat/Edit Penunjukan Petugas">
@@ -102,7 +96,7 @@
                                                       </a>';
                                             }
 
-                                            if (isset($p['status']) && in_array($p['status'], ['0', '5', '6'])) { // Ditambah status 6 agar bisa dihapus jika salah tolak
+                                            if (isset($p['status']) && in_array($p['status'], ['0', '5', '6'])) { 
                                                 echo '<a href="' . site_url('admin/hapus_permohonan/' . $p['id']) . '" class="btn btn-danger btn-circle btn-sm my-1" title="Hapus Permohonan" onclick="return confirm(\'APAKAH ANDA YAKIN ingin menghapus permohonan dengan ID Aju: ' . htmlspecialchars($p['id']) . ' atas nama ' . htmlspecialchars($p['NamaPers'] ?? 'N/A') . '?\nTindakan ini tidak dapat diurungkan!\');">
                                                         <i class="fas fa-trash"></i>
                                                       </a>';

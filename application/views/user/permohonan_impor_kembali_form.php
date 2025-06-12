@@ -1,14 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-// Variabel yang dikirim dari Controller:
-// $user (array): Data user yang login
-// $user_perusahaan (array): Data perusahaan terkait
-// $list_barang_berkuota (array): Daftar barang yang memiliki kuota aktif untuk user ini
-// $title (string)
-// $subtitle (string)
 
-// Inisialisasi untuk JavaScript jika ada value lama dari form_error atau set_value
 $selected_id_kuota_barang_js = set_value('id_kuota_barang_selected', '');
 $selected_nama_barang_js = set_value('NamaBarang', '');
 $prefill_skep = '';
@@ -46,7 +39,6 @@ if (!empty($selected_id_kuota_barang_js) && !empty($list_barang_berkuota)) {
     <?php
     if ($this->session->flashdata('message')) { echo $this->session->flashdata('message'); }
     if ($this->session->flashdata('message_form_permohonan')) { echo $this->session->flashdata('message_form_permohonan'); }
-    // Tampilkan validation errors tanpa tag <p> default agar styling konsisten dengan form_error() per field
     if (validation_errors()) { echo '<div class="alert alert-danger" role="alert">' . validation_errors('', '') . '</div>';}
     ?>
 
@@ -56,7 +48,7 @@ if (!empty($selected_id_kuota_barang_js) && !empty($list_barang_berkuota)) {
         </div>
         <div class="card-body">
             <?php if (isset($user['is_active']) && $user['is_active'] == 1 && !empty($user_perusahaan)) : ?>
-                <?php // === PASTIKAN BARIS INI MENGGUNAKAN form_open_multipart() ===
+                <?php 
                 echo form_open_multipart(site_url('user/permohonan_impor_kembali'), ['class' => 'needs-validation', 'novalidate' => '']); ?>
 
                 <div class="alert alert-secondary small">
@@ -108,7 +100,7 @@ if (!empty($selected_id_kuota_barang_js) && !empty($list_barang_berkuota)) {
                     </div>
                     <div class="form-group col-md-3">
                         <label for="JumlahBarang">Jumlah Barang Diajukan <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control <?= (form_error('JumlahBarang')) ? 'is-invalid' : ''; ?>" id="JumlahBarang" name="JumlahBarang" value="<?= set_value('JumlahBarang'); ?>" required min="1" max="9999999999"> <?php // max akan diatur JS ?>
+                        <input type="number" class="form-control <?= (form_error('JumlahBarang')) ? 'is-invalid' : ''; ?>" id="JumlahBarang" name="JumlahBarang" value="<?= set_value('JumlahBarang'); ?>" required min="1" max="9999999999"> <?php ?>
                         <?= form_error('JumlahBarang', '<small class="text-danger pl-1">', '</small>'); ?>
                     </div>
                     <div class="form-group col-md-4">
@@ -142,7 +134,7 @@ if (!empty($selected_id_kuota_barang_js) && !empty($list_barang_berkuota)) {
                 <button type="submit" class="btn btn-primary btn-user btn-block mt-4" id="submitPermohonanBtn" <?= empty($list_barang_berkuota) ? 'disabled title="Tidak ada barang dengan kuota aktif untuk diajukan."' : ''; ?>>
                     <i class="fas fa-paper-plane fa-fw"></i> Ajukan Permohonan
                 </button>
-                <?php echo form_close(); // === PASTIKAN INI ADA UNTUK MENUTUP FORM === ?>
+                <?php echo form_close(); ?>
 
             <?php else : ?>
                 <div class="alert alert-warning" role="alert">

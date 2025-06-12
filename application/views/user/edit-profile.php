@@ -1,22 +1,14 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-// Variabel dari Controller:
-// $user (array): Data user login
-// $user_perusahaan (array): Data perusahaan, bisa kosong jika baru
-// $is_activating (boolean): True jika $user_perusahaan kosong
-// $daftar_kuota_barang_user (array): Daftar kuota barang (jika !$is_activating)
-// $title, $subtitle
-// $upload_error (dari flashdata jika ada)
 
-// --- Inisialisasi Variabel untuk Form ---
 $default_nama_pers = '';
 $default_npwp = '';
 $default_alamat = '';
 $default_telp = '';
 $default_pic = '';
 $default_jabatan_pic = '';
-$default_no_skep_fasilitas = ''; // Untuk SKEP Fasilitas Umum
+$default_no_skep_fasilitas = ''; 
 $existing_ttd_file = null;
 $existing_skep_fasilitas_file = null;
 
@@ -33,19 +25,17 @@ if (isset($user_perusahaan) && is_array($user_perusahaan) && !empty($user_perusa
 }
 
 $current_user_image = isset($user['image']) ? $user['image'] : 'default.jpg';
-// !!! GANTI 'uploads/kop/' DENGAN 'uploads/profile_images/' JIKA ITU PATH YANG BENAR UNTUK FOTO PROFIL/LOGO USER !!!
 $profileImagePath = base_url('uploads/profile_images/') . htmlspecialchars($current_user_image);
-$fallbackImagePath = base_url('assets/img/default-avatar.png'); // Sediakan gambar fallback
+$fallbackImagePath = base_url('assets/img/default-avatar.png'); 
 
 $form_action_url = site_url('user/edit');
 ?>
 
-<div class="container-fluid"> <?php // Container-fluid utama untuk view ini ?>
+<div class="container-fluid"> <?php ?>
 
     <h1 class="h3 mb-4 text-gray-800"> <?= isset($subtitle) ? htmlspecialchars($subtitle) : 'Edit Profil & Perusahaan'; ?></h1>
 
     <?php
-    // if ($this->session->flashdata('message')) { echo $this->session->flashdata('message'); }
     if (validation_errors()) { echo '<div class="alert alert-danger mt-3" role="alert">' . validation_errors() . '</div>'; }
     if (isset($upload_error) && !empty($upload_error)) { echo '<div class="alert alert-danger mt-3" role="alert">' . $upload_error . '</div>'; }
     ?>
@@ -123,7 +113,7 @@ $form_action_url = site_url('user/edit');
         </div>
     </div>
 
-    <?php // --- BAGIAN INPUT KUOTA AWAL SAAT AKTIVASI --- ?>
+    <?php ?>
     <?php if (isset($is_activating) && $is_activating): ?>
     <div class="card shadow mb-4">
         <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Input Kuota Awal (Jika Sudah Memiliki SKEP & Kuota Sebelumnya)</h6></div>
@@ -165,9 +155,9 @@ $form_action_url = site_url('user/edit');
         </div>
     </div>
     <?php endif; ?>
-    <?php // --- AKHIR BAGIAN INPUT KUOTA AWAL --- ?>
+    <?php ?>
 
-    <?php // --- MENAMPILKAN DAFTAR KUOTA PER BARANG YANG SUDAH ADA (JIKA BUKAN AKTIVASI) --- ?>
+    <?php ?>
     <?php if (isset($is_activating) && !$is_activating && isset($daftar_kuota_barang_user)): ?>
     <div class="card shadow mb-4">
         <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Daftar Kuota per Jenis Barang Saat Ini (Read-Only)</h6></div>
@@ -216,7 +206,7 @@ $form_action_url = site_url('user/edit');
         </div>
     </div>
     <?php endif; ?>
-    <?php // --- AKHIR BAGIAN DAFTAR KUOTA PER BARANG --- ?>
+    <?php ?>
 
     <div class="card shadow mb-4">
         <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Upload Dokumen Perusahaan</h6></div>
@@ -233,7 +223,7 @@ $form_action_url = site_url('user/edit');
                  <?= form_error('ttd', '<small class="text-danger d-block mt-1">', '</small>'); ?>
                 <small id="ttdHelp" class="form-text text-muted">Format: JPG, PNG, PDF. Maksimum ukuran 1MB.</small>
                 <?php if ($existing_ttd_file): ?>
-                    <small class="form-text text-info mt-1">File TTD saat ini: <a href="<?= base_url('uploads/ttd/' . htmlspecialchars($existing_ttd_file)); // Pastikan path ini benar ?>" target="_blank"><?= htmlspecialchars($existing_ttd_file); ?></a></small>
+                    <small class="form-text text-info mt-1">File TTD saat ini: <a href="<?= base_url('uploads/ttd/' . htmlspecialchars($existing_ttd_file)); ?>" target="_blank"><?= htmlspecialchars($existing_ttd_file); ?></a></small>
                 <?php endif; ?>
             </div>
         </div>
@@ -244,7 +234,7 @@ $form_action_url = site_url('user/edit');
     </button>
     <?php echo form_close(); ?>
 
-</div> <?php // Penutup untuk <div class="container-fluid"> yang dibuka di awal file ini. ?>
+</div> <?php ?>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -279,7 +269,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 "search": "Cari:",
                 "paginate": { "first": "Awal", "last": "Akhir", "next": "Berikutnya", "previous": "Sebelumnya"}
             },
-            "pageLength": 5, // Contoh: tampilkan 5 entri per halaman
+            "pageLength": 5,
             "lengthMenu": [ [5, 10, 25, -1], [5, 10, 25, "Semua"] ]
         });
     }

@@ -1,14 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-// Variabel dari Controller Admin::histori_kuota_perusahaan():
-// $user (array): Data admin yang login
-// $perusahaan (array): Data perusahaan yang dilihat historinya
-// $title (string)
-// $subtitle (string)
-// $id_pers_untuk_histori (int)
 
-// Perhitungan agregat akan dilakukan oleh JavaScript setelah data AJAX diterima
 ?>
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">

@@ -1,11 +1,10 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
-// Variabel dari controller: $user, $subtitle, $title, $daftar_pengajuan_kuota
 ?>
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800"><?= htmlspecialchars($subtitle ?? 'Pantauan Data Pengajuan Kuota'); ?></h1>
-        <?php // Tombol aksi lain jika perlu ?>
+        <?php ?>
     </div>
 
     <?php if ($this->session->flashdata('message')) { echo $this->session->flashdata('message'); } ?>
@@ -55,7 +54,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                                     <i class="fas fa-eye"></i>
                                 </a>
                                 <?php if (!empty($pk['file_sk_petugas'])): ?>
-                                    <a href="<?= site_url('admin/download_sk_kuota_admin/' . $pk['id']); // Arahkan ke method download di Admin controller ?>" class="btn btn-sm btn-success btn-circle" title="Unduh SK Penetapan Kuota">
+                                    <a href="<?= site_url('admin/download_sk_kuota_admin/' . $pk['id']); ?>" class="btn btn-sm btn-success btn-circle" title="Unduh SK Penetapan Kuota">
                                         <i class="fas fa-download"></i>
                                     </a>
                                 <?php endif; ?>

@@ -1,4 +1,4 @@
-<?php // application/views/admin/form_tambah_user_view.php ?>
+<?php ?>
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800"><?= htmlspecialchars($subtitle ?? 'Tambah User Baru'); ?></h1>
@@ -20,7 +20,7 @@
         </div>
         <div class="card-body">
             <?php echo form_open(site_url('admin/tambah_user/' . $role_id_to_add)); ?>
-                <input type="hidden" name="role_id_hidden" value="<?= htmlspecialchars($role_id_to_add); ?>"> <?php // Opsional, bisa juga diambil dari URL di controller ?>
+                <input type="hidden" name="role_id_hidden" value="<?= htmlspecialchars($role_id_to_add); ?>"> <?php ?>
 
                 <div class="form-group">
                     <label for="name">Nama Lengkap <span class="text-danger">*</span></label>
@@ -32,14 +32,14 @@
                 $login_identifier_label_view = 'Login Identifier';
                 $login_identifier_placeholder = 'Masukkan Email atau NIP';
                 $login_identifier_help_text = 'Digunakan untuk login.';
-                if ($role_id_to_add == 2) { // Pengguna Jasa
+                if ($role_id_to_add == 2) { 
                     $login_identifier_label_view = 'Email';
                     $login_identifier_placeholder = 'Contoh: user@example.com';
-                } elseif ($role_id_to_add == 3) { // Petugas
+                } elseif ($role_id_to_add == 3) { 
                     $login_identifier_label_view = 'NIP (Nomor Induk Pegawai)';
                     $login_identifier_placeholder = 'Masukkan NIP Petugas';
                     $login_identifier_help_text = 'NIP akan digunakan untuk login.';
-                } elseif ($role_id_to_add == 4) { // Monitoring
+                } elseif ($role_id_to_add == 4) { 
                     $login_identifier_label_view = 'NIP (Nomor Induk Pegawai)';
                     $login_identifier_placeholder = 'Masukkan NIP Monitoring';
                     $login_identifier_help_text = 'NIP akan digunakan untuk login.';
@@ -65,7 +65,7 @@
                     <?= form_error('confirm_password', '<small class="text-danger pl-3">', '</small>'); ?>
                 </div>
 
-                <?php // Field spesifik untuk Role Petugas (ID 3) ?>
+                <?php ?>
                 <?php if ($role_id_to_add == 3) : ?>
                 <hr>
                 <h6 class="text-muted">Data Detail Spesifik untuk Role Petugas</h6>
@@ -76,18 +76,9 @@
                 </div>
                 <?php endif; ?>
 
-                <?php // Tambahkan blok elseif untuk field spesifik Role Monitoring (ID 4) jika ada ?>
-                <?php /*
-                <?php elseif ($role_id_to_add == 4) : ?>
-                <hr>
-                <h6 class="text-muted">Data Detail Spesifik untuk Role Monitoring</h6>
-                <div class="form-group">
-                    <label for="field_monitoring">Field Monitoring <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control <?= form_error('field_monitoring') ? 'is-invalid' : ''; ?>" id="field_monitoring" name="field_monitoring" value="<?= set_value('field_monitoring'); ?>" required>
-                    <?= form_error('field_monitoring', '<small class="text-danger pl-3">', '</small>'); ?>
-                </div>
-                <?php endif; ?>
-                */ ?>
+                <?php ?>
+                <?php 
+ ?>
 
                 <button type="submit" class="btn btn-primary">Simpan User</button>
                 <a href="<?= site_url('admin/manajemen_user'); ?>" class="btn btn-secondary ml-2">Batal</a>

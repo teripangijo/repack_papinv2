@@ -1,6 +1,5 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
-// Variabel dari controller: $user, $subtitle, $title, $daftar_permohonan_impor
 ?>
 <div class="container-fluid">
 

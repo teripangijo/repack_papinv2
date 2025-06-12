@@ -1,13 +1,6 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-// Variabel dari controller:
-// $user, $user_perusahaan, $title, $subtitle
-// $total_kuota_awal_disetujui_barang
-// $total_sisa_kuota_barang
-// $total_kuota_terpakai_barang
-// $daftar_kuota_per_barang (array)
-// $recent_permohonan (array)
 ?>
 <div class="container-fluid">
 
@@ -22,7 +15,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
     <!-- <?php
     if ($this->session->flashdata('message')) { echo $this->session->flashdata('message'); }
-    if ($this->session->flashdata('message_dashboard')) { echo $this->session->flashdata('message_dashboard'); } // Untuk pesan dari controller index
+    if ($this->session->flashdata('message_dashboard')) { echo $this->session->flashdata('message_dashboard'); } 
     ?> -->
 
     <?php if (isset($user['is_active']) && $user['is_active'] == 0 && empty($user_perusahaan)) : ?>

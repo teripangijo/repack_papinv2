@@ -1,4 +1,4 @@
-<?php // application/views/user/daftar_pengajuan_kuota_view.php ?>
+<?php ?>
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800"><?= isset($subtitle) ? htmlspecialchars($subtitle) : 'Daftar Pengajuan Kuota Saya'; ?></h1>
@@ -64,7 +64,6 @@
                                             <i class="fas fa-print"></i>
                                         </a>
                                         <?php
-                                        // Tombol Hapus hanya jika status 'pending'
                                         if (isset($p['status']) && strtolower($p['status']) == 'pending'):
                                         ?>
                                             <a href="<?= site_url('user/hapus_pengajuan_kuota/' . $p['id']); ?>" class="btn btn-danger btn-circle btn-sm my-1" title="Hapus Pengajuan Kuota" onclick="return confirm('Apakah Anda yakin ingin menghapus pengajuan kuota untuk barang \'<?= htmlspecialchars($p['nama_barang_kuota']); ?>\' ini?');">

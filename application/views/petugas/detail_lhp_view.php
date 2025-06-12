@@ -53,7 +53,7 @@
                         <?php endif; ?>
                     </div>
                 </div>
-                 <?php // Tombol Edit LHP hanya jika permohonan masih berstatus 'LHP Direkam' (status '2') di tabel user_permohonan
+                 <?php 
                     $status_permohonan_terkait = '';
                     if(isset($lhp_detail['id_permohonan_ajuan'])){
                         $permohonan_status_query = $this->db->select('status')->get_where('user_permohonan', ['id' => $lhp_detail['id_permohonan_ajuan']])->row();

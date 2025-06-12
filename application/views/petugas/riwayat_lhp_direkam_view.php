@@ -58,12 +58,12 @@
                                 ?>
                             </td>
                             <td class="text-center">
-                                <a href="<?= site_url('petugas/detail_lhp_direkam/' . ($lhp_item['id_lhp'] ?? $lhp_item['id'])); // Gunakan id_lhp jika ada, fallback ke id (PK tabel LHP) ?>" class="btn btn-sm btn-info" title="Lihat Detail LHP">
+                                <a href="<?= site_url('petugas/detail_lhp_direkam/' . ($lhp_item['id_lhp'] ?? $lhp_item['id'])); ?>" class="btn btn-sm btn-info" title="Lihat Detail LHP">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <?php // Tombol Edit LHP hanya jika permohonan masih berstatus 'LHP Direkam' (status '2')
+                                <?php 
                                 if (isset($lhp_item['status_permohonan_terkini']) && $lhp_item['status_permohonan_terkini'] == '2'): ?>
-                                    <a href="<?= site_url('petugas/rekam_lhp/' . $lhp_item['id_permohonan']); // Link ke form rekam_lhp untuk edit ?>" class="btn btn-sm btn-warning mt-1" title="Edit LHP">
+                                    <a href="<?= site_url('petugas/rekam_lhp/' . $lhp_item['id_permohonan']); ?>" class="btn btn-sm btn-warning mt-1" title="Edit LHP">
                                         <i class="fas fa-edit"></i>
                                     </a>
                                 <?php endif; ?>

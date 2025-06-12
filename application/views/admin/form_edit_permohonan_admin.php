@@ -1,7 +1,6 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-// Inisialisasi untuk pre-fill dan JavaScript berdasarkan data permohonan yang diedit
 $id_kuota_barang_saat_ini = $permohonan_edit['id_kuota_barang_digunakan'] ?? set_value('id_kuota_barang_selected', '');
 $nama_barang_saat_ini = $permohonan_edit['NamaBarang'] ?? set_value('NamaBarang', '');
 $jumlah_barang_saat_ini_di_permohonan = (float)($permohonan_edit['JumlahBarang'] ?? 0);
@@ -31,12 +30,11 @@ if (!empty($id_kuota_barang_saat_ini) && isset($list_barang_berkuota) && is_arra
     </div>
 
     <?php
-    // Menampilkan pesan flashdata dan error validasi
     if ($this->session->flashdata('message')) {
         echo $this->session->flashdata('message');
     }
     if (validation_errors()) {
-        echo '<div class="alert alert-danger mt-3" role="alert">' . validation_errors('', '') . '</div>'; // Menghapus <p> tag default
+        echo '<div class="alert alert-danger mt-3" role="alert">' . validation_errors('', '') . '</div>'; 
     }
     ?>
 
@@ -56,7 +54,7 @@ if (!empty($id_kuota_barang_saat_ini) && isset($list_barang_berkuota) && is_arra
 
             <?php echo form_open_multipart(site_url('user/editpermohonan/' . $permohonan_edit['id']), ['class' => 'needs-validation', 'novalidate' => '']); ?>
             
-            <?php // Hidden fields untuk menyimpan data yang mungkin diubah oleh JavaScript ?>
+            <?php ?>
             <input type="hidden" name="id_kuota_barang_selected" id="id_kuota_barang_selected" value="<?= set_value('id_kuota_barang_selected', $id_kuota_barang_saat_ini); ?>">
             <input type="hidden" name="NamaBarang" id="NamaBarangHidden" value="<?= set_value('NamaBarang', $nama_barang_saat_ini); ?>">
 
@@ -81,7 +79,7 @@ if (!empty($id_kuota_barang_saat_ini) && isset($list_barang_berkuota) && is_arra
             <div class="form-row">
                 <div class="form-group col-md-5">
                     <label for="id_kuota_barang_selected_dropdown">Nama / Jenis Barang (sesuai kuota) <span class="text-danger">*</span></label>
-                    <select class="form-control <?= (form_error('id_kuota_barang_selected') || form_error('NamaBarang')) ? 'is-invalid' : ''; ?>" id="id_kuota_barang_selected_dropdown" name="id_kuota_barang_selected_dropdown_display" required> <?php // Nama dropdown display bisa berbeda, tapi hidden inputnya yang penting ?>
+                    <select class="form-control <?= (form_error('id_kuota_barang_selected') || form_error('NamaBarang')) ? 'is-invalid' : ''; ?>" id="id_kuota_barang_selected_dropdown" name="id_kuota_barang_selected_dropdown_display" required> <?php ?>
                         <option value="">-- Pilih Barang & Kuota SKEP --</option>
                         <?php if (!empty($list_barang_berkuota)): ?>
                             <?php foreach($list_barang_berkuota as $barang): ?>
@@ -102,7 +100,7 @@ if (!empty($id_kuota_barang_saat_ini) && isset($list_barang_berkuota) && is_arra
                 </div>
                 <div class="form-group col-md-3">
                     <label for="JumlahBarang">Jumlah Barang Diajukan <span class="text-danger">*</span></label>
-                    <input type="number" class="form-control <?= (form_error('JumlahBarang')) ? 'is-invalid' : ''; ?>" id="JumlahBarang" name="JumlahBarang" value="<?= set_value('JumlahBarang', $permohonan_edit['JumlahBarang'] ?? ''); ?>" required min="1" max="9999999999"> <?php // Beri max yang besar, akan di-adjust oleh JS ?>
+                    <input type="number" class="form-control <?= (form_error('JumlahBarang')) ? 'is-invalid' : ''; ?>" id="JumlahBarang" name="JumlahBarang" value="<?= set_value('JumlahBarang', $permohonan_edit['JumlahBarang'] ?? ''); ?>" required min="1" max="9999999999"> <?php ?>
                     <?= form_error('JumlahBarang', '<small class="text-danger pl-1">', '</small>'); ?>
                 </div>
                 <div class="form-group col-md-4">
@@ -140,7 +138,7 @@ if (!empty($id_kuota_barang_saat_ini) && isset($list_barang_berkuota) && is_arra
                 <label for="file_bc_manifest_edit">Upload File BC 1.1 / Manifest Baru <span class="text-danger">*</span> <span class="text-info small">(Hanya PDF, max 2MB)</span></label>
                 <span class="text-info small d-block mb-1">Kosongkan jika tidak ingin mengganti. Jika file baru diupload, file lama akan terhapus. Jika belum ada file sebelumnya, maka ini wajib diisi.</span>
                 <div class="custom-file">
-                    <input type="file" class="custom-file-input <?= (form_error('file_bc_manifest_edit')) ? 'is-invalid' : ''; ?>" id="file_bc_manifest_edit" name="file_bc_manifest_edit" accept=".pdf" <?= (empty($permohonan_edit['file_bc_manifest'])) ? 'required' : ''; ?>> <?php // Tambahkan 'required' jika file lama kosong ?>
+                    <input type="file" class="custom-file-input <?= (form_error('file_bc_manifest_edit')) ? 'is-invalid' : ''; ?>" id="file_bc_manifest_edit" name="file_bc_manifest_edit" accept=".pdf" <?= (empty($permohonan_edit['file_bc_manifest'])) ? 'required' : ''; ?>> <?php ?>
                     <label class="custom-file-label" for="file_bc_manifest_edit">Pilih file baru (PDF)...</label>
                 </div>
                 <?= form_error('file_bc_manifest_edit', '<small class="text-danger pl-1">', '</small>'); ?>
@@ -154,7 +152,7 @@ if (!empty($id_kuota_barang_saat_ini) && isset($list_barang_berkuota) && is_arra
             <?php echo form_close(); ?>
         </div>
     </div>
-</div> <?php // Penutup untuk <div class="container-fluid"> ?>
+</div> <?php ?>
 
 <script>
 $(document).ready(function () {

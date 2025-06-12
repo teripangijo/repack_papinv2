@@ -1,7 +1,5 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
-// Variabel dari controller: $user, $title, $subtitle, $permohonan_detail, $lhp_detail
-// $user_perusahaan (jika diperlukan, pastikan di-pass dari controller)
 ?>
 <div class="container-fluid">
 
@@ -22,14 +20,14 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                 <h6 class="m-0 font-weight-bold text-primary">Informasi Permohonan (ID Aju: <?= htmlspecialchars($permohonan_detail['id']); ?>)</h6>
                 <span>
                     <?php
-                        $status_info = status_permohonan_text_badge($permohonan_detail['status'] ?? ''); // Helper
+                        $status_info = status_permohonan_text_badge($permohonan_detail['status'] ?? ''); 
                         echo '<span class="badge badge-pill badge-' . htmlspecialchars($status_info['badge']) . ' p-2">' . htmlspecialchars($status_info['text']) . '</span>';
                     ?>
                 </span>
             </div>
             <div class="card-body">
-                <?php // --- SEMUA BAGIAN DETAIL DATA (Data Pengajuan, Perusahaan, Angkutan) SAMA SEPERTI DI VIEW ADMIN --- ?>
-                <?php // --- Anda bisa copy-paste bagian tersebut dari detail_permohonan_admin_view.php --- ?>
+                <?php ?>
+                <?php ?>
                 
                 <div class="row">
                     <div class="col-lg-6 mb-3">
@@ -117,7 +115,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
             </div>
             <div class="card-body">
                 <?php if (isset($lhp_detail) && !empty($lhp_detail)): ?>
-                     <?php // ... (Copy bagian LHP dari view admin/detail_permohonan_admin_view.php) ... ?>
+                     <?php ?>
                 <?php else: ?>
                     <p class="text-muted"><em>Data LHP belum direkam atau tidak ditemukan untuk permohonan ini.</em></p>
                 <?php endif; ?>
@@ -130,7 +128,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                     <h6 class="m-0 font-weight-bold text-primary">Hasil Akhir & Dokumen Penyelesaian</h6>
                 </div>
                 <div class="card-body">
-                     <?php // ... (Copy bagian Hasil Akhir dari view admin/detail_permohonan_admin_view.php yang sudah disesuaikan) ... ?>
+                     <?php ?>
                 </div>
             </div>
         <?php endif; ?>

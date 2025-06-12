@@ -42,7 +42,7 @@
                                 </div>
                         <?php else: ?>
                             <p class="text-danger"><strong>LHP belum direkam atau data No/Tgl LHP tidak lengkap. Tidak dapat melanjutkan penyelesaian.</strong></p>
-                            <?php // Tombol submit akan di-disable di bawah jika kondisi ini terpenuhi ?>
+                            <?php ?>
                         <?php endif; ?>
                         <hr>
 

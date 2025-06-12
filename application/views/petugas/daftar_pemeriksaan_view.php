@@ -4,10 +4,6 @@
         </div>
 
     <?php
-    // Flashdata akan ditampilkan oleh templates/topbar_petugas.php atau di tempat lain secara global.
-    // if ($this->session->flashdata('message')) {
-    //     echo $this->session->flashdata('message');
-    // }
     ?>
 
     <div class="card shadow mb-4">
@@ -52,7 +48,7 @@
                             </td>
                         </tr>
                         <?php endforeach; ?>
-                        <?php // Bagian 'else' untuk data kosong akan ditangani oleh DataTables "emptyTable" ?>
+                        <?php ?>
                         <?php endif; ?>
                     </tbody>
                 </table>

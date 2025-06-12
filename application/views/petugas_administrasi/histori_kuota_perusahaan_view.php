@@ -1,16 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-// Variabel dari Controller Admin::histori_kuota_perusahaan():
-// $user (array): Data admin yang login
-// $perusahaan (array): Data perusahaan yang dilihat historinya
-// $daftar_kuota_barang_perusahaan (array): List kuota per barang dari user_kuota_barang
-// $histori_kuota_transaksi (array): Log transaksi dari log_kuota_perusahaan
-// $title (string)
-// $subtitle (string)
-// $id_pers_untuk_histori (int)
 
-// Hitung total agregat dari daftar kuota barang untuk ditampilkan di summary (jika perlu)
 $total_initial_agregat = 0;
 $total_remaining_agregat = 0;
 if (isset($daftar_kuota_barang_perusahaan) && !empty($daftar_kuota_barang_perusahaan)) {
@@ -130,7 +121,7 @@ $total_terpakai_agregat = $total_initial_agregat - $total_remaining_agregat;
                                 <td><?= $no_log++; ?></td>
                                 <td><?= isset($log['tanggal_transaksi']) ? date('d/m/Y H:i', strtotime($log['tanggal_transaksi'])) : '-'; ?></td>
                                 <td>
-                                    <?php /* ... (logika badge jenis transaksi seperti sebelumnya) ... */
+                                    <?php 
                                     $jenis_badge = 'secondary';
                                     if (isset($log['jenis_transaksi'])) {
                                         if ($log['jenis_transaksi'] == 'penambahan') $jenis_badge = 'success';
@@ -156,7 +147,7 @@ $total_terpakai_agregat = $total_initial_agregat - $total_remaining_agregat;
                                         } elseif (in_array($log['tipe_referensi'], ['permohonan_impor', 'permohonan_impor_barang', 'permohonan_impor_selesai'])) {
                                             $link_ref = site_url('petugas_administrasi/detail_permohonan_admin/' . $id_ref);
                                         } elseif ($log['tipe_referensi'] == 'input_kuota_awal_user' && !empty($log['id_kuota_barang_referensi'])) {
-                                            $link_ref = '#!'; // Placeholder
+                                            $link_ref = '#!'; 
                                         }
                                         ?>
                                         <br><small><a href="<?= $link_ref; ?>" <?= $link_ref != '#!' ? 'target="_blank"' : ''; ?> title="Lihat detail referensi">(Ref: <?= htmlspecialchars(ucfirst(str_replace('_', ' ', $log['tipe_referensi']))) . ' ID ' . $id_ref; ?><?= !empty($log['id_kuota_barang_referensi']) ? ' / KuotaBrg ID '.$log['id_kuota_barang_referensi'] : '' ?>)</a></small>

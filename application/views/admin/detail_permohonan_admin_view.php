@@ -1,7 +1,5 @@
-<?php // application/views/admin/detail_permohonan_admin_view.php 
+<?php 
 defined('BASEPATH') OR exit('No direct script access allowed');
-// Variabel dari controller: $user, $title, $subtitle, $permohonan_detail, $lhp_detail
-// dan $is_monitoring_view (jika diakses dari controller Monitoring, akan bernilai TRUE)
 ?>
 <div class="container-fluid">
 
@@ -9,16 +7,15 @@ defined('BASEPATH') OR exit('No direct script access allowed');
         <h1 class="h3 mb-0 text-gray-800"><?= htmlspecialchars($subtitle ?? 'Detail Permohonan Impor'); ?></h1>
         <div>
             <?php
-            // Tentukan URL kembali berdasarkan apakah ini view monitoring atau bukan
-            $url_kembali = site_url('admin/permohonanMasuk'); // Default untuk Admin
+            $url_kembali = site_url('admin/permohonanMasuk'); 
             if (isset($is_monitoring_view) && $is_monitoring_view === TRUE) {
-                $url_kembali = site_url('monitoring/permohonan_impor'); // Untuk Monitoring
+                $url_kembali = site_url('monitoring/permohonan_impor'); 
             } elseif ($this->session->userdata('role_id') == 2) { 
                  $url_kembali = site_url('user/daftarPermohonan');
             }
             ?>
 
-            <?php // Tombol aksi Admin (hanya tampil jika BUKAN view monitoring DAN jika role adalah Admin) ?>
+            <?php ?>
             <?php if ((!isset($is_monitoring_view) || $is_monitoring_view !== TRUE) && $this->session->userdata('role_id') == 1): ?>
                 <?php if (isset($permohonan_detail['status'])): ?>
                     <?php if ($permohonan_detail['status'] == '0' || $permohonan_detail['status'] == '5'): ?>
@@ -35,20 +32,20 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                         </a>
                     <?php endif; ?>
                 <?php endif; ?>
-            <?php endif; // Akhir blok tombol aksi admin ?>
+            <?php endif; ?>
             
             <a href="<?= $url_kembali; ?>" class="btn btn-sm btn-secondary shadow-sm">
                 <i class="fas fa-arrow-left fa-sm text-white-50"></i> Kembali ke Daftar
             </a>
-             <?php // Tombol Cetak PDF Permohonan Awal (relevan untuk semua yang bisa lihat detail) ?>
+             <?php ?>
             <?php if (isset($permohonan_detail['id'])): ?>
             <a href="<?= site_url('user/printPdf/' . $permohonan_detail['id']); ?>" target="_blank" class="btn btn-info btn-sm ml-2"><i class="fas fa-print fa-sm"></i> Cetak Form Awal</a>
             <?php endif; ?>
         </div>
     </div>
     
-    <?php // ... sisa dari view detail_permohonan_admin_view.php Anda ... ?>
-    <?php // (Pastikan semua bagian lain dari view ini tetap sama seperti yang sudah kita finalisasi sebelumnya) ?>
+    <?php ?>
+    <?php ?>
     <?php if ($this->session->flashdata('message')) { echo $this->session->flashdata('message'); } ?>
     <?php if ($this->session->flashdata('message_error_quota')) { echo $this->session->flashdata('message_error_quota'); } ?>
 
@@ -125,7 +122,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
             </div>
         </div>
 
-        <?php // Card Detail Penugasan Pemeriksa ?>
+        <?php ?>
         <div class="card shadow mb-4">
             <div class="card-header py-3">
                 <h6 class="m-0 font-weight-bold text-primary">Detail Penugasan Pemeriksa</h6>
@@ -156,7 +153,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
             </div>
         </div>
 
-        <?php // Card Detail LHP ?>
+        <?php ?>
         <div class="card shadow mb-4">
             <div class="card-header py-3">
                 <h6 class="m-0 font-weight-bold text-primary">Detail Laporan Hasil Pemeriksaan (LHP)</h6>
@@ -207,7 +204,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
             </div>
         </div>
 
-        <?php // Card Hasil Akhir ?>
+        <?php ?>
         <?php if (isset($permohonan_detail['status']) && ($permohonan_detail['status'] == '3' || $permohonan_detail['status'] == '4')): ?>
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
@@ -243,7 +240,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                         <?php endif; ?>
                     </div>
                      <p class="font-italic mt-2"><small>Waktu Penyelesaian Permohonan: <?= isset($permohonan_detail['time_selesai']) && $permohonan_detail['time_selesai'] != '0000-00-00 00:00:00' ? date('d M Y H:i:s', strtotime($permohonan_detail['time_selesai'])) : '-'; ?></small></p>
-                     <p class="font-italic"><small>Diproses oleh Admin: <?= htmlspecialchars($permohonan_detail['nama_admin_pemroses'] ?? 'N/A'); // Pastikan field ini ada dari controller ?></small></p>
+                     <p class="font-italic"><small>Diproses oleh Admin: <?= htmlspecialchars($permohonan_detail['nama_admin_pemroses'] ?? 'N/A'); ?></small></p>
                 </div>
             </div>
         <?php endif; ?>

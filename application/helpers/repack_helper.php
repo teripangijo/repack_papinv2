@@ -158,11 +158,10 @@ if (!function_exists('status_pengajuan_kuota_text_badge')) {
     }
 }
 
-// application/helpers/repack_helper.php
 if (!function_exists('status_kuota_barang_text_badge')) {
     function status_kuota_barang_text_badge($status_code) {
         $status_text = ucfirst($status_code ?? 'N/A');
-        $status_badge = 'secondary'; // Default badge
+        $status_badge = 'secondary'; 
         switch (strtolower($status_code ?? '')) {
             case 'active':
                 $status_text = 'Aktif';
@@ -176,11 +175,10 @@ if (!function_exists('status_kuota_barang_text_badge')) {
                 $status_text = 'Habis';
                 $status_badge = 'danger';
                 break;
-            case 'pending_approval': // Contoh status lain jika ada
+            case 'pending_approval': 
                 $status_text = 'Menunggu Persetujuan';
                 $status_badge = 'info';
                 break;
-            // Tambahkan case lain jika perlu
         }
         return ['text' => $status_text, 'badge' => $status_badge];
     }

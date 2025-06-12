@@ -5,15 +5,12 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800"><?= isset($subtitle) ? htmlspecialchars($subtitle) : 'Pengajuan Penambahan Kuota'; ?></h1>
-        <a href="<?= site_url('user/daftar_pengajuan_kuota'); // Perbaikan: daftar_pengajuan_kuota_user menjadi daftar_pengajuan_kuota (sesuai method Anda) ?>" class="btn btn-sm btn-secondary shadow-sm">
+        <a href="<?= site_url('user/daftar_pengajuan_kuota'); ?>" class="btn btn-sm btn-secondary shadow-sm">
             <i class="fas fa-list fa-sm text-white-50"></i> Lihat Daftar Pengajuan Kuota
         </a>
     </div>
 
     <?php
-    // if ($this->session->flashdata('message')) { echo $this->session->flashdata('message'); }
-    // Hapus validasi error di sini jika sudah ditampilkan oleh form_error() per field
-    // if (validation_errors()) { echo '<div class="alert alert-danger" role="alert">' . validation_errors() . '</div>'; }
     ?>
 
     <div class="row">
@@ -32,13 +29,13 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                             Akun Anda belum aktif. Tidak dapat mengajukan kuota. Mohon <a href="<?= site_url('user/edit'); ?>" class="alert-link">lengkapi profil perusahaan Anda</a> jika belum, atau hubungi Administrator.
                         </div>
                     <?php else: ?>
-                        <?php echo form_open_multipart(site_url('user/pengajuan_kuota'), ['class' => 'needs-validation', 'novalidate' => '']); // Tambah form_open_multipart untuk upload file ?>
+                        <?php echo form_open_multipart(site_url('user/pengajuan_kuota'), ['class' => 'needs-validation', 'novalidate' => '']); ?>
                         <div class="alert alert-secondary small">
                             <strong>Informasi Perusahaan & Kuota Saat Ini:</strong><br>
                             Nama: <?= htmlspecialchars($user_perusahaan['NamaPers'] ?? 'N/A'); ?><br>
                             NPWP: <?= htmlspecialchars($user_perusahaan['npwp'] ?? 'N/A'); ?><br>
                             <hr class="my-1">
-                            <?php // Menggunakan variabel baru dari controller ?>
+                            <?php ?>
                             Total Kuota Awal (Semua Barang): <?= isset($total_kuota_awal_semua_barang) ? number_format($total_kuota_awal_semua_barang,0,',','.') : '0'; ?> Unit<br>
                             Total Sisa Kuota (Semua Barang): <?= isset($total_sisa_kuota_semua_barang) ? number_format($total_sisa_kuota_semua_barang,0,',','.') : '0'; ?> Unit
                             <p class="mt-2 mb-0"><em>Catatan: Informasi kuota di atas adalah total gabungan dari semua jenis barang yang telah disetujui. Pengajuan ini akan diproses untuk kuota barang spesifik.</em></p>
@@ -91,7 +88,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                                  <input type="file" class="custom-file-input <?= (form_error('file_lampiran_pengajuan')) ? 'is-invalid' : ''; ?>" id="file_lampiran_pengajuan" name="file_lampiran_pengajuan" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
                                  <label class="custom-file-label" for="file_lampiran_pengajuan">Pilih file...</label>
                             </div>
-                            <?php // Menampilkan error upload spesifik jika ada dari controller, atau form_error biasa
+                            <?php 
                                 if($this->session->flashdata('upload_error_file_lampiran_pengajuan')) {
                                     echo '<small class="text-danger d-block mt-1">' . $this->session->flashdata('upload_error_file_lampiran_pengajuan') . '</small>';
                                 } else {
@@ -125,7 +122,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
     </div>
 
 </div>
-<?php // Script untuk Gijgo Datepicker dan Custom File Input (tetap sama) ?>
+<?php ?>
 <script>
     $(document).ready(function () {
         // ... (skrip Anda tetap sama) ...

@@ -1,11 +1,5 @@
 <?php
-// Variabel yang dikirim dari controller Admin::proses_pengajuan_kuota():
-// $user (array): Data admin yang login
-// $pengajuan (array): Data detail pengajuan kuota dari user, termasuk join ke user_perusahaan
-// $title (string)
-// $subtitle (string)
 
-// Ambil nama barang yang diajukan dari data pengajuan
 $nama_barang_diajukan = isset($pengajuan['nama_barang_kuota']) ? htmlspecialchars($pengajuan['nama_barang_kuota']) : 'Tidak Diketahui';
 ?>
 
@@ -52,7 +46,7 @@ $nama_barang_diajukan = isset($pengajuan['nama_barang_kuota']) ? htmlspecialchar
                     <p><strong>Jumlah Kuota Diajukan:</strong> <span class="font-weight-bold text-info"><?= htmlspecialchars(number_format($pengajuan['requested_quota'] ?? 0, 0, ',', '.')); ?> Unit</span></p>
                     <p><strong>Alasan Pengajuan:</strong> <?= nl2br(htmlspecialchars($pengajuan['reason'] ?? 'N/A')); ?></p>
                     <p><strong>Tanggal Pengajuan Sistem:</strong> <?= isset($pengajuan['submission_date']) ? date('d M Y H:i:s', strtotime($pengajuan['submission_date'])) : 'N/A'; ?></p>
-                     <?php if (!empty($pengajuan['file_lampiran_user'])): // Sesuaikan nama kolom jika ada ?>
+                     <?php if (!empty($pengajuan['file_lampiran_user'])): ?>
                         <p><strong>File Lampiran User:</strong>
                             <a href="<?= base_url('uploads/lampiran_kuota/' . $pengajuan['file_lampiran_user']); ?>" target="_blank">
                                 <?= htmlspecialchars($pengajuan['file_lampiran_user']); ?>

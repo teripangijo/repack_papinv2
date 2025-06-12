@@ -1,7 +1,6 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-// Helper function untuk format tanggal
 if (!function_exists('dateConvertFullIndonesia')) {
     function dateConvertFullIndonesia($date_sql) {
         if (!is_string($date_sql) || empty(trim($date_sql)) || $date_sql == '0000-00-00' || $date_sql == '0000-00-00 00:00:00') {
@@ -109,7 +108,7 @@ $ttd_pic_file = (isset($user_perusahaan['ttd']) && !empty($user_perusahaan['ttd'
         <tr>
             <td style="width: 20%; text-align: center; vertical-align: top;">
                 <?php if ($logo_perusahaan_file) : ?>
-                    <img src="<?= base_url('uploads/profile_images/' . htmlspecialchars($logo_perusahaan_file)); // Ganti uploads/kop/ dengan path logo perusahaan jika beda ?>" alt="Logo Perusahaan" style="max-width: 90px; max-height: 90px; object-fit: contain;">
+                    <img src="<?= base_url('uploads/profile_images/' . htmlspecialchars($logo_perusahaan_file)); ?>" alt="Logo Perusahaan" style="max-width: 90px; max-height: 90px; object-fit: contain;">
                 <?php else: ?>
                     <div style="width:90px; height:90px; border:1px solid #eee; display:flex; align-items:center; justify-content:center; margin:auto; font-size:10px; color: #ccc;">LOGO</div>
                 <?php endif; ?>
@@ -176,7 +175,7 @@ $ttd_pic_file = (isset($user_perusahaan['ttd']) && !empty($user_perusahaan['ttd'
         <p>Hormat Kami,</p>
         <p>PT. <?= strtoupper(htmlspecialchars($user_perusahaan['NamaPers'] ?? 'NAMA PERUSAHAAN')); ?></p>
         <?php if ($ttd_pic_file) : ?>
-            <img src="<?= base_url('uploads/ttd/' . htmlspecialchars($ttd_pic_file)); // Pastikan path ini benar ?>" alt="Tanda Tangan PIC" style="max-height: 50px; margin-top:10px; margin-bottom:10px;">
+            <img src="<?= base_url('uploads/ttd/' . htmlspecialchars($ttd_pic_file)); ?>" alt="Tanda Tangan PIC" style="max-height: 50px; margin-top:10px; margin-bottom:10px;">
         <?php else : ?>
             <div style="height: 70px;">&nbsp;</div>
         <?php endif; ?>

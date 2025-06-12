@@ -1,10 +1,5 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
-// Variabel dari controller: $user, $subtitle, $title,
-// $total_pengajuan_kuota_all, $total_permohonan_impor_all,
-// $pengajuan_kuota_pending, $pengajuan_kuota_approved, $pengajuan_kuota_rejected,
-// $permohonan_impor_baru_atau_diproses_admin, $permohonan_impor_penunjukan_petugas,
-// $permohonan_impor_lhp_direkam, $permohonan_impor_selesai_disetujui, $permohonan_impor_selesai_ditolak
 ?>
 
 <div class="container-fluid">

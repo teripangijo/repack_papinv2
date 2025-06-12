@@ -1,10 +1,5 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
-// Variabel dari controller Monitoring::detail_pengajuan_kuota():
-// $user (data user monitoring yang login)
-// $title (string)
-// $subtitle (string)
-// $pengajuan (array berisi detail satu record pengajuan kuota)
 ?>
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
@@ -23,7 +18,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                     <h6 class="m-0 font-weight-bold text-primary">Pengajuan Kuota ID: <?= htmlspecialchars($pengajuan['id']); ?> oleh <?= htmlspecialchars($pengajuan['NamaPers'] ?? 'N/A'); ?></h6>
                     <?php
-                        $status_info = status_pengajuan_kuota_text_badge($pengajuan['status'] ?? ''); // Asumsi helper ada
+                        $status_info = status_pengajuan_kuota_text_badge($pengajuan['status'] ?? ''); 
                         echo '<span class="badge badge-'.htmlspecialchars($status_info['badge']).' p-2">'.htmlspecialchars($status_info['text']).'</span>';
                     ?>
                 </div>

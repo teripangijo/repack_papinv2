@@ -47,13 +47,8 @@
                         <?php if (!empty($list_petugas)): ?>
                             <?php foreach ($list_petugas as $petugas_item): ?>
                                 <?php
-                                // Di controller Admin.php -> penunjukanPetugas(), Anda mengambil $list_petugas dari tabel 'petugas'
-                                // $data['list_petugas'] = $this->db->order_by('Nama', 'ASC')->get('petugas')->result_array();
-                                // Jadi, $petugas_item['id'] adalah 'petugas.id'
-                                // dan $petugas_item['id_user'] adalah 'petugas.id_user' (FK ke user.id)
-                                // dan $petugas_item['Nama'] adalah 'petugas.Nama'
                                 ?>
-                                <option value="<?= htmlspecialchars($petugas_item['id']); // GUNAKAN 'id' DARI TABEL 'petugas' (petugas.id) ?>"
+                                <option value="<?= htmlspecialchars($petugas_item['id']); ?>"
                                         <?= set_select('petugas_id', $petugas_item['id'], ($permohonan['petugas'] ?? null) == $petugas_item['id']); ?>>
                                     <?= htmlspecialchars($petugas_item['Nama']); ?>
                                      (NIP: <?= htmlspecialchars($petugas_item['NIP'] ?? '-'); ?>)

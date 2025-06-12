@@ -2,14 +2,10 @@
 
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800"><?= isset($subtitle) ? htmlspecialchars($subtitle) : 'Daftar Pengajuan Kuota'; ?></h1>
-        <?php // Tombol "Ajukan Kuota Baru" tidak relevan untuk Admin di halaman ini ?>
+        <?php ?>
     </div>
 
     <?php
-    // Flashdata seharusnya sudah ditampilkan secara global oleh templates/topbar.php
-    // if ($this->session->flashdata('message')) {
-    //     echo $this->session->flashdata('message');
-    // }
     ?>
 
     <div class="card shadow mb-4">
@@ -61,7 +57,6 @@
                                                 case 'diproses': $status_badge = 'info'; $status_text = 'Diproses'; break;
                                                 case 'approved': $status_badge = 'success'; $status_text = 'Disetujui'; break;
                                                 case 'rejected': $status_badge = 'danger'; $status_text = 'Ditolak'; break;
-                                                // case 'selesai': $status_badge = 'primary'; $status_text = 'Selesai (SK Terbit)'; break; // Jika ada status ini
                                             }
                                         }
                                         echo '<span class="badge badge-pill badge-' . $status_badge . '">' . $status_text . '</span>';
@@ -88,7 +83,7 @@
                                 </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>
-                        <?php // Baris "Belum ada data pengajuan kuota." yang menggunakan colspan DIHAPUS dari sini ?>
+                        <?php ?>
                     </tbody>
                 </table>
             </div>

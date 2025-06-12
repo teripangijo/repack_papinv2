@@ -1,4 +1,4 @@
-<?php // application/views/petugas/monitoring_permohonan_view.php ?>
+<?php ?>
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800"><?= isset($subtitle) ? htmlspecialchars($subtitle) : 'Monitoring Permohonan Impor'; ?></h1>
@@ -37,20 +37,18 @@
                                     <td><?= htmlspecialchars($p['nomorSurat'] ?? '-'); ?></td>
                                     <td><?= isset($p['TglSurat']) && $p['TglSurat'] != '0000-00-00' ? date('d/m/Y', strtotime($p['TglSurat'])) : '-'; ?></td>
                                     <td><?= htmlspecialchars($p['NamaPers'] ?? 'N/A'); ?></td>
-                                    <td><?= htmlspecialchars($p['nama_pengaju_permohonan'] ?? 'N/A'); // Menggunakan alias dari query ?></td>
+                                    <td><?= htmlspecialchars($p['nama_pengaju_permohonan'] ?? 'N/A'); ?></td>
                                     <td><?= isset($p['time_stamp']) && $p['time_stamp'] != '0000-00-00 00:00:00' ? date('d/m/Y H:i', strtotime($p['time_stamp'])) : '-'; ?></td>
                                     <td><?= !empty($p['nama_petugas_pemeriksa']) ? htmlspecialchars($p['nama_petugas_pemeriksa']) : '<span class="text-muted font-italic">Belum Ditunjuk</span>'; ?></td>
                                     <td>
                                         <?php
                                         $status_text = '-'; $status_badge = 'secondary';
                                         if (isset($p['status'])) {
-                                            // Gunakan helper atau switch case seperti di view admin/user
-                                            // Contoh sederhana:
                                             if (function_exists('status_permohonan_text_badge')) {
                                                 $status_info = status_permohonan_text_badge($p['status']);
                                                 $status_text = $status_info['text'];
                                                 $status_badge = $status_info['badge'];
-                                            } else { // Fallback manual
+                                            } else { 
                                                  switch ($p['status']) {
                                                      case '0': $status_text = 'Baru Masuk'; $status_badge = 'dark'; break;
                                                      case '5': $status_text = 'Diproses Admin'; $status_badge = 'info'; break;

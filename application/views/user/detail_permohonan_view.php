@@ -1,4 +1,4 @@
-<?php // application/views/user/detail_permohonan_view.php
+<?php 
 defined('BASEPATH') OR exit('No direct script access allowed');
 ?>
 <div class="container-fluid">
@@ -15,7 +15,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
             <h6 class="m-0 font-weight-bold text-primary">Informasi Permohonan</h6>
             <div>
                 <a href="<?= site_url('user/daftarPermohonan'); ?>" class="btn btn-secondary btn-sm"><i class="fas fa-arrow-left fa-sm"></i> Kembali ke Daftar</a>
-                <?php // Tombol cetak PDF hanya jika data permohonan ada ?>
+                <?php ?>
                 <?php if (isset($permohonan_detail['id'])): ?>
                 <a href="<?= site_url('user/printPdf/' . $permohonan_detail['id']); ?>" target="_blank" class="btn btn-info btn-sm"><i class="fas fa-print fa-sm"></i> Cetak PDF Permohonan Awal</a>
                 <?php endif; ?>
@@ -69,7 +69,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                 <div class="row mt-2">
                     <div class="col-md-4"><strong>Jenis Barang:</strong> <?= htmlspecialchars($permohonan_detail['NamaBarang'] ?? '-'); ?></div>
                     <div class="col-md-4"><strong>Jumlah Diajukan:</strong> <?= htmlspecialchars(number_format($permohonan_detail['JumlahBarang'] ?? 0)); ?> <?= htmlspecialchars($permohonan_detail['SatuanBarang'] ?? 'Unit'); ?></div>
-                    <?php // Menampilkan File BC 1.1 / Manifest yang diupload user saat pengajuan ?>
+                    <?php ?>
                     <div class="col-md-4"><strong>File BC 1.1/Manifest Awal:</strong>
                         <?php if (isset($permohonan_detail['file_bc_manifest']) && !empty($permohonan_detail['file_bc_manifest'])): ?>
                             <a href="<?= base_url('uploads/bc_manifest/' . htmlspecialchars($permohonan_detail['file_bc_manifest'])); ?>" target="_blank" title="Lihat File BC 1.1 / Manifest Awal">
@@ -91,7 +91,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                 </div>
                 <hr>
 
-                <?php if (isset($permohonan_detail['status']) && $permohonan_detail['status'] >= '1' && $permohonan_detail['status'] != '5') : // Tampil jika sudah ada penunjukan petugas dan bukan lagi diproses admin awal ?>
+                <?php if (isset($permohonan_detail['status']) && $permohonan_detail['status'] >= '1' && $permohonan_detail['status'] != '5') : ?>
                     <h5 class="mt-4 mb-3 font-weight-bold text-primary">Informasi Penugasan & Pemeriksaan</h5>
                     <div class="row">
                         <div class="col-md-6"><strong>Petugas Pemeriksa:</strong> <?= htmlspecialchars($permohonan_detail['nama_petugas_pemeriksa'] ?? 'Belum Ditunjuk/Data Tidak Tersedia'); ?></div>
@@ -141,7 +141,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                 <?php endif; ?>
 
 
-                <?php // Bagian Keputusan Akhir Disesuaikan ?>
+                <?php ?>
                 <?php if (isset($permohonan_detail['status']) && ($permohonan_detail['status'] == '3' || $permohonan_detail['status'] == '4')) : ?>
                     <h5 class="mt-4 mb-3 font-weight-bold text-<?= $permohonan_detail['status'] == '3' ? 'success' : 'danger'; ?>">
                         Keputusan Akhir: <?= $permohonan_detail['status'] == '3' ? 'Permohonan Disetujui' : 'Permohonan Ditolak'; ?>
@@ -151,7 +151,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                         <div class="col-md-6"><strong>Tgl. Surat Persetujuan/Penolakan:</strong> <?= isset($permohonan_detail['tgl_S']) && $permohonan_detail['tgl_S'] != '0000-00-00' ? date('d F Y', strtotime($permohonan_detail['tgl_S'])) : '-'; ?></div>
                     </div>
 
-                    <?php // Menampilkan File Surat Keputusan jika Disetujui dan file ada ?>
+                    <?php ?>
                     <?php if ($permohonan_detail['status'] == '3' && isset($permohonan_detail['file_surat_keputusan']) && !empty($permohonan_detail['file_surat_keputusan'])): ?>
                     <div class="row mt-2">
                         <div class="col-md-12">
@@ -173,7 +173,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                     </div>
                     <?php endif; ?>
 
-                    <?php // Menampilkan Catatan Penolakan jika statusnya Ditolak ?>
+                    <?php ?>
                     <?php if ($permohonan_detail['status'] == '4' && isset($permohonan_detail['catatan_penolakan']) && !empty($permohonan_detail['catatan_penolakan'])): ?>
                     <div class="row mt-3">
                         <div class="col-md-12">

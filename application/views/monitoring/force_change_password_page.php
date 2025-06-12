@@ -17,7 +17,7 @@
                         </div>
                     <?php endif; ?>
 
-                    <form method="post" action="<?= site_url('petugas/force_change_password_page'); // Pastikan action benar ?>">
+                    <form method="post" action="<?= site_url('petugas/force_change_password_page'); ?>">
                         <div class="form-group">
                             <label for="new_password">Password Baru <span class="text-danger">*</span></label>
                             <input type="password" class="form-control <?= form_error('new_password') ? 'is-invalid' : ''; ?>" 
