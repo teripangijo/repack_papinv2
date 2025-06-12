@@ -6,11 +6,7 @@ class Petugas_administrasi extends CI_Controller
     public function __construct()
     {
         parent::__construct();
-        // Helper 'is_loggedin()' mungkin sudah melakukan pengecekan sesi email.
-        // Jika belum, _check_auth_pa() akan menanganinya.
-        // is_loggedin(); 
 
-        // Load library dan helper yang umum digunakan
         $this->load->library('session');
         $this->load->library('form_validation');
         $this->load->library('upload');
@@ -20,7 +16,6 @@ class Petugas_administrasi extends CI_Controller
             $this->load->database();
         }
         
-        // Pengecekan otentikasi dan otorisasi khusus untuk Petugas Administrasi
         $excluded_methods = ['logout']; 
         $current_method = $this->router->fetch_method();
 
@@ -55,15 +50,10 @@ class Petugas_administrasi extends CI_Controller
             $new_login_identifier = $this->input->post('login_identifier', true);
 
             if (!empty($new_login_identifier) && $new_login_identifier !== $current_login_identifier) {
-                // Assuming Petugas Administrasi uses email, role_id 5
-                // For other roles, adjust validation as needed.
                 $this->form_validation->set_rules('login_identifier', 'Email Login', 'trim|required|valid_email|is_unique[user.email.id.'.$user_id.']');
-                if ($this->form_validation->run() == TRUE) { // Check validation for this rule specifically if other rules exist
+                if ($this->form_validation->run() == TRUE) { 
                      $update_data_user['email'] = htmlspecialchars($new_login_identifier);
                 } else {
-                    // $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">' . validation_errors() . '</div>');
-                    // redirect('petugas_administrasi/edit_profil'); // Adjusted redirect
-                    // return;
                 }
             }
 
@@ -86,14 +76,14 @@ class Petugas_administrasi extends CI_Controller
                 if (!is_dir($upload_path_profile)) {
                     if (!@mkdir($upload_path_profile, 0777, true)) {
                         $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Gagal membuat direktori upload foto profil.</div>');
-                        redirect('petugas_administrasi/edit_profil'); // Adjusted redirect
+                        redirect('petugas_administrasi/edit_profil'); 
                         return;
                     }
                 }
 
                 if (!is_writable($upload_path_profile)) {
                     $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Upload error: Direktori foto profil tidak writable.</div>');
-                    redirect('petugas_administrasi/edit_profil'); // Adjusted redirect
+                    redirect('petugas_administrasi/edit_profil'); 
                     return;
                 }
 
@@ -124,7 +114,7 @@ class Petugas_administrasi extends CI_Controller
                     $this->session->set_flashdata('message', ($current_flash ? $current_flash . '<br>' : '') .'<div class="alert alert-danger" role="alert">Upload Foto Profil Gagal: ' . $this->profile_upload->display_errors('', '') . '</div>');
                 }
             }
-            redirect('petugas_administrasi/edit_profil'); // Adjusted redirect
+            redirect('petugas_administrasi/edit_profil'); 
             return; 
         }
 
@@ -133,7 +123,6 @@ class Petugas_administrasi extends CI_Controller
         $this->load->view('templates/header', $data);
         $this->load->view('templates/sidebar', $data);
         $this->load->view('templates/topbar', $data);
-        // Pastikan Anda membuat view ini: application/views/petugas_administrasi/form_edit_profil_admin.php (Adjusted Comment)
         $this->load->view('petugas_administrasi/form_edit_profil_admin', $data);
         $this->load->view('templates/footer');
     }
@@ -150,7 +139,7 @@ class Petugas_administrasi extends CI_Controller
         $role_id_session = $this->session->userdata('role_id');
         log_message('debug', 'Petugas_administrasi: _check_auth_petugas_administrasi() - Role ID: ' . ($role_id_session ?? 'NULL'));
 
-        if ($role_id_session != 5) { // Role ID 5 untuk Petugas Administrasi
+        if ($role_id_session != 5) { 
             log_message('error', 'Petugas_administrasi: _check_auth_petugas_administrasi() - Akses ditolak, role ID tidak sesuai: ' . $role_id_session);
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Akses Ditolak! Anda tidak diotorisasi untuk mengakses halaman ini.</div>');
             
@@ -210,14 +199,13 @@ class Petugas_administrasi extends CI_Controller
         $this->db->order_by('up.NamaPers', 'ASC');
         $data['monitoring_data'] = $this->db->get()->result_array();
 
-        log_message('debug', 'PETUGAS_ADMINISTRASI MONITORING KUOTA - Query: ' . $this->db->last_query()); // Adjusted Log
-        log_message('debug', 'PETUGAS_ADMINISTRASI MONITORING KUOTA - Data: ' . print_r($data['monitoring_data'], true)); // Adjusted Log
+        log_message('debug', 'PETUGAS_ADMINISTRASI MONITORING KUOTA - Query: ' . $this->db->last_query()); 
+        log_message('debug', 'PETUGAS_ADMINISTRASI MONITORING KUOTA - Data: ' . print_r($data['monitoring_data'], true)); 
 
         $this->load->view('templates/header', $data);
         $this->load->view('templates/sidebar', $data);
         $this->load->view('templates/topbar', $data);
-        // Consider if this view should be specific to petugas_administrasi
-        $this->load->view('petugas_administrasi/monitoring_kuota_view', $data); // Adjusted View Path
+        $this->load->view('petugas_administrasi/monitoring_kuota_view', $data); 
         $this->load->view('templates/footer');
     }
 
@@ -252,23 +240,23 @@ class Petugas_administrasi extends CI_Controller
         $this->load->view('templates/header', $data);
         $this->load->view('templates/sidebar', $data);
         $this->load->view('templates/topbar', $data);
-        $this->load->view('petugas_administrasi/permohonan-masuk', $data); // Adjusted View Path
+        $this->load->view('petugas_administrasi/permohonan-masuk', $data); 
         $this->load->view('templates/footer');
     }
 
     private function _get_upload_config($upload_path, $allowed_types, $max_size_kb, $max_width = null, $max_height = null) 
     {
-        log_message('debug', "Petugas_administrasi Controller: _get_upload_config() called. Path: {$upload_path}, Types: {$allowed_types}, Size: {$max_size_kb}KB"); // Adjusted Log
+        log_message('debug', "Petugas_administrasi Controller: _get_upload_config() called. Path: {$upload_path}, Types: {$allowed_types}, Size: {$max_size_kb}KB"); 
         if (!is_dir($upload_path)) {
-            log_message('debug', 'Petugas_administrasi Controller: _get_upload_config() - Upload path does not exist: ' . $upload_path); // Adjusted Log
+            log_message('debug', 'Petugas_administrasi Controller: _get_upload_config() - Upload path does not exist: ' . $upload_path); 
             if (!@mkdir($upload_path, 0777, true)) {
-                log_message('error', 'Petugas_administrasi Controller: _get_upload_config() - Gagal membuat direktori upload: ' . $upload_path . ' - Periksa izin parent direktori.'); // Adjusted Log
+                log_message('error', 'Petugas_administrasi Controller: _get_upload_config() - Gagal membuat direktori upload: ' . $upload_path . ' - Periksa izin parent direktori.'); 
                 return false;
             }
-            log_message('debug', 'Petugas_administrasi Controller: _get_upload_config() - Direktori upload berhasil dibuat: ' . $upload_path); // Adjusted Log
+            log_message('debug', 'Petugas_administrasi Controller: _get_upload_config() - Direktori upload berhasil dibuat: ' . $upload_path); 
         }
         if (!is_writable($upload_path)) {
-            log_message('error', 'Petugas_administrasi Controller: _get_upload_config() - Direktori upload tidak writable: ' . $upload_path . ' - Periksa izin (chown www-data:www-data dan chmod 775).'); // Adjusted Log
+            log_message('error', 'Petugas_administrasi Controller: _get_upload_config() - Direktori upload tidak writable: ' . $upload_path . ' - Periksa izin (chown www-data:www-data dan chmod 775).'); 
             return false;
         }
 
@@ -278,20 +266,20 @@ class Petugas_administrasi extends CI_Controller
         if ($max_width) $config['max_width'] = $max_width;
         if ($max_height) $config['max_height'] = $max_height;
         $config['encrypt_name']  = TRUE;
-        log_message('debug', 'Petugas_administrasi Controller: _get_upload_config() - Config created: ' . print_r($config, true)); // Adjusted Log
+        log_message('debug', 'Petugas_administrasi Controller: _get_upload_config() - Config created: ' . print_r($config, true)); 
         return $config;
     }
 
     public function prosesSurat($id_permohonan = 0)
     {
-        $admin_user = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array(); // Renaming to $pa_user would be clearer
-        $data['user'] = $admin_user; // $data['petugas_administrasi_user']
+        $admin_user = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array(); 
+        $data['user'] = $admin_user; 
         $data['title'] = 'Returnable Package';
         $data['subtitle'] = 'Proses Finalisasi Permohonan Impor';
 
         if ($id_permohonan == 0 || !is_numeric($id_permohonan)) { 
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">ID Permohonan tidak valid.</div>');
-            redirect('petugas_administrasi/permohonanMasuk'); // Adjusted redirect
+            redirect('petugas_administrasi/permohonanMasuk'); 
             return; 
         }
 
@@ -303,7 +291,7 @@ class Petugas_administrasi extends CI_Controller
 
         if (!$data['permohonan']) { 
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Permohonan tidak ditemukan.</div>');
-            redirect('petugas_administrasi/permohonanMasuk'); // Adjusted redirect
+            redirect('petugas_administrasi/permohonanMasuk'); 
             return; 
         }
         
@@ -315,7 +303,7 @@ class Petugas_administrasi extends CI_Controller
         $data['lhp'] = $this->db->get_where('lhp', ['id_permohonan' => $id_permohonan])->row_array();
         if (!$data['lhp'] || $data['permohonan']['status'] != '2' || empty($data['lhp']['NoLHP']) || empty($data['lhp']['TglLHP'])) {
             $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">LHP belum lengkap atau status permohonan (ID '.htmlspecialchars($id_permohonan).') tidak valid untuk finalisasi.</div>');
-            redirect('petugas_administrasi/detail_permohonan_admin/' . $id_permohonan); // Adjusted redirect (assuming detail_permohonan_admin is used by PA)
+            redirect('petugas_administrasi/detail_permohonan_admin/' . $id_permohonan); 
             return;
         }
         
@@ -331,19 +319,19 @@ class Petugas_administrasi extends CI_Controller
                 $this->form_validation->set_rules('file_surat_keputusan', 'File Surat Persetujuan Pengeluaran', 'required');
             }
             if (isset($_FILES['file_surat_keputusan']) && $_FILES['file_surat_keputusan']['error'] != UPLOAD_ERR_NO_FILE) {
-                $this->form_validation->set_rules('file_surat_keputusan', 'File Surat Persetujuan Pengeluaran', 'callback_petugas_administrasi_check_file_sk_upload'); // Adjusted callback name
+                $this->form_validation->set_rules('file_surat_keputusan', 'File Surat Persetujuan Pengeluaran', 'callback_petugas_administrasi_check_file_sk_upload'); 
             }
         }
 
         if ($this->form_validation->run() == false) {
-            log_message('debug', 'PETUGAS_ADMINISTRASI PROSES SURAT - Form validation failed. Errors: ' . validation_errors()); // Adjusted Log
+            log_message('debug', 'PETUGAS_ADMINISTRASI PROSES SURAT - Form validation failed. Errors: ' . validation_errors()); 
             $this->load->view('templates/header', $data);
             $this->load->view('templates/sidebar', $data);
             $this->load->view('templates/topbar', $data);
-            $this->load->view('petugas_administrasi/prosesSurat', $data); // Adjusted View Path
+            $this->load->view('petugas_administrasi/prosesSurat', $data); 
             $this->load->view('templates/footer');
         } else {
-            log_message('debug', 'PETUGAS_ADMINISTRASI PROSES SURAT - Form validation success. Processing data...'); // Adjusted Log
+            log_message('debug', 'PETUGAS_ADMINISTRASI PROSES SURAT - Form validation success. Processing data...'); 
             $status_final_permohonan = $this->input->post('status_final');
             $nomor_surat_keputusan = $this->input->post('nomorSetuju');
             $tanggal_surat_keputusan = $this->input->post('tgl_S');
@@ -356,7 +344,6 @@ class Petugas_administrasi extends CI_Controller
                 'catatan_penolakan' => ($status_final_permohonan == '4') ? $catatan_penolakan_input : null,
                 'time_selesai'  => date("Y-m-d H:i:s"),
                 'status'        => $status_final_permohonan,
-                // 'diproses_oleh_id_pa' => $admin_user['id'] // Or $pa_user['id']
             ];
 
             $nama_file_sk_baru = $data['permohonan']['file_surat_keputusan']; 
@@ -367,7 +354,7 @@ class Petugas_administrasi extends CI_Controller
 
                 if (!$config_sk) {
                     $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Konfigurasi direktori upload SK gagal.</div>');
-                    redirect('petugas_administrasi/prosesSurat/' . $id_permohonan); return; // Adjusted redirect
+                    redirect('petugas_administrasi/prosesSurat/' . $id_permohonan); return; 
                 }
 
                 $this->load->library('upload', $config_sk, 'sk_penyelesaian_upload');
@@ -383,7 +370,7 @@ class Petugas_administrasi extends CI_Controller
                     $this->load->view('templates/header', $data);
                     $this->load->view('templates/sidebar', $data);
                     $this->load->view('templates/topbar', $data);
-                    $this->load->view('petugas_administrasi/prosesSurat', $data); // Adjusted View Path
+                    $this->load->view('petugas_administrasi/prosesSurat', $data); 
                     $this->load->view('templates/footer');
                     return;
                 }
@@ -401,29 +388,23 @@ class Petugas_administrasi extends CI_Controller
             $this->db->update('user_permohonan', $data_update_permohonan);
             if ($status_final_permohonan == '3' && isset($data['lhp']['JumlahBenar']) && $data['lhp']['JumlahBenar'] > 0) {
     
-                // Ambil data yang diperlukan untuk pemotongan dan logging
                 $jumlah_dipotong = (float)$data['lhp']['JumlahBenar'];
                 $id_kuota_barang_terpakai = $data['permohonan']['id_kuota_barang_digunakan'];
                 $id_perusahaan = $data['permohonan']['id_pers'];
 
-                // Pastikan ID Kuota Barang ada sebelum melanjutkan
                 if ($id_kuota_barang_terpakai) {
-                    // Mulai transaksi database untuk memastikan integritas data
                     $this->db->trans_start();
 
-                    // 1. Ambil data kuota saat ini untuk logging
                     $kuota_barang_saat_ini = $this->db->get_where('user_kuota_barang', ['id_kuota_barang' => $id_kuota_barang_terpakai])->row_array();
                     
                     if ($kuota_barang_saat_ini) {
                         $kuota_sebelum = (float)$kuota_barang_saat_ini['remaining_quota_barang'];
                         $kuota_sesudah = $kuota_sebelum - $jumlah_dipotong;
 
-                        // 2. Update sisa kuota di tabel user_kuota_barang
                         $this->db->where('id_kuota_barang', $id_kuota_barang_terpakai);
                         $this->db->set('remaining_quota_barang', 'remaining_quota_barang - ' . $this->db->escape($jumlah_dipotong), FALSE);
                         $this->db->update('user_kuota_barang');
 
-                        // 3. Catat transaksi ke dalam log
                         $keterangan_log = 'Pemotongan kuota dari persetujuan impor. No. Surat: ' . ($data_update_permohonan['nomorSetuju'] ?? '-');
                         $this->_log_perubahan_kuota(
                             $id_perusahaan,
@@ -432,26 +413,24 @@ class Petugas_administrasi extends CI_Controller
                             $kuota_sebelum,
                             $kuota_sesudah,
                             $keterangan_log,
-                            $id_permohonan, // id_referensi_transaksi
-                            'permohonan_impor_disetujui', // tipe_referensi
-                            $admin_user['id'], // dicatat_oleh_user_id
-                            $kuota_barang_saat_ini['nama_barang'], // nama_barang_terkait
-                            $id_kuota_barang_terpakai // id_kuota_barang_referensi
+                            $id_permohonan, 
+                            'permohonan_impor_disetujui', 
+                            $admin_user['id'], 
+                            $kuota_barang_saat_ini['nama_barang'], 
+                            $id_kuota_barang_terpakai 
                         );
                     }
                     
-                    // Selesaikan transaksi
                     $this->db->trans_complete();
                 }
             }
 
             $pesan_status_akhir = ($status_final_permohonan == '3') ? 'Disetujui' : 'Ditolak';
             $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Status permohonan ID '.htmlspecialchars($id_permohonan).' telah berhasil diproses menjadi "'. $pesan_status_akhir .'"!</div>');
-            redirect('petugas_administrasi/permohonanMasuk'); // Adjusted redirect
+            redirect('petugas_administrasi/permohonanMasuk'); 
         }
     }
 
-    // Adjusted callback name for consistency
     public function petugas_administrasi_check_file_sk_upload($str) 
     {
         $field_name = 'file_surat_keputusan';
@@ -543,7 +522,7 @@ class Petugas_administrasi extends CI_Controller
 
         if (!$permohonan) {
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Permohonan tidak ditemukan!</div>');
-            redirect('petugas_administrasi/permohonanMasuk'); // Adjusted redirect
+            redirect('petugas_administrasi/permohonanMasuk'); 
             return;
         }
         $data['permohonan'] = $permohonan;
@@ -569,7 +548,7 @@ class Petugas_administrasi extends CI_Controller
             $this->load->view('templates/header', $data);
             $this->load->view('templates/sidebar', $data);
             $this->load->view('templates/topbar', $data);
-            $this->load->view('petugas_administrasi/form_penunjukan_petugas', $data); // Adjusted View Path
+            $this->load->view('petugas_administrasi/form_penunjukan_petugas', $data); 
             $this->load->view('templates/footer');
         } else {
             $update_data = [
@@ -587,14 +566,14 @@ class Petugas_administrasi extends CI_Controller
                 if (!is_dir($upload_dir_st)) {
                     if (!@mkdir($upload_dir_st, 0777, true)) {
                         $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Gagal membuat direktori upload Surat Tugas.</div>');
-                        redirect('petugas_administrasi/penunjukanPetugas/' . $id_permohonan); // Adjusted redirect
+                        redirect('petugas_administrasi/penunjukanPetugas/' . $id_permohonan); 
                         return;
                     }
                 }
 
                 if (!is_writable($upload_dir_st)) {
                     $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Upload error: Direktori Surat Tugas tidak writable. Path: '.$upload_dir_st.'</div>');
-                    redirect('petugas_administrasi/penunjukanPetugas/' . $id_permohonan); // Adjusted redirect
+                    redirect('petugas_administrasi/penunjukanPetugas/' . $id_permohonan); 
                     return;
                 }
 
@@ -613,7 +592,7 @@ class Petugas_administrasi extends CI_Controller
                     $nama_file_surat_tugas = $this->st_upload->data('file_name');
                 } else {
                     $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Upload File Surat Tugas Gagal: ' . $this->st_upload->display_errors('', '') . '</div>');
-                    redirect('petugas_administrasi/penunjukanPetugas/' . $id_permohonan); // Adjusted redirect
+                    redirect('petugas_administrasi/penunjukanPetugas/' . $id_permohonan); 
                     return;
                 }
             }
@@ -623,11 +602,11 @@ class Petugas_administrasi extends CI_Controller
             $this->db->update('user_permohonan', $update_data);
 
             $updated_permohonan = $this->db->get_where('user_permohonan', ['id' => $id_permohonan])->row_array();
-            log_message('debug', 'PENUNJUKAN PETUGAS (PA) - Data Permohonan Setelah Update: ' . print_r($updated_permohonan, true)); // Adjusted Log
-            log_message('debug', 'PENUNJUKAN PETUGAS (PA) - Nilai petugas_id yang di-POST: ' . $this->input->post('petugas_id')); // Adjusted Log
+            log_message('debug', 'PENUNJUKAN PETUGAS (PA) - Data Permohonan Setelah Update: ' . print_r($updated_permohonan, true)); 
+            log_message('debug', 'PENUNJUKAN PETUGAS (PA) - Nilai petugas_id yang di-POST: ' . $this->input->post('petugas_id')); 
 
             $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Petugas pemeriksa berhasil ditunjuk untuk permohonan ID ' . htmlspecialchars($id_permohonan) . '. Status diubah menjadi "Penunjukan Pemeriksa".</div>');
-            redirect('petugas_administrasi/permohonanMasuk'); // Adjusted redirect
+            redirect('petugas_administrasi/permohonanMasuk'); 
         }
     }
 
@@ -647,16 +626,16 @@ class Petugas_administrasi extends CI_Controller
         $this->load->view('templates/header', $data);
         $this->load->view('templates/sidebar', $data);
         $this->load->view('templates/topbar', $data);
-        $this->load->view('petugas_administrasi/daftar_pengajuan_kuota', $data); // Adjusted View Path
+        $this->load->view('petugas_administrasi/daftar_pengajuan_kuota', $data); 
         $this->load->view('templates/footer');
     }
 
     public function proses_pengajuan_kuota($id_pengajuan)
     {
-        log_message('debug', 'PETUGAS_ADMINISTRASI PROSES PENGAJUAN KUOTA - Method dipanggil untuk id_pengajuan: ' . $id_pengajuan); // Adjusted Log
+        log_message('debug', 'PETUGAS_ADMINISTRASI PROSES PENGAJUAN KUOTA - Method dipanggil untuk id_pengajuan: ' . $id_pengajuan); 
         $data['title'] = 'Returnable Package';
         $data['subtitle'] = 'Proses Pengajuan Kuota';
-        $pa_user = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array(); // Changed var name
+        $pa_user = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array(); 
         $data['user'] = $pa_user;
 
         $this->db->select('upk.*, upr.NamaPers, upr.initial_quota as initial_quota_umum_sebelum, upr.remaining_quota as remaining_quota_umum_sebelum, u.email as user_email');
@@ -665,13 +644,13 @@ class Petugas_administrasi extends CI_Controller
         $this->db->join('user u', 'upk.id_pers = u.id', 'left');
         $this->db->where('upk.id', $id_pengajuan);
         $data['pengajuan'] = $this->db->get()->row_array();
-        log_message('debug', 'PETUGAS_ADMINISTRASI PROSES PENGAJUAN KUOTA - Data pengajuan yang diambil: ' . print_r($data['pengajuan'], true)); // Adjusted Log
+        log_message('debug', 'PETUGAS_ADMINISTRASI PROSES PENGAJUAN KUOTA - Data pengajuan yang diambil: ' . print_r($data['pengajuan'], true)); 
 
         if (!$data['pengajuan'] || ($data['pengajuan']['status'] != 'pending' && $data['pengajuan']['status'] != 'diproses')) {
             $pesan_error_awal = 'Pengajuan kuota tidak ditemukan atau statusnya tidak memungkinkan untuk diproses (Status saat ini: ' . ($data['pengajuan']['status'] ?? 'Tidak Diketahui') . '). Hanya status "pending" atau "diproses" yang bisa dilanjutkan.';
-            log_message('error', 'PETUGAS_ADMINISTRASI PROSES PENGAJUAN KUOTA - Validasi awal gagal: ' . $pesan_error_awal); // Adjusted Log
+            log_message('error', 'PETUGAS_ADMINISTRASI PROSES PENGAJUAN KUOTA - Validasi awal gagal: ' . $pesan_error_awal); 
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">' . $pesan_error_awal . '</div>');
-            redirect('petugas_administrasi/daftar_pengajuan_kuota'); // Adjusted redirect
+            redirect('petugas_administrasi/daftar_pengajuan_kuota'); 
             return;
         }
 
@@ -685,29 +664,29 @@ class Petugas_administrasi extends CI_Controller
             $this->form_validation->set_rules('nomor_sk_petugas', 'Nomor Surat Keputusan', 'trim|max_length[100]');
             $this->form_validation->set_rules('tanggal_sk_petugas', 'Tanggal Surat Keputusan', 'trim');
         }
-        $this->form_validation->set_rules('admin_notes', 'Catatan Petugas Administrasi', 'trim'); // Adjusted Label
+        $this->form_validation->set_rules('admin_notes', 'Catatan Petugas Administrasi', 'trim'); 
         if ($this->input->post('status_pengajuan') == 'approved' && empty($data['pengajuan']['file_sk_petugas']) && empty($_FILES['file_sk_petugas']['name'])) {
             $this->form_validation->set_rules('file_sk_petugas', 'File SK Petugas', 'required');
         }
 
         if ($this->form_validation->run() == false) {
-            log_message('debug', 'PETUGAS_ADMINISTRASI PROSES PENGAJUAN KUOTA - Validasi Form Gagal. Errors: ' . validation_errors() . ' POST Data: ' . print_r($this->input->post(), true)); // Adjusted Log
+            log_message('debug', 'PETUGAS_ADMINISTRASI PROSES PENGAJUAN KUOTA - Validasi Form Gagal. Errors: ' . validation_errors() . ' POST Data: ' . print_r($this->input->post(), true)); 
             $this->load->view('templates/header', $data);
             $this->load->view('templates/sidebar', $data);
             $this->load->view('templates/topbar', $data);
             $this->load->view('petugas_administrasi/proses_pengajuan_kuota_form', $data);
-            $this->load->view('templates/footer', $data); // Should be $this->load->view('templates/footer'); only
+            $this->load->view('templates/footer', $data); 
         } else {
-            log_message('debug', 'PETUGAS_ADMINISTRASI PROSES PENGAJUAN KUOTA - Validasi Form Sukses. Memproses data...'); // Adjusted Log
+            log_message('debug', 'PETUGAS_ADMINISTRASI PROSES PENGAJUAN KUOTA - Validasi Form Sukses. Memproses data...'); 
             $status_pengajuan = $this->input->post('status_pengajuan');
             $approved_quota_input = ($status_pengajuan == 'approved') ? (float)$this->input->post('approved_quota') : 0;
             $nomor_sk_petugas = $this->input->post('nomor_sk_petugas');
             $tanggal_sk_petugas = $this->input->post('tanggal_sk_petugas'); 
-            $admin_notes = $this->input->post('admin_notes'); // Consider renaming to pa_notes
+            $admin_notes = $this->input->post('admin_notes'); 
 
             $data_update_pengajuan = [
                 'status' => $status_pengajuan,
-                'admin_notes' => $admin_notes, // Consider 'pa_notes' in DB
+                'admin_notes' => $admin_notes, 
                 'processed_date' => date('Y-m-d H:i:s'),
                 'nomor_sk_petugas' => $nomor_sk_petugas,
                 'tanggal_sk_petugas' => !empty($tanggal_sk_petugas) ? $tanggal_sk_petugas : null, 
@@ -720,7 +699,7 @@ class Petugas_administrasi extends CI_Controller
                 if (!is_dir($upload_dir_sk)) { @mkdir($upload_dir_sk, 0777, true); }
                 if (!is_writable($upload_dir_sk)) { 
                     $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Error: Direktori upload SK Kuota tidak writable.</div>');
-                    redirect('petugas_administrasi/proses_pengajuan_kuota/' . $id_pengajuan); // Adjusted redirect
+                    redirect('petugas_administrasi/proses_pengajuan_kuota/' . $id_pengajuan); 
                     return; 
                 }
                 
@@ -738,21 +717,20 @@ class Petugas_administrasi extends CI_Controller
                     $nama_file_sk = $this->sk_upload_instance->data('file_name');
                 } else {
                     $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">File SK Upload Error: ' . $this->sk_upload_instance->display_errors('', '') . '</div>');
-                    redirect('petugas_administrasi/proses_pengajuan_kuota/' . $id_pengajuan); return; // Adjusted redirect
+                    redirect('petugas_administrasi/proses_pengajuan_kuota/' . $id_pengajuan); return; 
                 }
             }
             $data_update_pengajuan['file_sk_petugas'] = $nama_file_sk;
 
             $this->db->where('id', $id_pengajuan);
             $this->db->update('user_pengajuan_kuota', $data_update_pengajuan);
-            log_message('debug', 'PETUGAS_ADMINISTRASI PROSES PENGAJUAN KUOTA - user_pengajuan_kuota diupdate. Affected: ' . $this->db->affected_rows()); // Adjusted Log
+            log_message('debug', 'PETUGAS_ADMINISTRASI PROSES PENGAJUAN KUOTA - user_pengajuan_kuota diupdate. Affected: ' . $this->db->affected_rows()); 
 
             if ($status_pengajuan == 'approved' && $approved_quota_input > 0) {
                 $id_pers_terkait = $data['pengajuan']['id_pers'];
                 $nama_barang_diajukan = $data['pengajuan']['nama_barang_kuota']; 
 
                 if ($id_pers_terkait && !empty($nama_barang_diajukan)) {
-                    // $sisa_kuota_umum_sebelum_tambah = (float)($data['pengajuan']['remaining_quota_umum_sebelum'] ?? 0); // This logic might be complex and depends on overall quota strategy
 
                     $data_kuota_barang = [
                         'id_pers' => $id_pers_terkait,
@@ -763,12 +741,12 @@ class Petugas_administrasi extends CI_Controller
                         'nomor_skep_asal' => $nomor_sk_petugas,
                         'tanggal_skep_asal' => !empty($tanggal_sk_petugas) ? $tanggal_sk_petugas : null,
                         'status_kuota_barang' => 'active',
-                        'dicatat_oleh_user_id' => $pa_user['id'], // Changed var name
+                        'dicatat_oleh_user_id' => $pa_user['id'], 
                         'waktu_pencatatan' => date('Y-m-d H:i:s')
                     ];
                     $this->db->insert('user_kuota_barang', $data_kuota_barang);
                     $id_kuota_barang_baru = $this->db->insert_id();
-                    log_message('info', 'PETUGAS_ADMINISTRASI PROSES PENGAJUAN KUOTA - Data kuota barang baru disimpan. ID: ' . $id_kuota_barang_baru . ' untuk barang: ' . $nama_barang_diajukan); // Adjusted Log
+                    log_message('info', 'PETUGAS_ADMINISTRASI PROSES PENGAJUAN KUOTA - Data kuota barang baru disimpan. ID: ' . $id_kuota_barang_baru . ' untuk barang: ' . $nama_barang_diajukan); 
 
                     if ($id_kuota_barang_baru) {
                         $this->_log_perubahan_kuota(
@@ -776,17 +754,17 @@ class Petugas_administrasi extends CI_Controller
                             0, 
                             $approved_quota_input, 
                             'Persetujuan Pengajuan Kuota. Barang: ' . $nama_barang_diajukan . '. No. SK: ' . ($nomor_sk_petugas ?: '-'),
-                            $id_pengajuan, 'pengajuan_kuota_disetujui', $pa_user['id'], // Changed var name
+                            $id_pengajuan, 'pengajuan_kuota_disetujui', $pa_user['id'], 
                             $nama_barang_diajukan, $id_kuota_barang_baru
                         );
                     }
                 } else {
-                    log_message('error', 'PETUGAS_ADMINISTRASI PROSES PENGAJUAN KUOTA - Gagal menambah kuota barang: id_pers atau nama_barang_kuota kosong. ID Pers: ' . $id_pers_terkait . ', Nama Barang: ' . $nama_barang_diajukan); // Adjusted Log
+                    log_message('error', 'PETUGAS_ADMINISTRASI PROSES PENGAJUAN KUOTA - Gagal menambah kuota barang: id_pers atau nama_barang_kuota kosong. ID Pers: ' . $id_pers_terkait . ', Nama Barang: ' . $nama_barang_diajukan); 
                 }
             }
 
             $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Pengajuan kuota telah berhasil diproses!</div>');
-            redirect('petugas_administrasi/daftar_pengajuan_kuota'); // Adjusted redirect
+            redirect('petugas_administrasi/daftar_pengajuan_kuota'); 
         }
     }
 
@@ -804,18 +782,17 @@ class Petugas_administrasi extends CI_Controller
 
         if (!$data['pengajuan']) {
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Data pengajuan kuota tidak ditemukan.</div>');
-            redirect('petugas_administrasi/daftar_pengajuan_kuota'); // Adjusted redirect
+            redirect('petugas_administrasi/daftar_pengajuan_kuota'); 
             return;
         }
 
         $data['user'] = $this->db->get_where('user', ['id' => $data['pengajuan']['id_pers']])->row_array(); 
         $data['user_perusahaan'] = $this->db->get_where('user_perusahaan', ['id_pers' => $data['pengajuan']['id_pers']])->row_array();
 
-        // This view path seems to indicate a shared user view, which might be fine.
         $this->load->view('user/FormPengajuanKuota_print', $data);
     }
 
-    public function detailPengajuanKuotaAdmin($id_pengajuan) // Consider renaming to detailPengajuanKuota
+    public function detailPengajuanKuotaAdmin($id_pengajuan) 
     {
         $data['title'] = 'Returnable Package';
         $data['subtitle'] = 'Detail Proses Pengajuan Kuota';
@@ -830,18 +807,18 @@ class Petugas_administrasi extends CI_Controller
 
         if (!$data['pengajuan']) {
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Data pengajuan kuota tidak ditemukan.</div>');
-            redirect('petugas_administrasi/daftar_pengajuan_kuota'); // Adjusted redirect
+            redirect('petugas_administrasi/daftar_pengajuan_kuota'); 
             return;
         }
 
         $this->load->view('templates/header', $data);
         $this->load->view('templates/sidebar', $data);
         $this->load->view('templates/topbar', $data);
-        $this->load->view('petugas_administrasi/detail_pengajuan_kuota_view', $data); // Adjusted View Path
+        $this->load->view('petugas_administrasi/detail_pengajuan_kuota_view', $data); 
         $this->load->view('templates/footer');
     }
 
-    public function download_sk_kuota_admin($id_pengajuan) // Consider renaming to download_sk_kuota
+    public function download_sk_kuota_admin($id_pengajuan) 
     {
         $this->load->helper('download'); 
         $pengajuan = $this->db->get_where('user_pengajuan_kuota', ['id' => $id_pengajuan])->row_array();
@@ -853,23 +830,23 @@ class Petugas_administrasi extends CI_Controller
             if (file_exists($file_path)) {
                 force_download($file_path, NULL);
             } else {
-                log_message('error', 'Petugas_administrasi: File SK Kuota tidak ditemukan di path: ' . $file_path . ' untuk id_pengajuan: ' . $id_pengajuan); // Adjusted Log
+                log_message('error', 'Petugas_administrasi: File SK Kuota tidak ditemukan di path: ' . $file_path . ' untuk id_pengajuan: ' . $id_pengajuan); 
                 $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">File Surat Keputusan tidak ditemukan di server.</div>');
-                redirect('petugas_administrasi/daftar_pengajuan_kuota'); // Adjusted redirect
+                redirect('petugas_administrasi/daftar_pengajuan_kuota'); 
             }
         } else {
             $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Surat Keputusan belum tersedia untuk pengajuan ini.</div>');
-            redirect('petugas_administrasi/daftar_pengajuan_kuota'); // Adjusted redirect
+            redirect('petugas_administrasi/daftar_pengajuan_kuota'); 
         }
     }
     
     public function histori_kuota_perusahaan($id_pers = 0)
     {
-        log_message('debug', 'PETUGAS_ADMINISTRASI HISTORI KUOTA - Method dipanggil dengan id_pers: ' . $id_pers); // Adjusted Log
+        log_message('debug', 'PETUGAS_ADMINISTRASI HISTORI KUOTA - Method dipanggil dengan id_pers: ' . $id_pers); 
 
         if ($id_pers == 0 || !is_numeric($id_pers)) {
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">ID Perusahaan tidak valid.</div>');
-            redirect('petugas_administrasi/monitoring_kuota'); // Adjusted redirect
+            redirect('petugas_administrasi/monitoring_kuota'); 
             return;
         }
 
@@ -882,11 +859,11 @@ class Petugas_administrasi extends CI_Controller
         $this->db->join('user u', 'up.id_pers = u.id', 'left');
         $this->db->where('up.id_pers', $id_pers);
         $data['perusahaan'] = $this->db->get()->row_array();
-        log_message('debug', 'PETUGAS_ADMINISTRASI HISTORI KUOTA - Data Perusahaan: ' . print_r($data['perusahaan'], true)); // Adjusted Log
+        log_message('debug', 'PETUGAS_ADMINISTRASI HISTORI KUOTA - Data Perusahaan: ' . print_r($data['perusahaan'], true)); 
 
         if (!$data['perusahaan']) {
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Data perusahaan tidak ditemukan untuk ID: ' . $id_pers . '</div>');
-            redirect('petugas_administrasi/monitoring_kuota'); // Adjusted redirect
+            redirect('petugas_administrasi/monitoring_kuota'); 
             return;
         }
         $data['id_pers_untuk_histori'] = $id_pers;
@@ -896,34 +873,34 @@ class Petugas_administrasi extends CI_Controller
         $this->db->where('ukb.id_pers', $id_pers);
         $this->db->order_by('ukb.nama_barang ASC, ukb.waktu_pencatatan DESC');
         $data['daftar_kuota_barang_perusahaan'] = $this->db->get()->result_array();
-        log_message('debug', 'PETUGAS_ADMINISTRASI HISTORI KUOTA - Query Daftar Kuota Barang: ' . $this->db->last_query()); // Adjusted Log
-        log_message('debug', 'PETUGAS_ADMINISTRASI HISTORI KUOTA - Data Daftar Kuota Barang: ' . print_r($data['daftar_kuota_barang_perusahaan'], true)); // Adjusted Log
+        log_message('debug', 'PETUGAS_ADMINISTRASI HISTORI KUOTA - Query Daftar Kuota Barang: ' . $this->db->last_query()); 
+        log_message('debug', 'PETUGAS_ADMINISTRASI HISTORI KUOTA - Data Daftar Kuota Barang: ' . print_r($data['daftar_kuota_barang_perusahaan'], true)); 
 
-        $this->db->select('lk.*, u_admin.name as nama_pencatat'); // Consider u_pa.name
+        $this->db->select('lk.*, u_admin.name as nama_pencatat'); 
         $this->db->from('log_kuota_perusahaan lk');
-        $this->db->join('user u_admin', 'lk.dicatat_oleh_user_id = u_admin.id', 'left'); // u_pa
+        $this->db->join('user u_admin', 'lk.dicatat_oleh_user_id = u_admin.id', 'left'); 
         $this->db->where('lk.id_pers', $id_pers);
         $this->db->order_by('lk.tanggal_transaksi', 'DESC');
         $this->db->order_by('lk.id_log', 'DESC');
         $data['histori_kuota_transaksi'] = $this->db->get()->result_array(); 
-        log_message('debug', 'PETUGAS_ADMINISTRASI HISTORI KUOTA - Query Log Transaksi: ' . $this->db->last_query()); // Adjusted Log
-        log_message('debug', 'PETUGAS_ADMINISTRASI HISTORI KUOTA - Data Log Transaksi: ' . print_r($data['histori_kuota_transaksi'], true)); // Adjusted Log
+        log_message('debug', 'PETUGAS_ADMINISTRASI HISTORI KUOTA - Query Log Transaksi: ' . $this->db->last_query()); 
+        log_message('debug', 'PETUGAS_ADMINISTRASI HISTORI KUOTA - Data Log Transaksi: ' . print_r($data['histori_kuota_transaksi'], true)); 
 
         $this->load->view('templates/header', $data);
         $this->load->view('templates/sidebar', $data);
         $this->load->view('templates/topbar', $data);
-        $this->load->view('petugas_administrasi/histori_kuota_perusahaan_view', $data); // Adjusted View Path
+        $this->load->view('petugas_administrasi/histori_kuota_perusahaan_view', $data); 
         $this->load->view('templates/footer');
     }
 
-    public function detail_permohonan_admin($id_permohonan = 0) // Consider renaming if not exclusively for admin-level details
+    public function detail_permohonan_admin($id_permohonan = 0) 
     {
-        log_message('debug', 'PETUGAS_ADMINISTRASI DETAIL PERMOHONAN - Method dipanggil dengan id_permohonan: ' . $id_permohonan); // Adjusted Log
+        log_message('debug', 'PETUGAS_ADMINISTRASI DETAIL PERMOHONAN - Method dipanggil dengan id_permohonan: ' . $id_permohonan); 
 
         if ($id_permohonan == 0 || !is_numeric($id_permohonan)) {
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">ID Permohonan tidak valid.</div>');
-            log_message('error', 'PETUGAS_ADMINISTRASI DETAIL PERMOHONAN - ID Permohonan tidak valid: ' . $id_permohonan); // Adjusted Log
-            redirect('petugas_administrasi/permohonanMasuk'); // Adjusted redirect
+            log_message('error', 'PETUGAS_ADMINISTRASI DETAIL PERMOHONAN - ID Permohonan tidak valid: ' . $id_permohonan); 
+            redirect('petugas_administrasi/permohonanMasuk'); 
             return;
         }
 
@@ -940,23 +917,23 @@ class Petugas_administrasi extends CI_Controller
         $this->db->where('up.id', $id_permohonan);
         $data['permohonan_detail'] = $this->db->get()->row_array();
 
-        log_message('debug', 'PETUGAS_ADMINISTRASI DETAIL PERMOHONAN - Query Permohonan: ' . $this->db->last_query()); // Adjusted Log
-        log_message('debug', 'PETUGAS_ADMINISTRASI DETAIL PERMOHONAN - Data Permohonan: ' . print_r($data['permohonan_detail'], true)); // Adjusted Log
+        log_message('debug', 'PETUGAS_ADMINISTRASI DETAIL PERMOHONAN - Query Permohonan: ' . $this->db->last_query()); 
+        log_message('debug', 'PETUGAS_ADMINISTRASI DETAIL PERMOHONAN - Data Permohonan: ' . print_r($data['permohonan_detail'], true)); 
 
         if (!$data['permohonan_detail']) {
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Data permohonan dengan ID ' . htmlspecialchars($id_permohonan) . ' tidak ditemukan.</div>');
-            log_message('error', 'PETUGAS_ADMINISTRASI DETAIL PERMOHONAN - Data permohonan tidak ditemukan untuk ID: ' . $id_permohonan); // Adjusted Log
-            redirect('petugas_administrasi/permohonanMasuk'); // Adjusted redirect
+            log_message('error', 'PETUGAS_ADMINISTRASI DETAIL PERMOHONAN - Data permohonan tidak ditemukan untuk ID: ' . $id_permohonan); 
+            redirect('petugas_administrasi/permohonanMasuk'); 
             return;
         }
 
         $data['lhp_detail'] = $this->db->get_where('lhp', ['id_permohonan' => $id_permohonan])->row_array();
-        log_message('debug', 'PETUGAS_ADMINISTRASI DETAIL PERMOHONAN - Data LHP: ' . print_r($data['lhp_detail'], true)); // Adjusted Log
+        log_message('debug', 'PETUGAS_ADMINISTRASI DETAIL PERMOHONAN - Data LHP: ' . print_r($data['lhp_detail'], true)); 
 
         $this->load->view('templates/header', $data);
         $this->load->view('templates/sidebar', $data);
         $this->load->view('templates/topbar', $data);
-        $this->load->view('petugas_administrasi/detail_permohonan_view', $data); // Adjusted View path & name
+        $this->load->view('petugas_administrasi/detail_permohonan_view', $data); 
         $this->load->view('templates/footer');
     }
 
@@ -964,7 +941,7 @@ class Petugas_administrasi extends CI_Controller
     {
         if ($id_permohonan == 0 || !is_numeric($id_permohonan)) {
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">ID Permohonan tidak valid untuk dihapus.</div>');
-            redirect('petugas_administrasi/permohonanMasuk'); // Adjusted redirect
+            redirect('petugas_administrasi/permohonanMasuk'); 
             return;
         }
 
@@ -972,13 +949,13 @@ class Petugas_administrasi extends CI_Controller
 
         if (!$permohonan) {
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Permohonan dengan ID '.htmlspecialchars($id_permohonan).' tidak ditemukan.</div>');
-            redirect('petugas_administrasi/permohonanMasuk'); // Adjusted redirect
+            redirect('petugas_administrasi/permohonanMasuk'); 
             return;
         }
 
         if (!empty($permohonan['file_bc_manifest']) && file_exists('./uploads/bc_manifest/' . $permohonan['file_bc_manifest'])) {
             if (@unlink('./uploads/bc_manifest/' . $permohonan['file_bc_manifest'])) {
-                log_message('info', 'File BC Manifest ' . $permohonan['file_bc_manifest'] . ' berhasil dihapus untuk permohonan ID: ' . $id_permohonan . ' oleh Petugas Administrasi ID: ' . $this->session->userdata('user_id')); // Adjusted Log
+                log_message('info', 'File BC Manifest ' . $permohonan['file_bc_manifest'] . ' berhasil dihapus untuk permohonan ID: ' . $id_permohonan . ' oleh Petugas Administrasi ID: ' . $this->session->userdata('user_id')); 
             } else {
                 log_message('error', 'Gagal menghapus file BC Manifest ' . $permohonan['file_bc_manifest'] . ' untuk permohonan ID: ' . $id_permohonan);
             }
@@ -986,24 +963,24 @@ class Petugas_administrasi extends CI_Controller
 
         $this->db->where('id', $id_permohonan);
         if ($this->db->delete('user_permohonan')) {
-            log_message('info', 'Permohonan ID ' . $id_permohonan . ' berhasil dihapus oleh Petugas Administrasi ID: ' . $this->session->userdata('user_id')); // Adjusted Log
+            log_message('info', 'Permohonan ID ' . $id_permohonan . ' berhasil dihapus oleh Petugas Administrasi ID: ' . $this->session->userdata('user_id')); 
             $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Permohonan dengan ID Aju '.htmlspecialchars($id_permohonan).' berhasil dihapus.</div>');
         } else {
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Gagal menghapus permohonan. Silakan coba lagi.</div>');
         }
-        redirect('petugas_administrasi/permohonanMasuk'); // Adjusted redirect
+        redirect('petugas_administrasi/permohonanMasuk'); 
     }
 
     public function edit_permohonan($id_permohonan = 0)
     {
         if ($id_permohonan == 0 || !is_numeric($id_permohonan)) {
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">ID Permohonan tidak valid.</div>');
-            redirect('petugas_administrasi/permohonanMasuk'); // Adjusted redirect
+            redirect('petugas_administrasi/permohonanMasuk'); 
             return;
         }
 
         $data['title'] = 'Returnable Package';
-        $data['subtitle'] = 'Edit Permohonan (Petugas Administrasi)'; // Adjusted Subtitle
+        $data['subtitle'] = 'Edit Permohonan (Petugas Administrasi)'; 
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array(); 
 
         $permohonan = $this->db->select('up.*, upr.NamaPers as NamaPerusahaanPemohon') 
@@ -1014,7 +991,7 @@ class Petugas_administrasi extends CI_Controller
 
         if (!$permohonan) {
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Permohonan tidak ditemukan.</div>');
-            redirect('petugas_administrasi/permohonanMasuk'); // Adjusted redirect
+            redirect('petugas_administrasi/permohonanMasuk'); 
             return;
         }
         
@@ -1041,15 +1018,15 @@ class Petugas_administrasi extends CI_Controller
         $this->form_validation->set_rules('id_kuota_barang_selected', 'ID Kuota Barang', 'trim|required|numeric'); 
         $this->form_validation->set_rules('JumlahBarang', 'Jumlah Barang', 'trim|required|numeric|greater_than[0]');
 
-        if (isset($_FILES['file_bc_manifest_pa_edit']) && $_FILES['file_bc_manifest_pa_edit']['error'] != UPLOAD_ERR_NO_FILE) { // Adjusted field name suggestion
-            $this->form_validation->set_rules('file_bc_manifest_pa_edit', 'File BC 1.1 / Manifest (Baru)', 'callback_pa_check_file_bc_manifest_upload'); // Adjusted callback name
+        if (isset($_FILES['file_bc_manifest_pa_edit']) && $_FILES['file_bc_manifest_pa_edit']['error'] != UPLOAD_ERR_NO_FILE) { 
+            $this->form_validation->set_rules('file_bc_manifest_pa_edit', 'File BC 1.1 / Manifest (Baru)', 'callback_pa_check_file_bc_manifest_upload'); 
         }
 
         if ($this->form_validation->run() == false) {
             $this->load->view('templates/header', $data);
             $this->load->view('templates/sidebar', $data);
             $this->load->view('templates/topbar', $data);
-            $this->load->view('petugas_administrasi/form_edit_permohonan', $data); // Adjusted View Path
+            $this->load->view('petugas_administrasi/form_edit_permohonan', $data); 
             $this->load->view('templates/footer');
         } else {
             $id_kuota_barang_dipilih = (int)$this->input->post('id_kuota_barang_selected');
@@ -1064,11 +1041,11 @@ class Petugas_administrasi extends CI_Controller
 
             if (!$kuota_valid_db) { 
                  $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Data kuota barang tidak valid.</div>');
-                 redirect('petugas_administrasi/edit_permohonan/' . $id_permohonan); return; // Adjusted Redirect
+                 redirect('petugas_administrasi/edit_permohonan/' . $id_permohonan); return; 
             }
             if ($kuota_valid_db['nama_barang'] != $nama_barang_input_form) { 
                 $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Nama barang tidak sesuai dengan kuota yang dipilih.</div>');
-                redirect('petugas_administrasi/edit_permohonan/' . $id_permohonan); return; // Adjusted Redirect
+                redirect('petugas_administrasi/edit_permohonan/' . $id_permohonan); return; 
             }
             
             $sisa_kuota_efektif_untuk_validasi = (float)$kuota_valid_db['remaining_quota_barang'];
@@ -1077,19 +1054,19 @@ class Petugas_administrasi extends CI_Controller
             }
             if ($jumlah_barang_dimohon > $sisa_kuota_efektif_untuk_validasi) { 
                 $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Jumlah barang dimohon melebihi sisa kuota efektif.</div>');
-                redirect('petugas_administrasi/edit_permohonan/' . $id_permohonan); return; // Adjusted Redirect
+                redirect('petugas_administrasi/edit_permohonan/' . $id_permohonan); return; 
             }
 
             $nama_file_bc_manifest_update = $permohonan['file_bc_manifest']; 
-            if (isset($_FILES['file_bc_manifest_pa_edit']) && $_FILES['file_bc_manifest_pa_edit']['error'] != UPLOAD_ERR_NO_FILE) { // Adjusted field name
-                $config_upload_bc = $this->_get_upload_config('./uploads/bc_manifest/', 'pdf', 2048); // Using existing _get_upload_config
+            if (isset($_FILES['file_bc_manifest_pa_edit']) && $_FILES['file_bc_manifest_pa_edit']['error'] != UPLOAD_ERR_NO_FILE) { 
+                $config_upload_bc = $this->_get_upload_config('./uploads/bc_manifest/', 'pdf', 2048); 
                 if (!$config_upload_bc) { 
                      $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Konfigurasi upload file BC gagal.</div>');
-                     redirect('petugas_administrasi/edit_permohonan/' . $id_permohonan); return; // Adjusted Redirect
+                     redirect('petugas_administrasi/edit_permohonan/' . $id_permohonan); return; 
                 }
                 
                 $this->upload->initialize($config_upload_bc, TRUE); 
-                if ($this->upload->do_upload('file_bc_manifest_pa_edit')) { // Adjusted field name
+                if ($this->upload->do_upload('file_bc_manifest_pa_edit')) { 
                     if (!empty($permohonan['file_bc_manifest']) && file_exists('./uploads/bc_manifest/' . $permohonan['file_bc_manifest'])) {
                         @unlink('./uploads/bc_manifest/' . $permohonan['file_bc_manifest']);
                     }
@@ -1099,7 +1076,7 @@ class Petugas_administrasi extends CI_Controller
                     $this->load->view('templates/header', $data);
                     $this->load->view('templates/sidebar', $data);
                     $this->load->view('templates/topbar', $data);
-                    $this->load->view('petugas_administrasi/form_edit_permohonan', $data); // Adjusted View Path
+                    $this->load->view('petugas_administrasi/form_edit_permohonan', $data); 
                     $this->load->view('templates/footer');
                     return;
                 }
@@ -1113,25 +1090,22 @@ class Petugas_administrasi extends CI_Controller
                 'id_kuota_barang_digunakan' => $id_kuota_barang_dipilih,
                 'NoSkep'        => $kuota_valid_db['nomor_skep_asal'], 
                 'file_bc_manifest' => $nama_file_bc_manifest_update,
-                // 'diedit_oleh_pa_id' => $data['user']['id'], 
-                // 'waktu_edit_pa' => date('Y-m-d H:i:s')
             ];
 
             $this->db->where('id', $id_permohonan);
             $this->db->update('user_permohonan', $data_update);
             $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Permohonan berhasil diupdate oleh Petugas Administrasi.</div>');
-            redirect('petugas_administrasi/detail_permohonan_admin/' . $id_permohonan); // Adjusted redirect (or a PA specific detail view)
+            redirect('petugas_administrasi/detail_permohonan_admin/' . $id_permohonan); 
         }
     }
 
-    // Adjusted callback name for consistency
     public function pa_check_file_bc_manifest_upload($str) 
     {
-        $field_name = 'file_bc_manifest_pa_edit'; // Adjusted field name suggestion
+        $field_name = 'file_bc_manifest_pa_edit'; 
         if (!isset($_FILES[$field_name]) || $_FILES[$field_name]['error'] == UPLOAD_ERR_NO_FILE) {
             return TRUE;
         }
-        $config_upload_rules = $this->_get_upload_config('./uploads/dummy_path_for_rules/', 'pdf', 2048); // Using existing _get_upload_config
+        $config_upload_rules = $this->_get_upload_config('./uploads/dummy_path_for_rules/', 'pdf', 2048); 
          if (!$config_upload_rules) { 
             $this->form_validation->set_message('pa_check_file_bc_manifest_upload', 'Konfigurasi upload gagal (internal).');
             return FALSE; 
@@ -1155,7 +1129,6 @@ class Petugas_administrasi extends CI_Controller
 
     public function tolak_permohonan_awal($id_permohonan = 0)
     {
-        // Pastikan ID valid
         if ($id_permohonan == 0 || !is_numeric($id_permohonan)) {
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">ID Permohonan tidak valid.</div>');
             redirect('admin/permohonanMasuk');
@@ -1166,18 +1139,12 @@ class Petugas_administrasi extends CI_Controller
         $data['subtitle'] = 'Formulir Penolakan Permohonan';
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
 
-        // Ambil data permohonan untuk ditampilkan di form
         $this->db->select('up.id, up.nomorSurat, upr.NamaPers, up.status');
         $this->db->from('user_permohonan up');
         $this->db->join('user_perusahaan upr', 'up.id_pers = upr.id_pers', 'left');
         $this->db->where('up.id', $id_permohonan);
         $data['permohonan'] = $this->db->get()->row_array();
 
-        // // --Debug--
-        // echo "Nilai status dari database adalah: ";
-        // var_dump($data['permohonan']['status']);
-        // die; // Hentikan eksekusi untuk melihat hasilnya
-        // // --Akhir Debug--
 
         if (!$data['permohonan'] || $data['permohonan']['status'] != '0') {
             $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Permohonan ini tidak ditemukan atau statusnya bukan "Baru Masuk" sehingga tidak bisa ditolak langsung.</div>');
@@ -1185,25 +1152,21 @@ class Petugas_administrasi extends CI_Controller
             return;
         }
 
-        // Atur validasi untuk form
         $this->form_validation->set_rules('alasan_penolakan', 'Alasan Penolakan', 'trim|required');
 
         if ($this->form_validation->run() == false) {
-            // Jika validasi gagal atau halaman baru diakses (GET request)
             $this->load->view('templates/header', $data);
             $this->load->view('templates/sidebar', $data);
             $this->load->view('templates/topbar', $data);
-            // Kita akan membuat view baru untuk form ini
             $this->load->view('petugas_administrasi/form_tolak_permohonan_view', $data); 
             $this->load->view('templates/footer');
         } else {
-            // Jika form disubmit dan validasi berhasil (POST request)
             $alasan_penolakan = $this->input->post('alasan_penolakan', true);
 
             $update_data = [
-                'status' => '6', // Status baru: Ditolak oleh Admin
+                'status' => '6', 
                 'catatan_penolakan' => $alasan_penolakan,
-                'time_selesai' => date('Y-m-d H:i:s') // Tandai waktu selesai
+                'time_selesai' => date('Y-m-d H:i:s') 
             ];
 
             $this->db->where('id', $id_permohonan);
@@ -1214,4 +1177,4 @@ class Petugas_administrasi extends CI_Controller
         }
     }
 
-} // End class Petugas_administrasi
+} 

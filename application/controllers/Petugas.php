@@ -471,7 +471,6 @@ class Petugas extends CI_Controller {
         $this->load->view('templates/footer', $data);
     }
 
-    // --- METHOD BARU UNTUK MONITORING PERMOHONAN ---
     public function monitoring_permohonan()
     {
         log_message('debug', 'Petugas: monitoring_permohonan() called.');
@@ -479,22 +478,18 @@ class Petugas extends CI_Controller {
         $data['subtitle'] = 'Monitoring Seluruh Permohonan Impor';
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
 
-        // Query untuk mengambil semua permohonan yang relevan untuk dimonitor petugas
-        // Petugas mungkin perlu melihat semua permohonan atau yang terkait dengan seksinya, sesuaikan query ini
         $this->db->select(
             'up.id, up.nomorSurat, up.TglSurat, up.time_stamp, up.status, ' .
             'upr.NamaPers, ' .
-            'u_pemohon.name as nama_pengaju_permohonan, ' . // Alias diganti agar tidak konflik dengan $data['user']
+            'u_pemohon.name as nama_pengaju_permohonan, ' . 
             'u_petugas_pemeriksa.name as nama_petugas_pemeriksa'
         );
         $this->db->from('user_permohonan up');
         $this->db->join('user_perusahaan upr', 'up.id_pers = upr.id_pers', 'left');
-        $this->db->join('user u_pemohon', 'upr.id_pers = u_pemohon.id', 'left'); // User yang mengajukan
-        $this->db->join('petugas p_pemeriksa', 'up.petugas = p_pemeriksa.id', 'left'); // Petugas yang ditunjuk
-        $this->db->join('user u_petugas_pemeriksa', 'p_pemeriksa.id_user = u_petugas_pemeriksa.id', 'left'); // Nama petugas yang ditunjuk
+        $this->db->join('user u_pemohon', 'upr.id_pers = u_pemohon.id', 'left'); 
+        $this->db->join('petugas p_pemeriksa', 'up.petugas = p_pemeriksa.id', 'left'); 
+        $this->db->join('user u_petugas_pemeriksa', 'p_pemeriksa.id_user = u_petugas_pemeriksa.id', 'left'); 
         
-        // Petugas bisa melihat semua, atau filter tertentu (misalnya yang sudah ada LHP atau sudah selesai)
-        // Untuk contoh ini, kita tampilkan semua dengan urutan status dan waktu
         $this->db->order_by("
             CASE up.status
                 WHEN '0' THEN 1
@@ -509,13 +504,12 @@ class Petugas extends CI_Controller {
         log_message('debug', 'Petugas: monitoring_permohonan() - Jumlah Data: ' . count($data['permohonan_list']));
 
         $this->load->view('templates/header', $data);
-        $this->load->view('templates/sidebar', $data); // Pastikan sidebar petugas menyertakan link ke method ini
+        $this->load->view('templates/sidebar', $data); 
         $this->load->view('templates/topbar', $data);
-        $this->load->view('petugas/monitoring_permohonan_view', $data); // Buat view ini
+        $this->load->view('petugas/monitoring_permohonan_view', $data); 
         $this->load->view('templates/footer');
     }
 
-    // --- METHOD BARU UNTUK DETAIL MONITORING PERMOHONAN ---
     public function detail_monitoring_permohonan($id_permohonan = 0)
     {
         log_message('debug', 'Petugas: detail_monitoring_permohonan() called with ID: ' . $id_permohonan);
@@ -527,22 +521,19 @@ class Petugas extends CI_Controller {
 
         $data['title'] = 'Returnable Package';
         $data['subtitle'] = 'Detail Permohonan Impor (Monitoring) ID: ' . htmlspecialchars($id_permohonan);
-        $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array(); // Data petugas yang login
+        $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array(); 
 
-        // Query untuk mengambil detail permohonan, mirip dengan User::detailPermohonan atau Admin::detail_permohonan_admin
         $this->db->select(
             'up.*, ' .
-            'upr.NamaPers, upr.npwp AS npwp_perusahaan, upr.alamat AS alamat_perusahaan, upr.NoSkep AS NoSkep_perusahaan, ' . // Data Perusahaan Pengaju
-            'u_pemohon.name as nama_pengaju_permohonan, u_pemohon.email as email_pengaju_permohonan, '. // Data User Pengaju
-            'p_pemeriksa.NIP as nip_petugas_pemeriksa, u_petugas.name as nama_petugas_pemeriksa, ' // Data Petugas Pemeriksa
-            // 'admin_pemroses.name as nama_admin_pemroses' // Nama Admin yang memproses SK (jika ada)
+            'upr.NamaPers, upr.npwp AS npwp_perusahaan, upr.alamat AS alamat_perusahaan, upr.NoSkep AS NoSkep_perusahaan, ' . 
+            'u_pemohon.name as nama_pengaju_permohonan, u_pemohon.email as email_pengaju_permohonan, '. 
+            'p_pemeriksa.NIP as nip_petugas_pemeriksa, u_petugas.name as nama_petugas_pemeriksa, ' 
         );
         $this->db->from('user_permohonan up');
         $this->db->join('user_perusahaan upr', 'up.id_pers = upr.id_pers', 'left');
         $this->db->join('user u_pemohon', 'upr.id_pers = u_pemohon.id', 'left');
         $this->db->join('petugas p_pemeriksa', 'up.petugas = p_pemeriksa.id', 'left');
         $this->db->join('user u_petugas', 'p_pemeriksa.id_user = u_petugas.id', 'left');
-        // $this->db->join('user admin_pemroses'); // Join untuk nama admin
         $this->db->where('up.id', $id_permohonan);
         $data['permohonan_detail'] = $this->db->get()->row_array();
 
@@ -555,13 +546,11 @@ class Petugas extends CI_Controller {
             return;
         }
 
-        // Ambil data LHP jika ada
         $data['lhp_detail'] = $this->db->get_where('lhp', ['id_permohonan' => $id_permohonan])->row_array();
         log_message('debug', 'Petugas: detail_monitoring_permohonan() - Data LHP: ' . print_r($data['lhp_detail'], true));
         $this->load->view('templates/header', $data);
         $this->load->view('templates/sidebar', $data);
         $this->load->view('templates/topbar', $data);
-        // Menggunakan view yang sama dengan detail User untuk contoh, Anda bisa buat view khusus
         $this->load->view('user/detail_permohonan_view', $data); 
         $this->load->view('templates/footer');
     }

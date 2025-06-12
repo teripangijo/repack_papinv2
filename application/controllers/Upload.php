@@ -33,9 +33,7 @@ class Upload extends CI_Controller {
                 {       
                         $name = $this->upload->data('file_name');
                         var_dump($name);
-                        // $data = array('upload_data' => $this->upload->data());
 
-                        // $this->load->view('admin/upload_success', $data);
                 }
         }
 }

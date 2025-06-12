@@ -14,15 +14,12 @@ class Monitoring extends CI_Controller {
              $this->load->database();
         }
         
-        // Hanya method 'logout' yang dikecualikan dari _check_auth_monitoring
-        // Karena 'force_change_password_page' sudah tidak ada/tidak digunakan
         $excluded_methods_for_full_auth_check = ['logout']; 
         $current_method = $this->router->fetch_method();
 
         if (!in_array($current_method, $excluded_methods_for_full_auth_check)) {
             $this->_check_auth_monitoring();
         } 
-        // Pengecekan sesi email dasar jika method adalah salah satu yang dikecualikan (hanya logout sekarang)
         elseif (!$this->session->userdata('email') && $current_method != 'logout') {
              $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Sesi tidak valid atau telah berakhir. Silakan login kembali.</div>');
              redirect('auth');
@@ -41,8 +38,6 @@ class Monitoring extends CI_Controller {
         }
         
         $role_id_session = $this->session->userdata('role_id');
-        // $force_change_password = $this->session->userdata('force_change_password'); // Tidak relevan lagi untuk monitoring
-        // $current_method = $this->router->fetch_method(); // Tidak perlu lagi di sini jika tidak ada force_change_password
 
         log_message('debug', 'Monitoring: _check_auth_monitoring() - Role ID: ' . ($role_id_session ?? 'NULL'));
 
@@ -66,7 +61,6 @@ class Monitoring extends CI_Controller {
         $data['subtitle'] = 'Dashboard Monitoring';
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
 
-        // Statistik untuk Dashboard Monitoring
         $data['total_pengajuan_kuota_all'] = $this->db->count_all_results('user_pengajuan_kuota');
         $data['total_permohonan_impor_all'] = $this->db->count_all_results('user_permohonan');
         
@@ -95,7 +89,7 @@ class Monitoring extends CI_Controller {
         $data['subtitle'] = 'Pantauan Data Pengajuan Kuota';
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
 
-        $this->db->select('upk.*, upr.NamaPers, u_pemohon.name as nama_pengaju_kuota, u_pemohon.email as email_pengaju_kuota'); // Tambahkan email pengaju
+        $this->db->select('upk.*, upr.NamaPers, u_pemohon.name as nama_pengaju_kuota, u_pemohon.email as email_pengaju_kuota'); 
         $this->db->from('user_pengajuan_kuota upk');
         $this->db->join('user_perusahaan upr', 'upk.id_pers = upr.id_pers', 'left');
         $this->db->join('user u_pemohon', 'upk.id_pers = u_pemohon.id', 'left'); 
@@ -117,12 +111,12 @@ class Monitoring extends CI_Controller {
         $data['subtitle'] = 'Pantauan Data Permohonan Impor';
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
 
-        $this->db->select('up.*, upr.NamaPers, u_pemohon.name as nama_pemohon_impor, u_pemohon.email as email_pemohon_impor, u_petugas.name as nama_petugas_pemeriksa'); // Tambahkan email pemohon & nama petugas dari tabel user
+        $this->db->select('up.*, upr.NamaPers, u_pemohon.name as nama_pemohon_impor, u_pemohon.email as email_pemohon_impor, u_petugas.name as nama_petugas_pemeriksa'); 
         $this->db->from('user_permohonan up');
         $this->db->join('user_perusahaan upr', 'up.id_pers = upr.id_pers', 'left');
         $this->db->join('user u_pemohon', 'upr.id_pers = u_pemohon.id', 'left'); 
         $this->db->join('petugas p_petugas', 'up.petugas = p_petugas.id', 'left'); 
-        $this->db->join('user u_petugas', 'p_petugas.id_user = u_petugas.id', 'left'); // Join ke tabel user untuk nama petugas
+        $this->db->join('user u_petugas', 'p_petugas.id_user = u_petugas.id', 'left'); 
         $this->db->order_by('up.time_stamp', 'DESC');
         $data['daftar_permohonan_impor'] = $this->db->get()->result_array();
         log_message('debug', 'Monitoring: permohonan_impor() - Query: ' . $this->db->last_query());
@@ -131,7 +125,6 @@ class Monitoring extends CI_Controller {
         $this->load->view('templates/header', $data);
         $this->load->view('templates/sidebar', $data);
         $this->load->view('templates/topbar', $data);
-        // Pastikan nama view ini benar: monitoring/daftar_permohonan_impor_view.php
         $this->load->view('monitoring/daftar_permohonan_impor_view', $data); 
         $this->load->view('templates/footer');
     }
@@ -152,8 +145,6 @@ class Monitoring extends CI_Controller {
         $this->db->from('user_pengajuan_kuota upk');
         $this->db->join('user_perusahaan upr', 'upk.id_pers = upr.id_pers', 'left');
         $this->db->join('user u_pemohon', 'upk.id_pers = u_pemohon.id', 'left');
-        // Asumsi ada kolom 'diproses_oleh_admin_id' di 'user_pengajuan_kuota' yang merujuk ke 'user.id' admin
-        // $this->db->join('user admin_pemroses', 'upk.diproses_oleh_admin_id = admin_pemroses.id', 'left'); 
         $this->db->where('upk.id', $id_pengajuan);
         $data['pengajuan'] = $this->db->get()->row_array();
         log_message('debug', 'Monitoring: detail_pengajuan_kuota() - Query: ' . $this->db->last_query());
@@ -167,7 +158,6 @@ class Monitoring extends CI_Controller {
         $this->load->view('templates/header', $data);
         $this->load->view('templates/sidebar', $data);
         $this->load->view('templates/topbar', $data);
-        // Pastikan view ini ada: monitoring/detail_pengajuan_kuota_view.php
         $this->load->view('monitoring/detail_pengajuan_kuota_view', $data); 
         $this->load->view('templates/footer');
     }
@@ -184,10 +174,9 @@ class Monitoring extends CI_Controller {
         $data['subtitle'] = 'Detail Pantauan Permohonan Impor ID: ' . htmlspecialchars($id_permohonan);
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
 
-        // Query ini mirip dengan Admin::detail_permohonan_admin, pastikan semua field yang dibutuhkan view ada
         $this->db->select(
             'up.*, '.
-            'upr.NamaPers, upr.npwp AS npwp_perusahaan, upr.alamat AS alamat_perusahaan, upr.NoSkep AS NoSkep_perusahaan_asal, ' . // NoSkep dari user_perusahaan
+            'upr.NamaPers, upr.npwp AS npwp_perusahaan, upr.alamat AS alamat_perusahaan, upr.NoSkep AS NoSkep_perusahaan_asal, ' . 
             'u_pemohon.name as nama_pengaju_permohonan, u_pemohon.email as email_pengaju_permohonan, '.
             'p_petugas.NIP as nip_petugas_pemeriksa, u_petugas.name as nama_petugas_pemeriksa, '
         );
@@ -196,9 +185,8 @@ class Monitoring extends CI_Controller {
         $this->db->join('user u_pemohon', 'upr.id_pers = u_pemohon.id', 'left');
         $this->db->join('petugas p_petugas', 'up.petugas = p_petugas.id', 'left');
         $this->db->join('user u_petugas', 'p_petugas.id_user = u_petugas.id', 'left');
-        // $this->db->join('user admin_pemroses', 'up.diproses_oleh_id_admin = admin_pemroses.id', 'left');
         $this->db->where('up.id', $id_permohonan);
-        $data['permohonan_detail'] = $this->db->get()->row_array(); // Diubah ke permohonan_detail agar konsisten dengan view user/admin
+        $data['permohonan_detail'] = $this->db->get()->row_array(); 
         log_message('debug', 'Monitoring: detail_permohonan_impor() - Query: ' . $this->db->last_query());
 
         if (!$data['permohonan_detail']) {
@@ -207,18 +195,16 @@ class Monitoring extends CI_Controller {
             return;
         }
 
-        // Ambil data LHP jika ada
         $data['lhp_detail'] = $this->db->get_where('lhp', ['id_permohonan' => $id_permohonan])->row_array();
         
-        $data['is_monitoring_view'] = TRUE; // Flag untuk view
+        $data['is_monitoring_view'] = TRUE; 
         $this->load->view('templates/header', $data);
         $this->load->view('templates/sidebar', $data);
         $this->load->view('templates/topbar', $data);
-        $this->load->view('admin/detail_permohonan_admin_view', $data); // View admin yang dipakai bersama
+        $this->load->view('admin/detail_permohonan_admin_view', $data); 
         $this->load->view('templates/footer');
     }
 
-    // --- METHOD BARU UNTUK PANTAUAN KUOTA PERUSAHAAN ---
     public function pantau_kuota_perusahaan()
     {
         log_message('debug', 'Monitoring: pantau_kuota_perusahaan() called.');
@@ -226,7 +212,6 @@ class Monitoring extends CI_Controller {
         $data['subtitle'] = 'Pantauan Kuota Perusahaan';
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
 
-        // Query untuk mengambil data perusahaan dan agregat kuota barang mereka
         $this->db->select('
             up.id_pers,
             up.NamaPers,
@@ -245,7 +230,7 @@ class Monitoring extends CI_Controller {
             ) as total_remaining_kuota_all_items
         ');
         $this->db->from('user_perusahaan up');
-        $this->db->join('user u', 'up.id_pers = u.id', 'left'); // User yang mendaftarkan perusahaan
+        $this->db->join('user u', 'up.id_pers = u.id', 'left'); 
         $this->db->order_by('up.NamaPers', 'ASC');
         $data['perusahaan_kuota_list'] = $this->db->get()->result_array();
 
@@ -255,11 +240,10 @@ class Monitoring extends CI_Controller {
         $this->load->view('templates/header', $data);
         $this->load->view('templates/sidebar', $data);
         $this->load->view('templates/topbar', $data);
-        $this->load->view('monitoring/pantau_kuota_perusahaan_view', $data); // View baru
+        $this->load->view('monitoring/pantau_kuota_perusahaan_view', $data); 
         $this->load->view('templates/footer');
     }
 
-    // --- METHOD BARU UNTUK DETAIL KUOTA PERUSAHAAN ---
     public function detail_kuota_perusahaan($id_pers = 0)
     {
         log_message('debug', 'Monitoring: detail_kuota_perusahaan() called for id_pers: ' . $id_pers);
@@ -272,7 +256,6 @@ class Monitoring extends CI_Controller {
         $data['title'] = 'Returnable Package';
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
 
-        // Ambil data perusahaan umum
         $this->db->select('up.id_pers, up.NamaPers, up.npwp, up.alamat, u.email as user_email_kontak, u.name as nama_kontak_user');
         $this->db->from('user_perusahaan up');
         $this->db->join('user u', 'up.id_pers = u.id', 'left');
@@ -286,7 +269,6 @@ class Monitoring extends CI_Controller {
         }
         $data['subtitle'] = 'Detail Rincian & Histori Kuota: ' . htmlspecialchars($data['perusahaan_info']['NamaPers']);
 
-        // Ambil daftar kuota per jenis barang untuk perusahaan ini
         $this->db->select('ukb.id_kuota_barang, ukb.nama_barang, ukb.initial_quota_barang, ukb.remaining_quota_barang, ukb.nomor_skep_asal, ukb.tanggal_skep_asal, ukb.status_kuota_barang, ukb.waktu_pencatatan, admin_pencatat.name as nama_admin_pencatat_kuota');
         $this->db->from('user_kuota_barang ukb');
         $this->db->join('user admin_pencatat', 'ukb.dicatat_oleh_user_id = admin_pencatat.id', 'left');
@@ -295,17 +277,15 @@ class Monitoring extends CI_Controller {
         $data['detail_kuota_items'] = $this->db->get()->result_array();
         log_message('debug', 'Monitoring: detail_kuota_perusahaan() - Query Detail Kuota Items: ' . $this->db->last_query());
 
-        // --- AMBIL HISTORI TRANSAKSI KUOTA ---
         $this->db->select('lk.*, u_pencatat.name as nama_pencatat_log');
         $this->db->from('log_kuota_perusahaan lk');
         $this->db->join('user u_pencatat', 'lk.dicatat_oleh_user_id = u_pencatat.id', 'left');
         $this->db->where('lk.id_pers', $id_pers);
         $this->db->order_by('lk.tanggal_transaksi', 'DESC');
-        $this->db->order_by('lk.id_log', 'DESC'); // Urutan sekunder jika timestamp sama
+        $this->db->order_by('lk.id_log', 'DESC'); 
         $data['histori_transaksi_kuota'] = $this->db->get()->result_array();
         log_message('debug', 'Monitoring: detail_kuota_perusahaan() - Query Histori Transaksi Kuota: ' . $this->db->last_query());
         log_message('debug', 'Monitoring: detail_kuota_perusahaan() - Data Histori Transaksi Kuota Count: ' . count($data['histori_transaksi_kuota']));
-        // --- AKHIR AMBIL HISTORI TRANSAKSI KUOTA ---
 
         $this->load->view('templates/header', $data);
         $this->load->view('templates/sidebar', $data);
@@ -314,10 +294,5 @@ class Monitoring extends CI_Controller {
         $this->load->view('templates/footer');
     }
 
-    // force_change_password_page dan edit_profil bisa jadi berbeda untuk Monitoring,
-    // atau bisa diarahkan ke method yang sama dengan User/Petugas jika logikanya identik
-    // dan hanya dibedakan oleh role_id di _check_auth untuk akses.
-    // Untuk saat ini, saya asumsikan method ini belum ada atau belum disesuaikan untuk Monitoring.
-    // Jika diperlukan, Anda bisa menambahkannya serupa dengan controller lain.
 
 }

@@ -59,12 +59,7 @@ class Menu extends CI_Controller
             $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Menu has been updated!</div>');
             redirect('menu');
         }
-        // var_dump($id);
-        // var_dump($data['menu']);
 
-        // $this->db->where('id', $id);
-        // $this->db->replace('user_menu', $data);
-        // redirect('menu');
     }
 
     public function update_menu()
@@ -73,8 +68,6 @@ class Menu extends CI_Controller
             'menu' => $this->input->post('update_menu')
         ];
         $id = $this->input->post('id');
-        // var_dump($id);
-        // var_dump($data['menu']);
         $this->load->model('Menu_model');
         $this->Menu_model->updateMenu($id, $data);
         redirect('menu');

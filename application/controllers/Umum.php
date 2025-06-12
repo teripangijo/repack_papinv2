@@ -35,11 +35,6 @@ class Umum extends CI_Controller
             'permohonan' => $permohonan,
             'user_perusahaan' => $user_perusahaan,
         );
-        // var_dump($data);
-        // $this->load->library('pdf');
-        // $this->pdf->setPaper('A4', 'potrait');
-        // $this->pdf->filename = "print.pdf";
-        // $this->pdf->load_view('user/FormPermohonan', $data);
 
         $this->load->view('user/FormPermohonan', $data);
     }

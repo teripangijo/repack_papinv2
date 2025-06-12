@@ -428,7 +428,7 @@ class User extends CI_Controller
         $data['title'] = 'Returnable Package';
         $data['subtitle'] = 'Permohonan Impor Kembali';
         $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
-        $id_user_login = $data['user']['id']; // Pastikan 'id' user ada di session
+        $id_user_login = $data['user']['id']; 
 
         $data['user_perusahaan'] = $this->db->get_where('user_perusahaan', ['id_pers' => $id_user_login])->row_array();
 
@@ -450,7 +450,6 @@ class User extends CI_Controller
         log_message('debug', 'PERMOHONAN BARU - Query List Barang Berkuota: ' . $this->db->last_query());
         log_message('debug', 'PERMOHONAN BARU - Data List Barang Berkuota: ' . print_r($data['list_barang_berkuota'], true));
         
-        // Aturan Validasi Form
         $this->form_validation->set_rules('nomorSurat', 'Nomor Surat Pengajuan', 'trim|required|max_length[100]');
         $this->form_validation->set_rules('TglSurat', 'Tanggal Surat', 'trim|required');
         $this->form_validation->set_rules('Perihal', 'Perihal Surat', 'trim|required|max_length[255]');
@@ -463,7 +462,6 @@ class User extends CI_Controller
         $this->form_validation->set_rules('TglKedatangan', 'Tanggal Perkiraan Kedatangan', 'trim|required');
         $this->form_validation->set_rules('TglBongkar', 'Tanggal Perkiraan Bongkar', 'trim|required');
         $this->form_validation->set_rules('lokasi', 'Lokasi Bongkar', 'trim|required|max_length[100]');
-        // Aturan validasi untuk file upload WAJIB
         $this->form_validation->set_rules('file_bc_manifest', 'File BC 1.1 / Manifest', 'callback_check_file_bc_manifest_upload');
 
         if ($this->form_validation->run() == false) {
@@ -507,12 +505,9 @@ class User extends CI_Controller
             }
             $nomor_skep_final = $kuota_valid_db['nomor_skep_asal'];
 
-            // Handle File Upload BC 1.1/Manifest
             log_message('debug', 'PERMOHONAN BARU - Memulai blok upload. _FILES[file_bc_manifest]: ' . print_r($_FILES['file_bc_manifest'] ?? 'TIDAK ADA', true));
             $nama_file_bc_manifest = null; 
 
-            // Callback 'check_file_bc_manifest_upload' sudah memastikan file ada dan valid secara dasar.
-            // Jadi kita bisa langsung mencoba upload.
             $config_upload_bc = $this->_get_upload_config('./uploads/bc_manifest/', 'pdf', 2048); 
 
             if (!$config_upload_bc) {
@@ -522,20 +517,15 @@ class User extends CI_Controller
             }
             
             $this->upload->initialize($config_upload_bc, TRUE); 
-            if ($this->upload->do_upload('file_bc_manifest')) { // Pastikan nama field 'file_bc_manifest'
+            if ($this->upload->do_upload('file_bc_manifest')) { 
                 $upload_data_bc = $this->upload->data();
                 $nama_file_bc_manifest = $upload_data_bc['file_name'];
                 log_message('info', 'PERMOHONAN BARU - UPLOAD BC MANIFEST SUKSES: ' . $nama_file_bc_manifest . ' | Full data: ' . print_r($upload_data_bc, true));
             } else {
-                // Ini hanya akan terjadi jika callback lolos tapi do_upload gagal karena alasan server (misalnya, izin akhir, disk penuh)
-                // atau jika callback tidak 100% menangkap semua kasus (misal mime type sebenarnya berbeda dari ekstensi,
-                // meskipun library Upload CI juga akan mengecek ini).
                 $upload_errors = $this->upload->display_errors('', '');
                 log_message('error', 'PERMOHONAN BARU - UPLOAD BC MANIFEST GAGAL SAAT PENYIMPANAN: ' . $upload_errors . ' _FILES data: ' . print_r($_FILES['file_bc_manifest'], true));
                 $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Upload File BC 1.1 / Manifest Gagal Saat Penyimpanan: ' . $upload_errors . '</div>');
                 
-                // Reload view dengan data yang ada agar form tidak kosong
-                // Perlu di-repopulate $data['list_barang_berkuota'] karena redirect akan hilang
                 $data['list_barang_berkuota'] = $this->db->select('id_kuota_barang, nama_barang, remaining_quota_barang, nomor_skep_asal, tanggal_skep_asal')
                                                     ->from('user_kuota_barang')
                                                     ->where('id_pers', $id_user_login)
@@ -550,7 +540,6 @@ class User extends CI_Controller
                 $this->load->view('templates/footer', $data);
                 return; 
             }
-            // Jika sampai sini, file sudah terupload dan $nama_file_bc_manifest seharusnya sudah terisi.
 
             log_message('debug', 'PERMOHONAN BARU - Nilai $nama_file_bc_manifest sebelum insert: ' . ($nama_file_bc_manifest ?? 'NULL (INI MASALAH JIKA FILE DIUPLOAD)'));
 
@@ -566,7 +555,7 @@ class User extends CI_Controller
                 'NamaKapal'     => $this->input->post('NamaKapal'),
                 'noVoyage'      => $this->input->post('noVoyage'),
                 'NoSkep'        => $nomor_skep_final,
-                'file_bc_manifest' => $nama_file_bc_manifest, // Memasukkan nama file
+                'file_bc_manifest' => $nama_file_bc_manifest, 
                 'id_kuota_barang_digunakan' => $id_kuota_barang_dipilih, 
                 'TglKedatangan' => $this->input->post('TglKedatangan'),
                 'TglBongkar'    => $this->input->post('TglBongkar'),
@@ -587,7 +576,6 @@ class User extends CI_Controller
                 $db_error = $this->db->error();
                 log_message('error', 'PERMOHONAN BARU - GAGAL insert ke database. Error: Code ' . $db_error['code'] . ' - ' . $db_error['message'] . ' Data: ' . print_r($data_insert, true));
                 $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Gagal menyimpan permohonan ke database. Error: ' . $db_error['message'] . '</div>');
-                // Reload form dengan data yang ada
                 $this->load->view('templates/header', $data);
                 $this->load->view('templates/sidebar', $data);
                 $this->load->view('templates/topbar', $data);
@@ -599,18 +587,13 @@ class User extends CI_Controller
 
     public function check_file_bc_manifest_upload($str)
     {
-        $field_name = 'file_bc_manifest'; // Nama field input file di form tambah
-        // --- TAMBAHKAN DEBUGGING DI SINI ---
+        $field_name = 'file_bc_manifest'; 
         log_message('debug', 'CALLBACK check_file_bc_manifest_upload - _FILES content: ' . print_r($_FILES, true));
         if (isset($_FILES[$field_name])) {
             log_message('debug', 'CALLBACK check_file_bc_manifest_upload - _FILES['.$field_name.'] error code: ' . $_FILES[$field_name]['error']);
-            // Anda bisa juga var_dump di sini jika ingin output langsung ke browser (hentikan dengan exit setelahnya jika perlu)
-            // var_dump($_FILES); exit; 
         } else {
             log_message('debug', 'CALLBACK check_file_bc_manifest_upload - _FILES['.$field_name.'] IS NOT SET.');
         }
-        // --- AKHIR DEBUGGING ---
-        // Path dummy di sini hanya untuk mengambil rules, tidak benar-benar membuat direktori
         $config_upload_rules = $this->_get_upload_config('./uploads/dummy_path_for_rules/', 'pdf', 2048); 
 
         if (!$config_upload_rules || !is_array($config_upload_rules)) {
@@ -1127,11 +1110,11 @@ class User extends CI_Controller
             return;
         }
 
-        $id_user_login = $this->session->userdata('id'); // Asumsi Anda menyimpan 'id' user di session
+        $id_user_login = $this->session->userdata('id'); 
 
         $permohonan = $this->db->get_where('user_permohonan', [
             'id' => $id_permohonan,
-            'id_pers' => $id_user_login // Pastikan user hanya bisa hapus miliknya sendiri
+            'id_pers' => $id_user_login 
         ])->row_array();
 
         if (!$permohonan) {
@@ -1140,28 +1123,24 @@ class User extends CI_Controller
             return;
         }
 
-        // Tentukan status di mana user boleh menghapus permohonan impor
-        $deletable_statuses = ['0', '5']; // 'Baru Masuk', 'Diproses Admin'
+        $deletable_statuses = ['0', '5']; 
         if (!in_array($permohonan['status'], $deletable_statuses)) {
             $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Permohonan ini sudah dalam proses dan tidak dapat dihapus lagi.</div>');
             redirect('user/daftarPermohonan');
             return;
         }
 
-        // Hapus file terkait (file_bc_manifest)
         $file_bc_manifest_path = './uploads/bc_manifest/' . $permohonan['file_bc_manifest'];
         if (!empty($permohonan['file_bc_manifest']) && file_exists($file_bc_manifest_path)) {
             if (@unlink($file_bc_manifest_path)) {
                 log_message('info', 'User (ID: '.$id_user_login.') menghapus file BC Manifest: ' . $permohonan['file_bc_manifest'] . ' untuk permohonan ID: ' . $id_permohonan);
             } else {
                 log_message('error', 'User (ID: '.$id_user_login.') GAGAL menghapus file BC Manifest: ' . $permohonan['file_bc_manifest'] . ' untuk permohonan ID: ' . $id_permohonan);
-                // Anda bisa memilih untuk menghentikan proses jika file gagal dihapus, atau tetap melanjutkan
             }
         }
 
-        // Hapus record permohonan dari database
         $this->db->where('id', $id_permohonan);
-        $this->db->where('id_pers', $id_user_login); // Double check kepemilikan
+        $this->db->where('id_pers', $id_user_login); 
         if ($this->db->delete('user_permohonan')) {
             log_message('info', 'User (ID: '.$id_user_login.') menghapus permohonan impor ID: ' . $id_permohonan);
             $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Permohonan Impor Kembali (ID Aju: '.htmlspecialchars($id_permohonan).') berhasil dihapus.</div>');
@@ -1179,11 +1158,11 @@ class User extends CI_Controller
             return;
         }
 
-        $id_user_login = $this->session->userdata('id'); // Asumsi Anda menyimpan 'id' user di session
+        $id_user_login = $this->session->userdata('id'); 
 
         $pengajuan = $this->db->get_where('user_pengajuan_kuota', [
             'id' => $id_pengajuan,
-            'id_pers' => $id_user_login // Pastikan user hanya bisa hapus miliknya sendiri
+            'id_pers' => $id_user_login 
         ])->row_array();
 
         if (!$pengajuan) {
@@ -1192,7 +1171,6 @@ class User extends CI_Controller
             return;
         }
 
-        // Tentukan status di mana user boleh menghapus pengajuan kuota
         $deletable_statuses = ['pending'];
         if (!in_array($pengajuan['status'], $deletable_statuses)) {
             $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Pengajuan kuota ini sudah dalam proses (Status: '.htmlspecialchars($pengajuan['status']).') dan tidak dapat dihapus lagi.</div>');
@@ -1200,7 +1178,6 @@ class User extends CI_Controller
             return;
         }
 
-        // Hapus file terkait (file_lampiran_user)
         $file_lampiran_path = './uploads/lampiran_kuota/' . $pengajuan['file_lampiran_user'];
         if (!empty($pengajuan['file_lampiran_user']) && file_exists($file_lampiran_path)) {
             if (@unlink($file_lampiran_path)) {
@@ -1210,9 +1187,8 @@ class User extends CI_Controller
             }
         }
 
-        // Hapus record pengajuan kuota dari database
         $this->db->where('id', $id_pengajuan);
-        $this->db->where('id_pers', $id_user_login); // Double check kepemilikan
+        $this->db->where('id_pers', $id_user_login); 
         if ($this->db->delete('user_pengajuan_kuota')) {
             log_message('info', 'User (ID: '.$id_user_login.') menghapus pengajuan kuota ID: ' . $id_pengajuan);
             $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Pengajuan kuota (ID: '.htmlspecialchars($id_pengajuan).') berhasil dihapus.</div>');
@@ -1224,13 +1200,12 @@ class User extends CI_Controller
 
     public function check_file_bc_manifest_upload_edit($str)
     {
-        $field_name = 'file_bc_manifest_edit'; // Nama field di form EDIT
+        $field_name = 'file_bc_manifest_edit'; 
 
         if (!isset($_FILES[$field_name]) || $_FILES[$field_name]['error'] == UPLOAD_ERR_NO_FILE) {
-            return TRUE; // Jika tidak ada file baru diupload saat edit, anggap valid
+            return TRUE; 
         }
 
-        // Jika ada file baru, validasi seperti biasa
         $config_upload_rules = $this->_get_upload_config('./uploads/dummy_path_for_rules/', 'pdf', 2048);
         if (!$config_upload_rules || !is_array($config_upload_rules)) {
             $this->form_validation->set_message('check_file_bc_manifest_upload_edit', 'Kesalahan konfigurasi upload internal.');
