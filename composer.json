@@ -11,7 +11,7 @@
 		"source": "https://github.com/bcit-ci/CodeIgniter"
 	},
 	"require": {
-		"php": ">=5.3.7",
+		"php": ">=8.4.7",
 		"dompdf/dompdf": "^1.0",
 		"vlucas/phpdotenv": "^5.6"
 	},
