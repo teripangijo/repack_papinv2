@@ -15,28 +15,24 @@ if (!function_exists('const_bool')) {
 }
 
 $db['default'] = array(
-    'dsn'      => defined('DB_DSN') ? DB_DSN : '',
-    'hostname' => defined('DB_HOSTNAME') ? DB_HOSTNAME : null,
-    'username' => defined('DB_USERNAME') ? DB_USERNAME : null,
-    'password' => defined('DB_PASSWORD') ? DB_PASSWORD : null,
-    'database' => defined('DB_DATABASE') ? DB_DATABASE : null,
-    'dbdriver' => defined('DB_DRIVER') ? DB_DRIVER : 'mysqli',
-    'dbprefix' => defined('DB_PREFIX') ? DB_PREFIX : '',
-    'pconnect' => const_bool('DB_PCONNECT', FALSE),
-    'db_debug' => const_bool('DB_DEBUG', TRUE), // Default TRUE untuk development
-    'cache_on' => const_bool('DB_CACHE_ON', FALSE),
-    'cachedir' => defined('DB_CACHEDIR') ? DB_CACHEDIR : '',
-    'char_set' => defined('DB_CHARSET') ? DB_CHARSET : 'utf8',
-    'dbcollat' => defined('DB_COLLATION') ? DB_COLLATION : 'utf8_general_ci',
-    'swap_pre' => defined('DB_SWAP_PRE') ? DB_SWAP_PRE : '',
-    'encrypt'  => const_bool('DB_ENCRYPT', FALSE),
-    'compress' => const_bool('DB_COMPRESS', FALSE),
-    'stricton' => const_bool('DB_STRICTON', FALSE),
+    'dsn'      => $_ENV['DB_DSN'] ?? '',
+    'hostname' => $_ENV['DB_HOSTNAME'] ?? null,
+    'username' => $_ENV['DB_USERNAME'] ?? null,
+    'password' => $_ENV['DB_PASSWORD'] ?? null,
+    'database' => $_ENV['DB_DATABASE'] ?? null,
+    'dbdriver' => $_ENV['DB_DRIVER'] ?? 'mysqli',
+    'dbprefix' => $_ENV['DB_PREFIX'] ?? '',
+    'pconnect' => (strtoupper($_ENV['DB_PCONNECT'] ?? 'FALSE') === 'TRUE'),
+    'db_debug' => (strtoupper($_ENV['DB_DEBUG'] ?? 'TRUE') !== 'FALSE'),
+    'cache_on' => (strtoupper($_ENV['DB_CACHE_ON'] ?? 'FALSE') === 'TRUE'),
+    'cachedir' => $_ENV['DB_CACHEDIR'] ?? '',
+    'char_set' => $_ENV['DB_CHARSET'] ?? 'utf8',
+    'dbcollat' => $_ENV['DB_COLLATION'] ?? 'utf8_general_ci',
+    'swap_pre' => $_ENV['DB_SWAP_PRE'] ?? '',
+    'encrypt'  => (strtoupper($_ENV['DB_ENCRYPT'] ?? 'FALSE') === 'TRUE'),
+    'compress' => (strtoupper($_ENV['DB_COMPRESS'] ?? 'FALSE') === 'TRUE'),
+    'stricton' => (strtoupper($_ENV['DB_STRICTON'] ?? 'FALSE') === 'TRUE'),
     'failover' => array(),
-    'save_queries' => const_bool('DB_SAVE_QUERIES', TRUE),
-    'port'     => defined('DB_PORT') ? (int)DB_PORT : 3306,
+    'save_queries' => (strtoupper($_ENV['DB_SAVE_QUERIES'] ?? 'TRUE') !== 'FALSE'),
+    'port'     => $_ENV['DB_PORT'] ?? 3306,
 );
-
-// HAPUS SEMUA echo, var_dump, dan exit dari sini
-// Contoh:
-// echo "<pre>..."; var_dump($db['default']); exit; // PASTIKAN INI SUDAH DIHAPUS

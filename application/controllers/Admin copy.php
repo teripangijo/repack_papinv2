@@ -2,7 +2,7 @@
 defined('BASEPATH') or exit('No direct script access allowed');
 use PragmaRX\Google2FA\Google2FA;
 
-class Admin extends MY_Controller
+class Admin extends CI_Controller
 {
     public function __construct()
     {
@@ -28,6 +28,23 @@ class Admin extends MY_Controller
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Access Denied! You are not authorized to access this page.</div>');
             redirect('auth/blocked');
             exit; 
+        }
+
+        if (empty($user_data_from_db['google2fa_secret']) || !$user_data_from_db['is_mfa_enabled']) {
+            $current_method = $this->router->fetch_method();
+            
+            if ($current_method != 'setup_mfa' && $current_method != 'verify_mfa') {
+                $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Untuk keamanan, Anda wajib mengaktifkan Multi-Factor Authentication (MFA) terlebih dahulu.</div>');
+                redirect('admin/setup_mfa');
+                exit;
+            }
+        } else {
+            $current_method = $this->router->fetch_method();
+            if ($current_method == 'setup_mfa') {
+                $this->session->set_flashdata('message', '<div class="alert alert-info" role="alert">MFA Anda sudah aktif.</div>');
+                redirect('admin/edit_profil');
+                exit;
+            }
         }
 
         $this->load->helper(array('form', 'url', 'repack_helper', 'download')); 
@@ -105,25 +122,6 @@ class Admin extends MY_Controller
             $this->session->set_flashdata('error', 'Kode verifikasi salah. Silakan coba lagi.');
             redirect('admin/setup_mfa');
         }
-    }
-
-    public function reset_mfa()
-    {
-        // Ambil ID user yang sedang login dari sesi
-        $user_id = $this->session->userdata('user_id');
-
-        // Update database untuk menonaktifkan MFA dan menghapus secret key yang lama
-        $this->db->where('id', $user_id);
-        $this->db->update('user', [
-            'is_mfa_enabled' => 0,          // Set status MFA menjadi TIDAK AKTIF
-            'google2fa_secret' => NULL    // Hapus secret key agar yang baru dibuat
-        ]);
-
-        // Beri pesan kepada pengguna bahwa MFA telah dinonaktifkan
-        $this->session->set_flashdata('message', '<div class="alert alert-info" role="alert">MFA Anda telah dinonaktifkan. Silakan lakukan pengaturan ulang untuk mengaktifkannya kembali.</div>');
-
-        // Arahkan pengguna ke halaman setup MFA
-        redirect('admin/setup_mfa');
     }
 
     public function edit_profil()

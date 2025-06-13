@@ -9,6 +9,9 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
+    <meta name="csrf-token-name" content="<?= $this->security->get_csrf_token_name(); ?>">
+    <meta name="csrf-token-hash" content="<?= $this->security->get_csrf_hash(); ?>">
+
     <title><?= isset($title) ? htmlspecialchars($title) : 'Default Title'; ?></title>
 
     <link href="<?= base_url('assets') ?>/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">

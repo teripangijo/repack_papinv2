@@ -1,20 +1,102 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 
-class User extends CI_Controller
+class User extends MY_Controller
 {
     public function __construct()
     {
         parent::__construct();
+
+        $this->_check_auth();
+
         $this->load->library('form_validation');
         $this->load->library('upload');
         $this->load->helper('url');
         $this->load->helper('form');
         
         if (!isset($this->db)) {
-             $this->load->database();
+            $this->load->database();
         }
-        $this->_check_auth();
+    }
+
+    public function setup_mfa()
+    {
+        $data['title'] = 'Returnable Package';
+        $data['subtitle'] = 'Setup Multi-Factor Authentication';
+        $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+
+        $google2fa = new \PragmaRX\Google2FA\Google2FA();
+        
+        if (empty($data['user']['google2fa_secret'])) {
+            $secretKey = $google2fa->generateSecretKey();
+            $this->db->where('id', $data['user']['id']);
+            $this->db->update('user', ['google2fa_secret' => $secretKey]);
+        } else {
+            $secretKey = $data['user']['google2fa_secret'];
+        }
+
+        $companyName = 'Repack Papin';
+        $userEmail = $data['user']['email'];
+
+        $qrCodeUrl = $google2fa->getQRCodeUrl($companyName, $userEmail, $secretKey);
+
+        $renderer = new \BaconQrCode\Renderer\ImageRenderer(
+            new \BaconQrCode\Renderer\RendererStyle\RendererStyle(400),
+            new \BaconQrCode\Renderer\Image\SvgImageBackEnd()
+        );
+        $writer = new \BaconQrCode\Writer($renderer);
+        $qrCodeImage = $writer->writeString($qrCodeUrl);
+        $qrCodeDataUri = 'data:image/svg+xml;base64,' . base64_encode($qrCodeImage);
+
+        $data['qr_code_data_uri'] = $qrCodeDataUri;
+        $data['secret_key'] = $secretKey;
+
+        $this->load->view('templates/header', $data);
+        $this->load->view('templates/sidebar', $data);
+        $this->load->view('templates/topbar', $data);
+        $this->load->view('user/mfa_setup', $data);
+        $this->load->view('templates/footer');
+    }
+
+    public function verify_mfa()
+    {
+        $userId = $this->session->userdata('user_id');
+        $user = $this->db->get_where('user', ['id' => $userId])->row_array();
+        $secret = $user['google2fa_secret'];
+
+        $oneTimePassword = $this->input->post('one_time_password');
+
+        $google2fa = new \PragmaRX\Google2FA\Google2FA();
+        $isValid = $google2fa->verifyKey($secret, $oneTimePassword);
+
+        if ($isValid) {
+            $this->db->where('id', $userId);
+            $this->db->update('user', ['is_mfa_enabled' => 1]);
+
+            $this->session->set_userdata('mfa_verified', true);
+
+            $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Autentikasi Dua Faktor (MFA) berhasil diaktifkan!</div>');
+            redirect('user/index');
+        } else {
+            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Kode verifikasi salah. Silakan coba lagi.</div>');
+            redirect('user/setup_mfa');
+        }
+    }
+
+    public function reset_mfa()
+    {
+        $user_id = $this->session->userdata('user_id');
+
+        $this->db->where('id', $user_id);
+        $this->db->update('user', [
+            'is_mfa_enabled' => 0,
+            'google2fa_secret' => NULL
+        ]);
+
+        $this->session->unset_userdata('mfa_verified');
+
+        $this->session->set_flashdata('message', '<div class="alert alert-info" role="alert">MFA Anda telah dinonaktifkan. Silakan lakukan pengaturan ulang.</div>');
+        redirect('user/setup_mfa');
     }
 
     

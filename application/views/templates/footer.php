@@ -48,8 +48,49 @@ defined('BASEPATH') OR exit('No direct script access allowed');
     <script src="https://unpkg.com/gijgo@1.9.13/js/gijgo.min.js" type="text/javascript"></script>
     <script src="<?= base_url('assets/vendor/datatables/jquery.dataTables.min.js'); ?>"></script>
     <script src="<?= base_url('assets/vendor/datatables/dataTables.bootstrap4.min.js'); ?>"></script>
+    <script>
+        // Setup AJAX untuk secara otomatis mengirim token CSRF
+        $.ajaxSetup({
+            data: {
+                '<?= $this->security->get_csrf_token_name(); ?>': $('meta[name="csrf-token-hash"]').attr('content')
+            },
+            // Fungsi ini akan memperbarui token setiap kali AJAX sukses,
+            // jika token di-regenerasi oleh server.
+            success: function(data, textStatus, jqXHR) {
+                // Coba ambil token baru dari header response jika ada
+                var new_token_hash = jqXHR.getResponseHeader('X-CSRF-TOKEN');
+                if(new_token_hash){
+                    $('meta[name="csrf-token-hash"]').attr('content', new_token_hash);
+                }
+            }
+        });
 
-    <?php // Skrip AJAX custom Anda (contoh) ?>
+        // Jika Anda menggunakan DataTables, konfigurasinya seperti ini:
+        // $.extend(true, $.fn.dataTable.defaults, {
+        //     "fnServerData": function ( sSource, aoData, fnCallback, oSettings ) {
+        //         aoData.push({
+        //             "name": "<?= $this->security->get_csrf_token_name(); ?>",
+        //             "value": $('meta[name="csrf-token-hash"]').attr('content')
+        //         });
+        //         oSettings.jqXHR = $.ajax( {
+        //             "dataType": 'json',
+        //             "type": "POST",
+        //             "url": sSource,
+        //             "data": aoData,
+        //             "success": function(data, textStatus, jqXHR) {
+        //                 var new_token_hash = jqXHR.getResponseHeader('X-CSRF-TOKEN');
+        //                 if(new_token_hash){
+        //                    $('meta[name="csrf-token-hash"]').attr('content', new_token_hash);
+        //                 }
+        //                 fnCallback(data);
+        //             }
+        //         });
+        //     }
+        // });
+    </script>
+
+
+
     <?php if(isset($user['role_id']) && $user['role_id'] == 1 && $this->uri->segment(1) == 'admin' && $this->uri->segment(2) == 'roleaccess'): ?>
     <script>
         $(document).ready(function(){

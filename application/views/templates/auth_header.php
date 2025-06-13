@@ -9,6 +9,9 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
+    <meta name="csrf-token-name" content="<?= $this->security->get_csrf_token_name(); ?>">
+    <meta name="csrf-token-hash" content="<?= $this->security->get_csrf_hash(); ?>">
+
     <title>
         <?= $title;?>
     </title>

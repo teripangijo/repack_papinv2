@@ -5,6 +5,7 @@ class Auth extends CI_Controller
 {
     public function __construct()
     {
+
         parent::__construct();
         $this->load->library('form_validation');
         $this->load->library('session'); 
@@ -43,7 +44,7 @@ class Auth extends CI_Controller
     private function _redirect_user_by_role($is_active = 1)
     {
         $role_id = $this->session->userdata('role_id');
-        $user_id = $this->session->userdata('id'); 
+        $user_id = $this->session->userdata('user_id'); 
         
         if ($role_id == 2 && $is_active == 0) {
             $this->session->set_flashdata('message', '<div class="alert alert-info" role="alert">Akun Anda belum aktif. Silakan lengkapi profil perusahaan Anda untuk aktivasi.</div>');
@@ -81,12 +82,14 @@ class Auth extends CI_Controller
         $user = $this->db->get_where('user', ['email' => $id_or_email])->row_array();
 
         if ($user) {
-            $data_session = [ 
-                'id' => $user['id'], 
+            $data_session = [
+                'user_id' => $user['id'], 
                 'email' => $user['email'],
                 'role_id' => $user['role_id'],
-                'nama' => $user['name'], 
-                'is_active' => $user['is_active'] 
+                'name' => $user['name'],
+                'image' => $user['image'] ?? 'default.jpg',
+                'is_active' => $user['is_active'],
+                'is_mfa_enabled' => $user['is_mfa_enabled'] ?? 0
             ];
             $this->session->set_userdata($data_session);
             if ($user['force_change_password'] == 1) {
@@ -115,27 +118,36 @@ class Auth extends CI_Controller
     {
         $login_identifier = $this->input->post('login_identifier');
         $password = $this->input->post('password');
-
-        
-        
+                
         $user = $this->db->get_where('user', ['email' => $login_identifier])->row_array();
 
         if ($user) {
-            
-            
-                
-                if (password_verify($password, $user['password'])) {
+            if ($user['is_active'] == 0 && $user['role_id'] != 2) {
+                $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Akun Anda tidak aktif!</div>');
+                redirect('auth');
+                return;
+            }
+
+            if (password_verify($password, $user['password'])) {
+                if ($user['is_mfa_enabled']) {
+                   
+                    $this->session->set_userdata('mfa_user_id', $user['id']);
+                    
+                    redirect('auth/verify_mfa_login');
+                } else {
+                   
                     $data_session = [
-                        'id'        => $user['id'],
-                        'email'     => $user['email'], 
+                        'user_id'   => $user['id'],
+                        'email'     => $user['email'],
                         'role_id'   => $user['role_id'],
-                        'nama'      => $user['name'], 
+                        'name'      => $user['name'],
+                        'image'     => $user['image'] ?? 'default.jpg',
                         'is_active' => $user['is_active'],
-                        'force_change_password' => $user['force_change_password'] ?? 0 
+                        'force_change_password' => $user['force_change_password'] ?? 0,
+                        'mfa_verified' => true
                     ];
                     $this->session->set_userdata($data_session);
 
-                    
                     if ($user['force_change_password'] == 1) {
                         $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Untuk keamanan, Anda wajib mengganti password Anda.</div>');
                         if ($user['role_id'] == 2) { 
@@ -145,27 +157,82 @@ class Auth extends CI_Controller
                         } elseif ($user['role_id'] == 4) { 
                             redirect('monitoring'); 
                         } else {
-                            
-                            
                             $this->_redirect_user_by_role($user['is_active']);
                         }
                     } else {
                         $this->_redirect_user_by_role($user['is_active']);
                     }
-                } else {
-                    
-                    $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Password salah!</div>');
-                    redirect('auth');
                 }
-            
-                
-                
-                
-            
+            } else {
+                $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Password salah!</div>');
+                redirect('auth');
+            }
         } else {
-            
             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Email atau NIP tidak terdaftar!</div>');
             redirect('auth');
+        }
+    }
+
+    public function verify_mfa_login()
+    {
+        if (!$this->session->userdata('mfa_user_id')) {
+            redirect('auth');
+        }
+        $this->form_validation->set_rules('mfa_code', 'Kode MFA', 'trim|required|numeric');
+        if ($this->form_validation->run() == false) {
+            $data['title'] = 'Verifikasi Dua Faktor';
+            $this->load->view('templates/auth_header', $data);
+            $this->load->view('auth/mfa_verify_page');
+            $this->load->view('templates/auth_footer');
+        } else {
+            $this->_process_mfa_login();
+        }
+    }
+
+    private function _process_mfa_login()
+    {
+        $userId = $this->session->userdata('mfa_user_id');
+        $mfaCode = $this->input->post('mfa_code');
+        $user = $this->db->get_where('user', ['id' => $userId])->row_array();
+
+        if (!$user) {
+            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Sesi tidak valid.</div>');
+            redirect('auth');
+        }
+
+        // Load library Google2FA
+        $google2fa = new \PragmaRX\Google2FA\Google2FA();
+        
+        // Verifikasi kunci
+        $isValid = $google2fa->verifyKey($user['google2fa_secret'], $mfaCode);
+
+        if ($isValid) {
+            $this->session->unset_userdata('mfa_user_id');
+            $data_session = [
+                'user_id' => $user['id'],
+                'email' => $user['email'],
+                'role_id' => $user['role_id'],
+                'name' => $user['name'],
+                'mfa_verified' => true
+            ];
+            
+            $this->session->set_userdata($data_session);
+            
+            if ($user['force_change_password'] == 1) {
+                $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Untuk keamanan, Anda wajib mengganti password Anda.</div>');
+                if ($user['role_id'] == 2) { 
+                    redirect('user/force_change_password_page'); 
+                } elseif ($user['role_id'] == 3) { 
+                    redirect('petugas/force_change_password_page'); 
+                } else {
+                    $this->_redirect_user_by_role($user['is_active']);
+                }
+            } else {
+                $this->_redirect_user_by_role($user['is_active']);
+            }
+        } else {
+            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Kode verifikasi salah!</div>');
+            redirect('auth/verify_mfa_login');
         }
     }
 
@@ -253,7 +320,7 @@ class Auth extends CI_Controller
              $this->load->database();
         }
 
-        $logged_in_user_id = $this->session->userdata('id'); 
+        $logged_in_user_id = $this->session->userdata('user_id'); 
 
         $actual_user_id = null;
         if ($this->session->userdata('role_id') == 1 && $id_from_url !== null && is_numeric($id_from_url)) {

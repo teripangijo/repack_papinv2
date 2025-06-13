@@ -78,6 +78,19 @@ $form_action_url = site_url('user/edit');
                     <small class="form-text text-muted">Format: JPG, PNG, GIF. Maks 1MB.</small>
                 </div>
             </div>
+
+            <hr>
+    
+            <div class="form-group row">
+                <div class="col-sm-3">Keamanan Akun</div>
+                <div class="col-sm-9">
+                    <p>Amankan akun Anda dengan lapisan verifikasi tambahan.</p>
+                    <a href="<?= base_url('user/reset_mfa'); ?>" class="btn btn-primary">
+                        Atur Ulang Multi-Factor Authentication (MFA)
+                    </a>
+                </div>
+            </div>
+            
         </div>
     </div>
 
@@ -233,7 +246,6 @@ $form_action_url = site_url('user/edit');
          <i class="fas fa-save fa-fw"></i> <?php echo (isset($is_activating) && $is_activating) ? 'Simpan Data & Aktifkan Akun' : 'Update Data Profil & Perusahaan'; ?>
     </button>
     <?php echo form_close(); ?>
-
 </div> <?php ?>
 
 <script>

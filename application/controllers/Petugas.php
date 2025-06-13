@@ -1,52 +1,122 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Petugas extends CI_Controller {
+class Petugas extends MY_Controller {
 
     public function __construct()
     {
         parent::__construct();
+        $this->_check_auth_petugas();
+
         $this->load->library('form_validation');
         $this->load->library('upload');
         $this->load->library('session');
-        $this->load->helper(array('url', 'form', 'download')); 
+        $this->load->helper(array('url', 'form', 'download'));
         if (!isset($this->db)) {
-             $this->load->database();
+            $this->load->database();
         }
-              
-        $excluded_methods = ['force_change_password_page', 'edit_profil', 'logout'];
-        $current_method = $this->router->fetch_method();
+    }
 
-        if (!in_array($current_method, $excluded_methods)) {
-            $this->_check_auth_petugas();
-        } elseif (!$this->session->userdata('email') && $current_method != 'logout' && !($current_method == 'force_change_password_page' && $this->session->flashdata('message')) ) {
-             $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Sesi tidak valid atau telah berakhir. Silakan login kembali.</div>');
-             redirect('auth');
-             exit;
+    public function setup_mfa()
+    {
+        $data['title'] = 'Returnable Package';
+        $data['subtitle'] = 'Setup Multi-Factor Authentication';
+        $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+
+        $google2fa = new \PragmaRX\Google2FA\Google2FA();
+        
+        if (empty($data['user']['google2fa_secret'])) {
+            $secretKey = $google2fa->generateSecretKey();
+            $this->db->where('id', $data['user']['id']);
+            $this->db->update('user', ['google2fa_secret' => $secretKey]);
+        } else {
+            $secretKey = $data['user']['google2fa_secret'];
         }
+
+        $companyName = 'Repack Papin';
+        $userEmail = $data['user']['email'];
+
+        $qrCodeUrl = $google2fa->getQRCodeUrl($companyName, $userEmail, $secretKey);
+
+        $renderer = new \BaconQrCode\Renderer\ImageRenderer(
+            new \BaconQrCode\Renderer\RendererStyle\RendererStyle(400),
+            new \BaconQrCode\Renderer\Image\SvgImageBackEnd()
+        );
+        $writer = new \BaconQrCode\Writer($renderer);
+        $qrCodeImage = $writer->writeString($qrCodeUrl);
+        $qrCodeDataUri = 'data:image/svg+xml;base64,' . base64_encode($qrCodeImage);
+
+        $data['qr_code_data_uri'] = $qrCodeDataUri;
+        $data['secret_key'] = $secretKey;
+
+        $this->load->view('templates/header', $data);
+        $this->load->view('templates/sidebar', $data);
+        $this->load->view('templates/topbar', $data);
+        $this->load->view('petugas/mfa_setup', $data);
+        $this->load->view('templates/footer');
+    }
+
+    public function verify_mfa()
+    {
+        $userId = $this->session->userdata('user_id');
+        $user = $this->db->get_where('user', ['id' => $userId])->row_array();
+        $secret = $user['google2fa_secret'];
+
+        $oneTimePassword = $this->input->post('one_time_password');
+
+        $google2fa = new \PragmaRX\Google2FA\Google2FA();
+        $isValid = $google2fa->verifyKey($secret, $oneTimePassword);
+
+        if ($isValid) {
+            $this->db->where('id', $userId);
+            $this->db->update('user', ['is_mfa_enabled' => 1]);
+
+            $this->session->set_userdata('mfa_verified', true);
+
+            $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Autentikasi Dua Faktor (MFA) berhasil diaktifkan!</div>');
+            redirect('petugas/index');
+        } else {
+            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Kode verifikasi salah. Silakan coba lagi.</div>');
+            redirect('petugas/setup_mfa');
+        }
+    }
+
+    public function reset_mfa()
+    {
+        $user_id = $this->session->userdata('user_id');
+
+        $this->db->where('id', $user_id);
+        $this->db->update('user', [
+            'is_mfa_enabled' => 0,
+            'google2fa_secret' => NULL
+        ]);
+
+        $this->session->unset_userdata('mfa_verified');
+
+        $this->session->set_flashdata('message', '<div class="alert alert-info" role="alert">MFA Anda telah dinonaktifkan. Silakan lakukan pengaturan ulang.</div>');
+        redirect('petugas/setup_mfa');
     }
 
     private function _check_auth_petugas()
     {
-        if (!$this->session->userdata('email')) {
-            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Please login to continue.</div>');
-            redirect('auth');
+ 
+        if ($this->router->fetch_method() == 'logout') {
+            return;
+        }
+
+        if ($this->session->userdata('force_change_password') == 1 && $this->router->fetch_method() != 'force_change_password_page') {
+            $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Untuk keamanan, Anda wajib mengganti password Anda terlebih dahulu.</div>');
+            redirect('petugas/force_change_password_page');
             exit;
         }
-
-        if ($this->session->userdata('force_change_password') == 1 &&
-            $this->router->fetch_method() != 'force_change_password_page' &&
-            $this->router->fetch_method() != 'logout') {
-
-            if ($this->session->userdata('role_id') == 3) {
-                 $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Untuk keamanan, Anda wajib mengganti password Anda terlebih dahulu.</div>');
-                 redirect('petugas/force_change_password_page');
-                 exit;
-            }
+        
+        $other_excluded_methods = ['edit_profil', 'reset_mfa', 'setup_mfa', 'verify_mfa'];
+        if (in_array($this->router->fetch_method(), $other_excluded_methods)) {
+            return; 
         }
 
-        if ($this->session->userdata('role_id') != 3) {
-            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Access Denied! Anda tidak diotorisasi untuk mengakses area Petugas.</div>');
+         if ($this->session->userdata('role_id') != 3) {
+            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Akses Ditolak! Anda tidak diotorisasi untuk mengakses area Petugas.</div>');
             $role_id_session = $this->session->userdata('role_id');
             if ($role_id_session == 1) redirect('admin');
             elseif ($role_id_session == 2) redirect('user');
@@ -54,14 +124,11 @@ class Petugas extends CI_Controller {
             else redirect('auth/blocked');
             exit;
         }
-        if ($this->session->userdata('is_active') == 0) {
-           $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Akun Petugas Anda tidak aktif. Hubungi Administrator.</div>');
-           $current_controller = $this->router->fetch_class();
-           $current_method = $this->router->fetch_method();
-            if (!($current_controller == 'auth' || ($current_controller == 'petugas' && $current_method == 'logout'))) {
-                 redirect('auth/logout');
-                 exit;
-            }
+
+        if ($this->session->userdata('is_active') === 0) {
+        $this->session->set_flashdata('message', '<div class="alert alert-warning" role="alert">Akun Petugas Anda tidak aktif. Hubungi Administrator.</div>');
+         redirect('auth/blocked');
+        exit;
         }
     }
 
@@ -85,8 +152,6 @@ class Petugas extends CI_Controller {
         } else {
             $data['jumlah_tugas_lhp'] = 0;
         }
-
-
         
         $this->db->where('id_petugas_pemeriksa', $petugas_user_id);
         $data['jumlah_lhp_selesai'] = $this->db->count_all_results('lhp');

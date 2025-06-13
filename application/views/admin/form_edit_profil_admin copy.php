@@ -3,6 +3,8 @@
 
     <div class="row">
         <div class="col-lg-8">
+            <!-- <?= $this->session->flashdata('message'); ?> -->
+
             <?= form_open_multipart('admin/edit_profil'); ?>
             <div class="form-group row">
                 <label for="login_identifier" class="col-sm-3 col-form-label">Email (Login)</label>
@@ -42,20 +44,7 @@
                 </div>
             </div>
             </form>
-
-            <hr>
-
-            <div class="form-group row">
-                <label class="col-sm-3 col-form-label">Keamanan Akun</label>
-                <div class="col-sm-9">
-                     <p class="form-text text-muted">Amankan akun Anda dengan lapisan verifikasi tambahan.</p>
-                     <a href="<?= base_url('admin/reset_mfa'); ?>" class="btn btn-info">
-                        <i class="fas fa-shield-alt fa-fw"></i> Atur Multi-Factor Authentication (MFA)
-                    </a>
-                </div>
-            </div>
-            
-            </div>
+        </div>
     </div>
 </div>
 
