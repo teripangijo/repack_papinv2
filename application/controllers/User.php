@@ -67,6 +67,7 @@ class User extends MY_Controller
         $oneTimePassword = $this->input->post('one_time_password');
 
         $google2fa = new \PragmaRX\Google2FA\Google2FA();
+        $window = 4;
         $isValid = $google2fa->verifyKey($secret, $oneTimePassword);
 
         if ($isValid) {

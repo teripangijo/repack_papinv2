@@ -93,6 +93,7 @@ class Admin extends MY_Controller
 
         $google2fa = new \PragmaRX\Google2FA\Google2FA();
 
+        $window = 4;
         $isValid = $google2fa->verifyKey($secret, $oneTimePassword);
 
         if ($isValid) {
