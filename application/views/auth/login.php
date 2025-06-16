@@ -35,7 +35,7 @@
                                         <div class="text-center">
                                             <img src="<?= base_url('/assets/img/logo_papin.webp');?>" alt="Logo Instansi" class="login-logo mb-3">
                                             <h1 class="h4 text-gray-900 mb-2">Selamat Datang</h1>
-                                            <p class="text-muted mb-4">Login ke akun REPACK Anda.</p>
+                                            <p class="text-muted mb-4">Login ke akun REPACK Anda</p>
                                         </div>
 
                                         <?= $this->session->flashdata('message'); ?>
