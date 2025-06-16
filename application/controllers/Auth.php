@@ -9,7 +9,8 @@ class Auth extends CI_Controller
         parent::__construct();
         $this->load->library('form_validation');
         $this->load->library('session'); 
-        $this->load->helper('url');    
+        $this->load->helper('url');   
+        $this->load->helper('form'); 
         
         if (!isset($this->db)) {
              $this->load->database();

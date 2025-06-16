@@ -12,6 +12,7 @@
                                 </div>
                                 <?= $this->session->flashdata('message'); ?>
                                 <form class="user" method="post" action="<?= base_url('auth/verify_mfa_login'); ?>">
+                                    <input type="hidden" name="<?= $this->security->get_csrf_token_name(); ?>" value="<?= $this->security->get_csrf_hash(); ?>">
                                     <div class="form-group">
                                         <input type="text" class="form-control form-control-user text-center" id="mfa_code" name="mfa_code" placeholder="xxxxxx" autofocus autocomplete="off" maxlength="6">
                                         <?= form_error('mfa_code', '<small class="text-danger pl-3">', '</small>'); ?>

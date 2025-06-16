@@ -41,6 +41,7 @@
                                         <?= $this->session->flashdata('message'); ?>
 
                                         <form class="user" method="post" action="<?= base_url('auth'); ?>">
+                                            <?php echo form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()); ?>
                                             <div class="form-group">
                                                 <input type="text" class="form-control form-control-user modern-form-control <?= (form_error('login_identifier')) ? 'is-invalid' : ''; ?>"
                                                     id="login_identifier" name="login_identifier" 
@@ -53,7 +54,6 @@
                                                     id="password" name="password" placeholder="Password" required>
                                                 <?= form_error('password', '<small class="text-danger pl-3">', '</small>'); ?>
                                             </div>
-                                            
                                             <button type="submit" class="btn btn-primary btn-user btn-block modern-btn-login">
                                                 Login
                                             </button>
