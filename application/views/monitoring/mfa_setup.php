@@ -28,6 +28,7 @@
                     <hr>
                     
                     <form action="<?= base_url('monitoring/verify_mfa'); ?>" method="post">
+                        <input type="hidden" name="<?= $this->security->get_csrf_token_name(); ?>" value="<?= $this->security->get_csrf_hash(); ?>">
                         <div class="form-group">
                             <label for="one_time_password">Masukkan Kode Verifikasi 6-Digit</label>
                             <input type="text" class="form-control" id="one_time_password" name="one_time_password" required autocomplete="off" maxlength="6">
