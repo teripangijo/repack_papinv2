@@ -58,6 +58,7 @@ $nama_barang_diajukan = isset($pengajuan['nama_barang_kuota']) ? htmlspecialchar
             <hr>
             <h5>Form Tindakan Admin</h5>
             <form action="<?= site_url('admin/proses_pengajuan_kuota/' . $pengajuan['id']); ?>" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="<?= $this->security->get_csrf_token_name(); ?>" value="<?= $this->security->get_csrf_hash(); ?>">
                 <div class="form-group">
                     <label for="status_pengajuan">Status Pengajuan <span class="text-danger">*</span></label>
                     <select class="form-control <?= form_error('status_pengajuan') ? 'is-invalid' : ''; ?>" id="status_pengajuan" name="status_pengajuan" required>
